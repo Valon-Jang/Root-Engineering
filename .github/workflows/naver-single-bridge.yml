@@ -124,114 +124,115 @@ jobs:
           from selenium import webdriver
           from selenium.webdriver.chrome.service import Service
           from selenium.webdriver.common.by import By
-          from selenium.webdriver.common.keys import Keys
           from selenium.webdriver.support.ui import WebDriverWait
 
           OUT=pathlib.Path('/tmp/naver-bridge/out')
           TO='tequiero7342@gmail.com'
           SUBJECT='ChatGPT Naver Mail Bridge Test'
-          BODY='ChatGPT가 QR 로그인 브리지를 통해 보낸 테스트 메일입니다.'
+          BODY='ChatGPT Naver mail bridge test. This message was sent from the authenticated browser session.'
 
           opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
           d=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
           result={'ok':False,'recipient':TO}
 
-          def displayed_xpath(xp):
-              for e in d.find_elements(By.XPATH,xp):
-                  try:
-                      if e.is_displayed(): return e
-                  except Exception: pass
-              return None
+          def point_meta(x,y):
+              return d.execute_script("""
+                const e=document.elementFromPoint(arguments[0],arguments[1]);
+                if(!e) return null;
+                return {tag:e.tagName,type:e.type||null,id:e.id||null,cls:e.className||null,
+                        text:(e.innerText||e.getAttribute('aria-label')||e.getAttribute('title')||'').slice(0,120),
+                        editable:e.isContentEditable||false};
+              """,x,y)
 
-          def displayed_css(selectors):
-              for sel in selectors:
-                  try:
-                      for e in d.find_elements(By.CSS_SELECTOR,sel):
-                          if e.is_displayed() and e.size.get('width',0)>3 and e.size.get('height',0)>3:
-                              return e,sel
-                  except Exception: pass
-              return None,None
+          def click(x,y):
+              d.execute_cdp_cmd('Input.dispatchMouseEvent',{'type':'mouseMoved','x':x,'y':y})
+              d.execute_cdp_cmd('Input.dispatchMouseEvent',{'type':'mousePressed','x':x,'y':y,'button':'left','clickCount':1})
+              d.execute_cdp_cmd('Input.dispatchMouseEvent',{'type':'mouseReleased','x':x,'y':y,'button':'left','clickCount':1})
+              time.sleep(.25)
+
+          def insert(text):
+              d.execute_cdp_cmd('Input.insertText',{'text':text})
+              time.sleep(.2)
+
+          def enter():
+              params={'key':'Enter','code':'Enter','windowsVirtualKeyCode':13,'nativeVirtualKeyCode':13}
+              d.execute_cdp_cmd('Input.dispatchKeyEvent',dict(params,type='keyDown'))
+              d.execute_cdp_cmd('Input.dispatchKeyEvent',dict(params,type='keyUp'))
+              time.sleep(.3)
 
           try:
               deadline=time.time()+420
               while time.time()<deadline:
                   cookies={c.get('name') for c in d.get_cookies()}
-                  if 'NID_AUT' in cookies or 'NID_SES' in cookies or 'nidlogin.login' not in d.current_url.lower(): break
+                  if 'NID_AUT' in cookies or 'NID_SES' in cookies or 'nidlogin.login' not in d.current_url.lower():
+                      break
                   time.sleep(1)
               else:
                   raise TimeoutError('QR login approval timeout')
 
-              d.get('https://mail.naver.com')
+              d.get('https://mail.naver.com/v2/new')
               WebDriverWait(d,30).until(lambda x:x.execute_script('return document.readyState') in ('interactive','complete'))
               time.sleep(5)
-              if 'nidlogin' in d.current_url.lower(): raise RuntimeError('Naver session not authenticated')
+              if 'nidlogin' in d.current_url.lower():
+                  raise RuntimeError('Naver session not authenticated')
 
-              compose=displayed_xpath("//*[self::button or self::a or @role='button'][contains(normalize-space(.),'메일 쓰기') or contains(@aria-label,'메일 쓰기') or contains(@title,'메일 쓰기')]")
-              if compose is None:
-                  compose=displayed_xpath("//*[self::button or self::a or @role='button'][contains(normalize-space(.),'메일쓰기') or contains(@aria-label,'메일쓰기') or contains(@title,'메일쓰기')]")
-              if compose is None: raise RuntimeError('메일 쓰기 button not found')
-              d.execute_script('arguments[0].click()',compose)
-              time.sleep(4)
               d.save_screenshot(str(OUT/'compose.png'))
 
-              def find_to():
-                  e,sel=displayed_css(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to' i]","input[id*='to' i]"])
-                  if e: return e,sel
-                  e=displayed_xpath("//*[contains(normalize-space(.),'받는 사람') or contains(normalize-space(.),'받는사람')]/following::input[1]")
-                  return (e,'xpath-near-recipient-label') if e else (None,None)
+              # Coordinates are based on the verified 1440px-wide Naver compose layout.
+              coords={
+                  'recipient':(600,196),
+                  'subject':(600,237),
+                  'body':(650,520),
+                  'send':(307,146),
+              }
+              result['point_meta']={k:point_meta(*v) for k,v in coords.items()}
 
-              def find_subject():
-                  e,sel=displayed_css(["input[placeholder*='제목']","input[aria-label*='제목']","input[name*='subject' i]","input[id*='subject' i]"])
-                  if e: return e,sel
-                  e=displayed_xpath("//*[normalize-space(.)='제목']/following::input[1]")
-                  return (e,'xpath-near-subject-label') if e else (None,None)
+              # Guard against the previous failure mode: never type into a checkbox.
+              if (result['point_meta'].get('recipient') or {}).get('type')=='checkbox':
+                  raise RuntimeError('Recipient coordinate unexpectedly points to checkbox')
 
-              to,tsel=find_to(); subject,ssel=find_subject()
-              if not to or not subject:
-                  raise RuntimeError(f'Compose header fields not found: to={bool(to)} subject={bool(subject)}')
+              click(*coords['recipient']); insert(TO); enter()
+              click(*coords['subject']); insert(SUBJECT)
+              click(*coords['body']); insert(BODY)
+              time.sleep(1)
+              d.save_screenshot(str(OUT/'filled.png'))
 
-              to.click(); to.send_keys(TO); to.send_keys(Keys.ENTER)
-              time.sleep(.5)
-              subject,ssel=find_subject()
-              if not subject: raise RuntimeError('Subject disappeared after recipient entry')
-              subject.click(); subject.send_keys(SUBJECT)
+              # Read back visible/input state before the irreversible send click.
+              state=d.execute_script("""
+                return {
+                  text: document.body.innerText,
+                  values: [...document.querySelectorAll('input,textarea')].map(e=>e.value).filter(Boolean)
+                };
+              """)
+              result['pre_send_values']=state.get('values',[])
+              result['pre_send_text_excerpt']=state.get('text','')[-1200:]
+              if TO not in state.get('text','') and not any(TO in v for v in state.get('values',[])):
+                  raise RuntimeError('Recipient was not visible after input; refusing to click send')
+              if not any(SUBJECT in v for v in state.get('values',[])) and SUBJECT not in state.get('text',''):
+                  raise RuntimeError('Subject was not visible after input; refusing to click send')
 
-              d.switch_to.default_content()
-              body,bsel=displayed_css(["[contenteditable='true'][role='textbox']","div[contenteditable='true']","textarea[placeholder*='내용']","textarea[aria-label*='내용']"])
-              if not body:
-                  for frame in d.find_elements(By.CSS_SELECTOR,'iframe'):
-                      try:
-                          d.switch_to.default_content(); d.switch_to.frame(frame)
-                          body,bsel=displayed_css(["body[contenteditable='true']","[contenteditable='true']","textarea"])
-                          if body:
-                              bsel='iframe:'+str(bsel); break
-                      except Exception: pass
-              if not body: raise RuntimeError('Body editor not found')
-              body.click(); body.send_keys(BODY)
-              d.switch_to.default_content(); time.sleep(1)
-
-              send=displayed_xpath("//*[self::button or self::a or @role='button'][normalize-space(.)='보내기' or @aria-label='보내기' or @title='보내기']")
-              if send is None: raise RuntimeError('Send button not found')
-              d.execute_script('arguments[0].click()',send)
+              click(*coords['send'])
               time.sleep(5)
 
+              # Optional confirmation: if a modal appears, choose its visible confirm/send action.
               for dialog in d.find_elements(By.CSS_SELECTOR,"[role='dialog'],.layer,.modal"):
                   try:
                       if not dialog.is_displayed(): continue
-                      btn=None
                       for e in dialog.find_elements(By.XPATH,".//*[self::button or self::a or @role='button']"):
-                          txt=(e.text or e.get_attribute('aria-label') or '').strip()
-                          if txt in ('확인','보내기'): btn=e; break
-                      if btn: d.execute_script('arguments[0].click()',btn); time.sleep(3)
+                          txt=(e.text or e.get_attribute('aria-label') or e.get_attribute('title') or '').strip()
+                          if txt in ('확인','보내기','Send'):
+                              d.execute_script('arguments[0].click()',e); time.sleep(3); break
                   except Exception: pass
 
               d.switch_to.default_content()
               text=d.find_element(By.TAG_NAME,'body').text
-              compose_left=displayed_xpath("//*[self::button or self::a or @role='button'][normalize-space(.)='보내기' or @aria-label='보내기' or @title='보내기']") is not None
-              sent=bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료',text,re.I)) or not compose_left
+              current=d.current_url
+              sent=bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료|sent',text,re.I)) or '/v2/new' not in current
               d.save_screenshot(str(OUT/'result.png'))
-              result={'ok':sent,'sent':sent,'url':d.current_url,'to_selector':tsel,'subject_selector':ssel,'body_selector':bsel,'status_excerpt':text[-700:]}
-              if not sent: raise RuntimeError('Send success not detected')
+              result.update({'ok':sent,'sent':sent,'url':current,'status_excerpt':text[-1000:]})
+              if not sent:
+                  raise RuntimeError('Send click completed but success state was not detected')
+
           except Exception as exc:
               try: d.switch_to.default_content(); d.save_screenshot(str(OUT/'result.png'))
               except Exception: pass
@@ -251,5 +252,6 @@ jobs:
             /tmp/naver-bridge/out/result.json
             /tmp/naver-bridge/out/result.png
             /tmp/naver-bridge/out/compose.png
+            /tmp/naver-bridge/out/filled.png
           retention-days: 1
           if-no-files-found: warn
