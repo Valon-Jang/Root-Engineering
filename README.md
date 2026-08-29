@@ -50,7 +50,7 @@ Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERIN
 
 The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
 
-Installer v0.1.3 also reduces recurring Google Drive overhead with a temporary in-context Root Update Buffer: critical state is persisted promptly, compatible routine updates are batched by Branch at meaningful checkpoints, and verification depth follows change risk.
+Installer v0.1.4 reduces recurring Google Drive overhead by batching compatible updates at meaningful checkpoints and matching verification depth to change risk. After installation is active, this storage work stays silent in ordinary conversation and uses plain language only when the user asks to save something or an update fails.
 
 ### What the installer establishes
 

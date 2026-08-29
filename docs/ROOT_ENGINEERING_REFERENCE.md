@@ -520,6 +520,18 @@ It also reduces the risk of destroying valid context during updates.
 
 ---
 
+# Quiet Runtime Communication
+
+Once installation and acceptance testing are complete, storage mechanics should disappear from ordinary conversation.
+
+The system continues to retrieve, update, and verify project records internally, but it does not routinely announce those operations. Terms such as `Root`, `Canonical`, `Branch`, `Read Back`, and `Save Gate` remain useful in methodology, installation, and diagnostics; they are not shown in normal user-facing replies.
+
+If the user explicitly asks to save something, a plain acknowledgement such as `Saved.` is sufficient. If an update fails, the failure must still be reported in ordinary language with the next useful action. Technical details are shown only when needed for recovery or explicitly requested.
+
+This is a communication policy, not a reduction in verification or persistence safety.
+
+---
+
 # Pruning
 
 A Root grows over time.
