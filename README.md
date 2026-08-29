@@ -144,3 +144,67 @@ Stronger Next Run
 ```
 
 > **The Root does not preserve everything. It preserves what should compound.**
+
+## How Root Engineering Differs
+
+Root Engineering overlaps with several existing AI engineering practices, but it focuses on a different layer of the system.
+
+These approaches are complementary rather than mutually exclusive.
+
+| Approach                                 | Primary Focus                                                            | Core Question                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| **Context Engineering**                  | Constructing the information available to an AI for the current task     | What should the model know right now?                                       |
+| **AI Memory**                            | Retaining and retrieving information across interactions                 | What should the system remember?                                            |
+| **RAG (Retrieval-Augmented Generation)** | Retrieving relevant external information at query time                   | What external information should be retrieved for this request?             |
+| **Loop Engineering**                     | Improving the current result through iteration, evaluation, and revision | How can this run become better?                                             |
+| **Root Engineering**                     | Maintaining verified, structured knowledge that improves future AI work  | What should persist, evolve, and become the starting point of the next run? |
+
+### Context Engineering
+
+Context Engineering optimizes the context supplied to an AI for a particular task or execution.
+
+Root Engineering operates across tasks and conversations. It maintains the persistent knowledge from which useful context can later be constructed.
+
+In that sense:
+
+> **Context is what the AI needs now. Root is what the system should continue to know.**
+
+### AI Memory
+
+Memory helps an AI retain information over time.
+
+Root Engineering adds governance to persistence: what becomes canonical, what remains temporary, what must be verified, what becomes outdated, what should be pruned, and where knowledge belongs.
+
+The objective is therefore not maximum retention.
+
+It is maintained, decision-relevant knowledge.
+
+### RAG
+
+Retrieval-Augmented Generation connects an AI to external information and retrieves relevant material when needed.
+
+Root Engineering can use retrieval, but retrieval alone does not determine which information represents the project's current truth, which decisions remain active, which lessons have been verified, or how knowledge should evolve after new work.
+
+RAG retrieves knowledge.
+
+Root Engineering maintains the state that future retrieval and reasoning should depend on.
+
+### Loop Engineering
+
+Loop Engineering and Root Engineering are directly complementary.
+
+A loop improves work through repeated generation, evaluation, testing, or revision.
+
+Root Engineering preserves the useful learning produced by that process and makes it available to future work.
+
+> **Loop improves the run. Root improves the starting point of future runs.**
+
+Together:
+
+```text
+Root → Context → Loop → Verification → Learning → Root
+```
+
+Root Engineering is therefore not a replacement for context engineering, memory, RAG, or iterative AI workflows.
+
+It is a persistence and learning layer designed to connect them across time.
