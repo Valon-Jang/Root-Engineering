@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.1
+package_version: 0.1.2
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -13,13 +13,16 @@ supported_modes:
   - UPGRADE
 single_file_package: true
 question_driven_root_deepening: true
+model_recommendation_adapter: runtime-aware-smallest-sufficient
+model_recommendation_floor: GPT-5.6 Terra
+model_recommendation_excludes:
+  - GPT-5.6 Luna
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.1
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.2
 
-> **한국어 번역본입니다. Canonical specification:** [ROOT_ENGINEERING_INSTALLER.md](./ROOT_ENGINEERING_INSTALLER.md)
+> **한국어 배포본입니다. Canonical English specification:** [ROOT_ENGINEERING_INSTALLER.md](./ROOT_ENGINEERING_INSTALLER.md)
 >
-
 > **Model is replaceable. Root persists.**
 >
 > 이 파일 하나가 Root Engineering의 설치 패키지다. 사용자는 새 ChatGPT Project의 첫 채팅에 이 파일을 직접 첨부하고 **“패키지 읽고 설치해”**라고 말하면 된다.
@@ -39,6 +42,7 @@ question_driven_root_deepening: true
 5. 지식을 저장하는 것뿐 아니라 성장·분리·통합·History 이동·Silent Pruning까지 지속 가능하게 한다.
 6. 텍스트 기반 Skill을 축적하고, 현재 환경에 실제 사용 가능한 앱·도구·웹 Skill이 있으면 연결해 실행할 수 있게 한다.
 7. 설치·검증·복구·업그레이드를 같은 패키지에서 처리한다.
+8. 실질 작업마다 현재 Runtime에서 선택 가능한 **가장 작은 충분한 모델 + 추론 깊이**를 동적으로 추천한다.
 
 설치 후 일반 사용자는 Root ID, Folder ID, Branch Map, Pruning 규칙을 직접 관리하지 않는다.
 
@@ -1115,6 +1119,312 @@ Project-specific 최종 판단이 Root에 의존하는데 Root를 읽지 못하�
 
 ---
 
+## 29A. Model Recommendation Adapter
+
+이 Adapter는 **Runtime 정책**이다. 모델 가용성·UI 명칭·추론 단계는 바뀔 수 있으므로
+프로젝트의 Canonical Knowledge에 고정하지 않는다. 설치 시 아래 규칙을 `Project Instructions`에 포함하고,
+실행할 때마다 현재 Runtime Capability를 확인한다.
+
+### 29A.1 핵심 원칙
+
+현재 작업을 안정적으로 끝낼 수 있는 **가장 작은 충분한 실제 모델 + 추론 깊이**를 추천한다.
+
+다음을 금지한다.
+
+- 모든 실질 작업에 `GPT-5.6 Sol (High)`를 고정 추천
+- 이전 Turn의 추천을 다음 Turn에 자동 상속
+- `LIGHT / STANDARD / HIGH / MAX` 같은 내부 등급을 사용자에게 최종 추천값으로 노출
+- 현재 Runtime에서 실제 선택할 수 없는 모델/추론 옵션을 선택 가능한 것처럼 표시
+- 이 Router에서 `GPT-5.6 Luna` 추천
+
+Luna는 이 Router의 사용자 정책상 의도적으로 제외한다.
+
+### 29A.2 모델 범위
+
+기본 후보:
+
+```text
+GPT-5.6 Terra
+→ GPT-5.6 Sol
+→ GPT-5.6 Sol Pro
+```
+
+모델 Tier와 추론 깊이는 별도 축으로 판단한다.
+
+```text
+모델 Tier
+= 필요한 기본 Capability
+
+Reasoning Effort
+= 같은 모델 안에서 필요한 사고 깊이
+```
+
+따라서 `Terra max → Sol low → Sol medium`처럼 무조건 한 줄짜리 계단으로 해석하지 않는다.
+짧아도 개념적으로 어렵고 불확실성이 크면 바로 Sol로 올릴 수 있고,
+길어도 기계적·반복적이면 Terra에 남을 수 있다.
+
+### 29A.3 Runtime Capability 확인
+
+추천 직전에 현재 제품 Surface와 실제 선택 가능한 모델/추론 옵션을 확인한다.
+
+현재 GPT-5.6 계열의 공식 기준을 참고하되, 문서에 적힌 모델명을 영구 사실로 가정하지 않는다.
+
+- Work / Codex / API에서 Terra가 실제 제공되면 Terra를 사용할 수 있다.
+- GPT-5.6 Terra / Sol의 명시적 reasoning effort가 제공되는 Runtime에서는
+  `none`, `low`, `medium`, `high`, `xhigh`, `max` 중 실제 노출된 값을 사용한다.
+- 일반 ChatGPT 대화에서 Terra가 선택 불가능하면 Terra 의도를 현재 선택 가능한 Sol 옵션으로 변환한다.
+- Sol Pro는 현재 계정/Plan/Workspace에 실제 노출되고 최상위 품질이 필요한 경우에만 추천한다.
+
+일반 ChatGPT fallback 기본값:
+
+| 내부 의도 | Terra를 직접 선택할 수 없는 일반 ChatGPT |
+|---|---|
+| Terra (none) | GPT-5.6 Sol (Instant) |
+| Terra (low) | GPT-5.6 Sol (Instant) |
+| Terra (medium) | GPT-5.6 Sol (Medium) |
+| Terra (high) | GPT-5.6 Sol (Medium) |
+| Terra (xhigh) | GPT-5.6 Sol (High) |
+| Terra (max) | GPT-5.6 Sol (High) |
+| Sol (xhigh / max) | GPT-5.6 Sol (Extra High) |
+| 최상위 escalation | GPT-5.6 Sol Pro (Pro), 실제 제공될 때만 |
+
+Fallback은 동일 Capability를 주장하는 것이 아니라 **현재 UI에서 선택 가능한 가장 가까운 추천**이다.
+
+### 29A.4 판단 기준 — 5축
+
+각 실질 작업을 다음 5축으로 판단한다.
+
+1. **사고 복잡도**
+   - 상호작용하는 제약, 추상화, reasoning step이 얼마나 많은가?
+2. **불확실성**
+   - 목표·증거·원인 구조가 얼마나 애매하며 경쟁 가설이 얼마나 남아 있는가?
+3. **오류 영향**
+   - 틀렸을 때 쉽게 고칠 수 있는가, 아니면 비용·일정·설계·전략에 큰 손실이 생기는가?
+4. **검증 부담**
+   - 단순 답변인가, 여러 Source·파일·코드·Test·대안을 교차검증해야 하는가?
+5. **Context / Coordination 부담**
+   - 긴 Context, 여러 Artifact, Tool, Agent, 파일, 의존 의사결정을 조율해야 하는가?
+
+작업이 길다는 이유만으로 올리지 않는다.
+하나 이상의 축이 실질적으로 더 강한 Capability 또는 Reasoning을 요구할 때만 올린다.
+
+### 29A.5 상세 라우팅 기준
+
+#### GPT-5.6 Terra (none)
+
+거의 기계적인 변환.
+
+- 단순 Formatting
+- 직접 Extract
+- 명백한 분류
+- 판단이 거의 없는 deterministic 변환
+
+#### GPT-5.6 Terra (low)
+
+목표가 명확하고 오류 비용이 낮은 가벼운 판단.
+
+- 짧은 Rewrite
+- Tone 조정
+- 단순 Summary
+- 기본 Categorization
+- 일반적인 간단 설명
+
+#### GPT-5.6 Terra (medium)
+
+일상적인 Knowledge Work의 기본 중심값.
+
+- 일반 계획
+- Routine 비교
+- 일반 업무 문서
+- 흔한 Troubleshooting
+- 보통 수준 문서 검토
+- 명확한 제약 아래의 단순 우선순위
+
+#### GPT-5.6 Terra (high)
+
+범위가 명확한 다단계 분석.
+
+- 여러 제약이 있는 운영 판단
+- 중간 난도 Debugging
+- Trade-off가 있는 여러 안 비교
+- 구조화된 Root-cause 분석
+- 비가역성이 낮은 Workflow 설계
+
+#### GPT-5.6 Terra (xhigh)
+
+어렵지만 범위가 여전히 잘 닫혀 있고 Terra의 속도/비용 이점이 유효한 작업.
+
+- 제한된 Codebase의 어려운 Debugging
+- 복잡하지만 well-defined 분석
+- 상당한 Technical Review
+- 전략적 모호성이 제한된 Multi-source synthesis
+
+새로운 판단, 높은 모호성, 긴 Context, 전략 Trade-off가 핵심이면 Terra effort만 올리지 말고 Sol로 전환한다.
+
+#### GPT-5.6 Terra (max)
+
+Terra의 비용/처리량을 명시적으로 우선하면서 문제 범위가 충분히 bounded일 때만 조건부 사용한다.
+
+Terra effort를 `max`까지 소진해야 Sol로 갈 수 있는 것이 아니다.
+Capability 차이가 중요하면 `Terra (max)`보다 `Sol (medium)`이 더 적절할 수 있다.
+
+#### GPT-5.6 Sol (medium)
+
+단순히 Terra effort를 높이는 것보다 더 강한 기본 Capability가 필요한 첫 Sol 구간.
+
+- 애매한 Root-cause 분석
+- 여러 Subsystem이 상호작용하는 System Design
+- 중요한 Technical Judgment
+- Long-context synthesis
+- 비단순 Research synthesis
+- 일관성이 중요한 Multi-step Artifact
+- 더 넓은 추론이 필요한 복잡한 Coding / Debugging
+
+#### GPT-5.6 Sol (high)
+
+깊은 분석 + 의미 있는 오류 영향 또는 높은 검증 부담.
+
+- Architecture 결정
+- 경쟁 Evidence가 있는 어려운 조사
+- 복잡한 Project Recovery
+- 영향도가 높은 운영 계획
+- Multi-file / Multi-tool Engineering
+- Benchmark / Experiment 설계
+- 숨은 가정이 결론을 크게 바꿀 수 있는 결정
+
+#### GPT-5.6 Sol (xhigh) / 일반 ChatGPT: Extra High
+
+비정상적으로 깊은 추론, 넓은 일관성, 강한 반증이 필요한 경우.
+
+- 새로운 System Architecture
+- 여러 경쟁 가설이 있는 어려운 Causal Diagnosis
+- Adversarial Review / Red Team
+- Switching Cost가 큰 전략 판단
+- Rollback 비용이 큰 대형 설계 변경
+- 새로운 방법론의 엄격한 평가
+
+일반 ChatGPT에서 `xhigh` 대신 실제 UI가 `Extra High`를 노출하면
+`GPT-5.6 Sol (Extra High)`로 표시한다.
+
+#### GPT-5.6 Sol (max) / 일반 ChatGPT: Extra High
+
+Runtime이 `max`를 실제 제공하고 가장 어려운 단일 모델 reasoning이 필요한 경우.
+
+- Frontier-level technical synthesis
+- 매우 어려운 Long-horizon coding/design
+- 반복 내부 검증이 필요한 복잡한 Research
+- 상호작용 Failure Mode가 많은 High-consequence Architecture
+
+일반 ChatGPT가 `max`를 노출하지 않으면 `Extra High`로 fallback하되,
+둘이 동일한 설정이라고 주장하지 않는다.
+
+#### GPT-5.6 Sol Pro (Pro)
+
+드물게 사용한다.
+
+다음이 모두 성립할 때만 추천한다.
+
+- 현재 Runtime에서 실제 사용 가능
+- 최고 품질이 결과를 실질적으로 바꿈
+- 작업이 매우 어렵거나 길게 이어짐
+- 일반 Sol 최고 단계가 효율적인 선택점이 아님
+
+Pro는 prestige default가 아니라 escalation tier다.
+
+### 29A.6 Escalation / De-escalation
+
+다음이 중요하면 상향한다.
+
+- 종속 제약 다수
+- 충돌 Evidence
+- 숨은 가정 위험
+- 비싸거나 되돌리기 어려운 결정
+- Long-context consistency
+- 반복 Tool 사용 / Multi-artifact coordination
+- 원인이 불확실한 복잡한 Debugging
+- Benchmark / Experiment methodology
+- 새로운 Architecture / Methodology
+- 강한 Verification / Adversarial checking
+
+다음이면 Terra 또는 더 낮은 effort를 우선한다.
+
+- Routine이고 명세가 명확함
+- 결과가 reasoning보다 transformation 중심
+- 오류가 싸고 쉽게 수정 가능
+- Latency / Cost가 중요한 목표
+- 의미 있는 Ambiguity나 Cross-check가 없음
+- 앞선 고난도 분석에서 어려운 부분이 이미 해결됨
+
+각 **실질 작업마다 독립적으로 다시 라우팅**한다.
+
+### 29A.7 사용자 표시 규칙
+
+실질 작업의 답변 맨 마지막 줄에만 다음 형식으로 표시한다.
+
+```text
+현 작업 추천 모델 : <ACTUAL_MODEL> (<ACTUAL_REASONING_LEVEL>)
+```
+
+예:
+
+```text
+현 작업 추천 모델 : GPT-5.6 Terra (Medium)
+현 작업 추천 모델 : GPT-5.6 Sol (High)
+현 작업 추천 모델 : GPT-5.6 Sol (Extra High)
+현 작업 추천 모델 : GPT-5.6 Sol Pro (Pro)
+```
+
+내부 Tier, Score, Routing table은 사용자가 요청하지 않는 한 노출하지 않는다.
+
+다음에는 추천 줄을 표시하지 않는다.
+
+- 인사
+- 가벼운 잡담
+- 짧은 확인 응답
+- 모델 선택이 실질적 가치를 주지 않는 요청
+
+### 29A.8 Legacy Cleanup
+
+다음 과거 동작은 폐기한다.
+
+- 모든 실질 작업 → `GPT-5.6 Sol (High)`
+- `GPT-5.6 Sol (High)`를 Template 기본값으로 간주
+- 내부 `LIGHT / STANDARD / HIGH / MAX`를 최종 표시
+- 이전 Turn 추천을 그대로 재사용
+- 이 Router에서 Luna 추천
+
+과거 Project Instructions, Memory, Source-derived rule과 충돌하면
+**모델 추천 동작에 한해서만 이 Adapter가 우선**한다.
+Root Engineering의 다른 규칙은 변경하지 않는다.
+
+### 29A.9 Conformance Test
+
+설치 또는 Upgrade 후 최소 다음 Case를 확인한다.
+
+```text
+한 줄 Rewrite
+→ Terra low 또는 Runtime fallback
+
+일반 회의/Action Summary
+→ Terra medium
+
+범위가 명확한 Multi-constraint 분석
+→ Terra high/xhigh
+
+모호한 System Architecture
+→ Sol medium/high
+
+경쟁 Failure Mode가 있는 Benchmark 설계
+→ Sol high/xhigh
+
+예외적으로 어려운 장기 최종 Synthesis
+→ Sol max 또는 Sol Pro
+```
+
+모든 실질 Case가 같은 모델/effort로 나오면 Router 적용 실패로 본다.
+
+---
+
 # PART G. Global Skill Library
 
 ## 30. Skill Library 역할
@@ -1212,6 +1522,8 @@ Google Drive Capability 재확인
 → 각 Branch ID와 Parent 확인
 → Protocol / Skill Root 접근 확인
 → Protocol과 Project Instructions의 Question-Driven Deepening 규칙 확인
+→ Project Instructions의 Model Recommendation Adapter 존재와 Legacy 고정 추천 제거 확인
+→ 현재 Runtime Capability에 맞는 모델/추론 매핑 확인
 → Project Manifest 상태 확인
 → 최소 Write / Read Back 테스트
 ```
@@ -1251,6 +1563,8 @@ Upgrade는 Root 지식을 다시 만드는 작업이 아니다.
 - Package Installer를 Project Source에 영구 추가하지 않는다.
 - 구버전 Protocol은 필요하면 Drive Revision History로 복구할 수 있게 같은 Document ID에서 수정한다.
 - Schema 변경이 의미적 내용 이동을 요구할 때는 이동 후 검증하고 기존 위치를 정리한다.
+- v0.1.1 이하에서 고정 모델 추천 또는 구형 Model Recommendation Adapter가 있으면 `Project Instructions`의 모델 추천 블록만 교체한다.
+- 모델 가용성·UI 명칭·추론 단계는 Living Runtime Capability로 취급하며 Canonical Root 지식으로 고정 저장하지 않는다.
 
 ---
 
@@ -1319,7 +1633,7 @@ Root 구조 생성 완료 — Project 연결 대기
 Fresh-Chat Acceptance Test가 PASS한 뒤에만:
 
 ```text
-Root Engineering v0.1.1 설치 완료
+Root Engineering v0.1.2 설치 완료
 
 - Google Drive 연결: PASS
 - Read / Create / Update / Move: PASS
@@ -1330,6 +1644,7 @@ Root Engineering v0.1.1 설치 완료
 - Global Skill Library: PASS
 - 새 Chat 자동 부팅: PASS
 - 질문 기반 Root Deepening: PASS
+- Model Recommendation Adapter: PASS
 - Manifest 상태: ACTIVE
 ```
 
@@ -1984,6 +2299,88 @@ History가 커져 실제 독립 조회 패턴이 생길 때만 추가한다.
 5. 사용 불가하면 Skill의 Fallback 절차를 사용한다.
 6. 프로젝트 고유 사실이나 민감 자료를 Global Skill에 저장하지 않는다.
 
+## Model Recommendation Adapter
+
+모델 추천은 Root의 Canonical Knowledge가 아니라 현재 ChatGPT Runtime을 위한 Adapter다.
+각 실질 작업마다 **가장 작은 충분한 실제 모델 + 추론 깊이**를 새로 선택한다.
+
+### 정책
+
+- 이 Router에서는 `GPT-5.6 Luna`를 추천하지 않는다.
+- 기본 후보는 `GPT-5.6 Terra → GPT-5.6 Sol → GPT-5.6 Sol Pro`다.
+- 모델 Tier와 Reasoning Effort는 별도 축이다.
+- 길다는 이유만으로 상향하지 않는다.
+- 이전 Turn의 높은 추천을 자동 상속하지 않는다.
+- 모든 작업에 `GPT-5.6 Sol (High)`를 고정 추천하지 않는다.
+- 내부 `LIGHT / STANDARD / HIGH / MAX`를 사용자에게 최종 추천값으로 표시하지 않는다.
+- 현재 Runtime에서 실제 선택할 수 없는 옵션을 선택 가능한 것처럼 표시하지 않는다.
+
+### Runtime Capability
+
+추천 직전에 현재 제품 Surface와 실제 선택 가능한 모델/추론 설정을 확인한다.
+
+Work / Codex / API에서 실제 제공될 때:
+
+- GPT-5.6 Terra: `none / low / medium / high / xhigh / max`
+- GPT-5.6 Sol: `none / low / medium / high / xhigh / max`
+
+일반 ChatGPT에서 Terra가 선택 불가능하면 현재 UI의 가장 가까운 Sol 옵션으로 fallback한다.
+
+```text
+Terra none/low   → Sol Instant
+Terra medium     → Sol Medium
+Terra high       → Sol Medium
+Terra xhigh/max  → Sol High
+Sol xhigh/max    → Sol Extra High
+최상위 escalation → Sol Pro (Pro), 실제 제공될 때만
+```
+
+Fallback은 동일 Capability를 의미하지 않는다. 현재 UI에서 사용자가 실제 선택할 수 있는 가장 가까운 추천이다.
+
+### 판단 기준
+
+다섯 축을 본다.
+
+1. 사고 복잡도
+2. 불확실성 / 경쟁 가설
+3. 오류 영향 / 비가역성
+4. 검증 부담
+5. 긴 Context / 여러 Artifact·Tool·Agent 조율 부담
+
+### 최소 충분 라우팅
+
+- Terra (none): 거의 기계적 변환
+- Terra (low): 짧은 Rewrite, Tone, 단순 Summary
+- Terra (medium): 일반 Knowledge Work, 계획, 비교, 업무 문서, Routine Troubleshooting
+- Terra (high): 범위가 명확한 Multi-step 분석, 중간 Debugging, Trade-off 비교
+- Terra (xhigh): 어렵지만 bounded한 Technical Analysis/Debugging
+- Terra (max): 비용/처리량 때문에 Terra 유지가 명시적으로 유리할 때만 조건부 사용
+- Sol (medium): 모호한 Root-cause, System Design, Long-context synthesis, 복잡한 Coding
+- Sol (high): Architecture, 중요 의사결정, 경쟁 Evidence, Multi-tool Engineering, Benchmark 설계
+- Sol (xhigh/max): 새로운 Architecture/Methodology, 강한 반증, 매우 어려운 Research/Design
+- Sol Pro (Pro): 최고 품질이 실질적으로 필요하고 일반 Sol 최고 단계가 효율적인 선택이 아닌 예외적 작업
+
+Terra effort를 `max`까지 모두 소진한 뒤 Sol로 넘어가는 선형 계단으로 취급하지 않는다.
+Capability가 중요하면 바로 Sol로 올린다.
+
+### 표시
+
+실질 작업의 마지막 줄에만:
+
+`현 작업 추천 모델 : <ACTUAL_MODEL> (<ACTUAL_REASONING_LEVEL>)`
+
+인사, 잡담, 짧은 확인 응답에는 표시하지 않는다.
+
+### Legacy Cleanup
+
+모델 추천에 한해서 다음 구형 규칙을 무효화한다.
+
+- 모든 실질 작업 → `GPT-5.6 Sol (High)`
+- `GPT-5.6 Sol (High)`를 기본 Template 값으로 사용
+- 내부 Tier를 최종 사용자 표시값으로 사용
+- 이전 Turn 추천 자동 재사용
+- Luna 추천
+
 ## Failure
 
 ROOT가 필요한 작업에서 ROOT를 읽을 수 없으면 Memory나 과거 대화를 Canonical Root 대체재로 가장하지 않는다. 실패 단계, 대상 ID, 실제 오류, 다음 안전 행동을 사용자에게 알린다.
@@ -2007,6 +2404,15 @@ ROOT가 필요한 작업에서 ROOT를 읽을 수 없으면 Memory나 과거 대
 - OpenAI Help — Projects in ChatGPT  
   https://help.openai.com/en/articles/10169521-using-projects-in-chatgpt
 
+- OpenAI Help — GPT-5.6 in ChatGPT  
+  https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt/
+
+- OpenAI API — Model guidance  
+  https://developers.openai.com/api/docs/guides/latest-model
+
+- OpenAI — GPT-5.6 overview  
+  https://openai.com/index/gpt-5-6/
+
 핵심 현재 전제:
 
 - Google Drive는 ChatGPT의 통합 앱으로 Docs, Sheets, Slides 작업을 제공할 수 있다.
@@ -2028,6 +2434,7 @@ Google Drive Preflight PASS
 + ROOT Doc Project Source 추가
 + 패키지 없는 새 Chat에서 ROOT 부팅
 + Question-Driven Deepening Protocol 적용 확인
++ Model Recommendation Adapter 적용 및 고정 Sol High 회귀 테스트 PASS
 + Manifest Write / Read Back
 + 상태 ACTIVE
 = 설치 완료
