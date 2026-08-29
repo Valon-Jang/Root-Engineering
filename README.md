@@ -50,7 +50,7 @@ Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERIN
 
 The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
 
-Installer v0.1.6 is a single-file package for installation, verification, repair, and upgrade. During an upgrade it resolves only the document sections changed since the installed version, deduplicates overlapping paths, and patches those sections without rebuilding the installation or touching project knowledge. Routine Google Drive updates remain checkpoint-batched and use risk-matched verification.
+Installer v0.1.8 is a single-file package for installation, verification, repair, and upgrade. Shared operating behavior lives in the Global Protocol, while ChatGPT Project Instructions contain only the project-specific connection block. During an upgrade it patches only those two managed paths without rebuilding the installation or touching project knowledge, then reports what actually changed. Routine Google Drive updates remain checkpoint-batched and use risk-matched verification.
 
 ### What the installer establishes
 

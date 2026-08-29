@@ -20,7 +20,7 @@ Current reference implementation: **ChatGPT Project + Google Drive live app acce
 3. Say: **“Read the package and install it.”**
 4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
 
-The same installer handles an existing installation in UPGRADE mode. It reads the installed version, resolves only the document-section paths changed since that version, and patches the deduplicated affected sections without recreating the installation or modifying project knowledge.
+The same installer handles an existing installation in UPGRADE mode. Shared operating policy stays in the Global Protocol, while Project Instructions retain only the project-specific connection block. The installer patches those managed paths without recreating the installation or modifying project knowledge.
 
 Korean users can use the separate [Korean installer](../installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
