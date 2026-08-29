@@ -80,19 +80,9 @@ jobs:
               env = json.loads(raw.decode('utf-8'))
               aes_key = private_key.decrypt(
                   base64.b64decode(env['wrapped_key']),
-                  padding.OAEP(
-                      mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                      algorithm=hashes.SHA256(),
-                      label=None,
-                  ),
+                  padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None),
               )
-              return json.loads(
-                  AESGCM(aes_key).decrypt(
-                      base64.b64decode(env['nonce']),
-                      base64.b64decode(env['ciphertext']),
-                      None,
-                  ).decode('utf-8')
-              )
+              return json.loads(AESGCM(aes_key).decrypt(base64.b64decode(env['nonce']), base64.b64decode(env['ciphertext']), None).decode('utf-8'))
 
           deadline = time.time() + 180
           last = 'request not seen'
@@ -100,12 +90,9 @@ jobs:
               r = requests.get(url, headers=headers, params={'ref': branch}, timeout=20)
               if r.status_code == 200:
                   try:
-                      raw = base64.b64decode(r.json()['content'])
-                      cmd = decrypt(raw)
+                      cmd = decrypt(base64.b64decode(r.json()['content']))
                       if cmd.get('request_id') == request_id:
                           (out/'command.json').write_text(json.dumps(cmd), encoding='utf-8')
-                          (out/'request-received.txt').write_text(request_id + '\n', encoding='utf-8')
-                          print(f'Received encrypted request {request_id}')
                           break
                       last = f"request id mismatch: {cmd.get('request_id')}"
                   except Exception as exc:
@@ -116,14 +103,6 @@ jobs:
           else:
               raise TimeoutError(last)
           PY
-
-      - name: Upload request-received marker
-        uses: actions/upload-artifact@v4
-        with:
-          name: request-received
-          path: /tmp/vnc-controller/request-received.txt
-          retention-days: 1
-          if-no-files-found: error
 
       - name: Control live noVNC browser
         env:
@@ -158,52 +137,27 @@ jobs:
           def kval(v): return KEY_MAP.get(str(v).upper(), v)
 
           options = webdriver.ChromeOptions()
-          binary = os.environ.get('CHROME_BINARY')
-          if binary:
-              options.binary_location = binary
+          options.binary_location = os.environ['CHROME_BINARY']
           options.add_argument('--headless=new')
           options.add_argument('--no-sandbox')
           options.add_argument('--disable-dev-shm-usage')
           options.add_argument('--window-size=1600,1000')
           options.add_argument('--hide-scrollbars')
-          service = Service(os.environ['CHROMEDRIVER']) if os.environ.get('CHROMEDRIVER') else Service()
-          driver = webdriver.Chrome(service=service, options=options)
+          driver = webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']), options=options)
 
           try:
               driver.get(cmd['live_url'])
-              end = time.time() + 30
-              while time.time() < end:
-                  fields = [e for e in driver.find_elements(By.CSS_SELECTOR, "input[type='password']") if e.is_displayed()]
-                  if fields:
-                      f = fields[0]
-                      f.clear()
-                      f.send_keys(cmd['vnc_password'])
-                      clicked = driver.execute_script("""
-                        const ids=['noVNC_password_button','noVNC_connect_button'];
-                        for (const id of ids) {
-                          const b=document.getElementById(id);
-                          if (b && b.offsetParent!==null) { b.click(); return true; }
-                        }
-                        const bs=[...document.querySelectorAll('button,input[type=button],input[type=submit]')];
-                        const b=bs.find(x => x.offsetParent!==null && /credential|connect|확인/i.test(x.innerText||x.value||''));
-                        if (b) { b.click(); return true; }
-                        return false;
-                      """)
-                      if not clicked:
-                          f.send_keys(Keys.ENTER)
-                      break
-                  time.sleep(.5)
+              WebDriverWait(driver, 30).until(lambda d: d.execute_script("return !!(window.UI && UI.rfb)"))
+              driver.execute_script("UI.rfb.sendCredentials({password: arguments[0]});", cmd['vnc_password'])
 
               def canvas_ready(d):
                   try:
-                      c=d.find_element(By.ID,'noVNC_canvas')
-                      s=c.size
+                      c=d.find_element(By.ID,'noVNC_canvas'); s=c.size
                       return c if c.is_displayed() and s['width']>100 and s['height']>100 else False
-                  except Exception:
-                      return False
+                  except Exception: return False
 
-              canvas = WebDriverWait(driver, 30).until(canvas_ready)
-              time.sleep(4)
+              canvas=WebDriverWait(driver,30).until(canvas_ready)
+              time.sleep(3)
 
               def hotkey(keys):
                   vals=[kval(k) for k in keys]
@@ -213,53 +167,28 @@ jobs:
                   for k in reversed(vals[:-1]): chain.key_up(k)
                   chain.perform()
 
-              for a in cmd.get('actions', [{'type':'screenshot'}]):
+              for a in cmd.get('actions',[{'type':'screenshot'}]):
                   t=a['type']
-                  if t=='wait':
-                      time.sleep(float(a.get('seconds',1)))
-                  elif t=='click':
-                      ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).click().perform()
-                  elif t=='double_click':
-                      ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).double_click().perform()
-                  elif t=='text':
-                      ActionChains(driver).move_to_element(canvas).click().send_keys(a['value']).perform()
-                  elif t=='key':
-                      ActionChains(driver).move_to_element(canvas).click().send_keys(kval(a['value'])).perform()
-                  elif t=='hotkey':
-                      hotkey(a['keys'])
+                  if t=='wait': time.sleep(float(a.get('seconds',1)))
+                  elif t=='click': ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).click().perform()
+                  elif t=='double_click': ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).double_click().perform()
+                  elif t=='text': ActionChains(driver).move_to_element(canvas).click().send_keys(a['value']).perform()
+                  elif t=='key': ActionChains(driver).move_to_element(canvas).click().send_keys(kval(a['value'])).perform()
+                  elif t=='hotkey': hotkey(a['keys'])
                   elif t=='paste':
-                      ok=driver.execute_script("""
-                        if (window.UI && UI.rfb && UI.rfb.clipboardPasteFrom) {
-                          UI.rfb.clipboardPasteFrom(arguments[0]); return true;
-                        }
-                        return false;
-                      """, a['value'])
+                      ok=driver.execute_script("if(window.UI&&UI.rfb&&UI.rfb.clipboardPasteFrom){UI.rfb.clipboardPasteFrom(arguments[0]);return true;}return false;",a['value'])
                       if not ok: raise RuntimeError('noVNC clipboard API unavailable')
-                      time.sleep(.5)
-                      hotkey(['CTRL','V'])
-                  elif t=='screenshot':
-                      driver.save_screenshot(str(screen))
-                  else:
-                      raise ValueError(f'unknown action {t}')
+                      time.sleep(.4); hotkey(['CTRL','V'])
+                  elif t=='screenshot': driver.save_screenshot(str(screen))
+                  else: raise ValueError(f'unknown action {t}')
                   time.sleep(float(a.get('after',.5)))
 
-              if not screen.exists():
-                  driver.save_screenshot(str(screen))
-              result.write_text(json.dumps({
-                  'ok': True,
-                  'request_id': cmd['request_id'],
-                  'canvas_size': canvas.size,
-                  'current_url': driver.current_url,
-              }, indent=2), encoding='utf-8')
+              driver.save_screenshot(str(screen))
+              result.write_text(json.dumps({'ok':True,'request_id':cmd['request_id'],'canvas_size':canvas.size,'current_url':driver.current_url},indent=2),encoding='utf-8')
           except Exception as exc:
               try: driver.save_screenshot(str(screen))
               except Exception: pass
-              result.write_text(json.dumps({
-                  'ok': False,
-                  'request_id': cmd.get('request_id'),
-                  'error': f'{type(exc).__name__}: {exc}',
-                  'traceback': traceback.format_exc(),
-              }, indent=2), encoding='utf-8')
+              result.write_text(json.dumps({'ok':False,'request_id':cmd.get('request_id'),'error':f'{type(exc).__name__}: {exc}','traceback':traceback.format_exc()},indent=2),encoding='utf-8')
               raise
           finally:
               driver.quit()
