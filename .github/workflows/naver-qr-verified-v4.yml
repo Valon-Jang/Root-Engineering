@@ -30,8 +30,8 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb x11vnc openbox novnc websockify
-          python -m pip install --quiet selenium
+          sudo apt-get install -y -qq xvfb x11vnc openbox novnc websockify python3-pip
+          python3 -m pip install --quiet --break-system-packages selenium
           curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
           chmod +x /tmp/cloudflared
 
@@ -68,7 +68,7 @@ jobs:
           done
           curl -fsS http://127.0.0.1:9222/json/version >/dev/null
 
-          python - <<'PY'
+          python3 - <<'PY'
           import json, os, re, time
           from selenium import webdriver
           from selenium.webdriver.chrome.service import Service
@@ -94,7 +94,6 @@ jobs:
                   except Exception:
                       pass
               if not state['clicked_qr']:
-                  # Naver has historically accepted a QR mode parameter; try it only as fallback.
                   driver.get('https://nid.naver.com/nidlogin.login?mode=qrcode')
               time.sleep(5)
               state['current_url'] = driver.current_url
