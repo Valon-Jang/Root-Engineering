@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.1
+package_version: 0.1.2
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -13,11 +13,15 @@ supported_modes:
   - UPGRADE
 single_file_package: true
 question_driven_root_deepening: true
+model_recommendation_adapter: runtime-aware-smallest-sufficient
+model_recommendation_floor: GPT-5.6 Terra
+model_recommendation_excludes:
+  - GPT-5.6 Luna
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.1
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.2
 
-> **This is the canonical installer for Root Engineering.**  
+> **This is the canonical English installer for Root Engineering.**  
 > Korean translation: [ROOT_ENGINEERING_INSTALLER_KO.md](./ROOT_ENGINEERING_INSTALLER_KO.md)
 >
 > **Model is replaceable. Root persists.**
@@ -39,8 +43,9 @@ Its purposes are to:
 5. Make knowledge not only storable, but sustainably growable, separable, mergeable, movable to History, and silently prunable.
 6. Accumulate text-based Skills and, when apps, tools, or web Skills are actually available in the current environment, connect them for execution.
 7. Handle installation, verification, repair, and upgrade through the same package.
+8. For each substantive task, dynamically recommend the **smallest sufficient actual model + reasoning effort** that is selectable in the current runtime.
 
-After installation, ordinary users do not manually manage Root IDs, Folder IDs, Branch Maps, or pruning rules.
+After installation, ordinary users do not manually manage Root IDs, Folder IDs, Branch Maps, pruning rules, or internal model-routing tiers.
 
 ---
 
@@ -545,6 +550,8 @@ Global Skill Root Document ID
 
 Do not ask the user to edit placeholders manually.
 
+The generated Project Instructions must also contain the **Model Recommendation Adapter** in this package so that fresh chats retain dynamic model routing without keeping the installer as a Project Source.
+
 ---
 
 ## 15. Guiding the User Through Project Connection
@@ -639,6 +646,7 @@ Root Engineering installation verification complete
 - Do not automatically create a new Folder and documents.
 
 ---
+
 # PART F. Post-Installation Runtime Protocol
 
 ## 17. Fresh-Chat Boot Trigger
@@ -1110,6 +1118,315 @@ currently safe next action
 
 ---
 
+## 29A. Model Recommendation Adapter
+
+This Adapter is a **Runtime policy**. Model availability, UI labels, and reasoning levels may change, so do not freeze them as project Canonical Knowledge. During installation, include this policy in `Project Instructions`, and verify current Runtime Capability whenever a recommendation is emitted.
+
+### 29A.1 Core Rule
+
+Recommend the **smallest sufficient actual model + reasoning effort** that can reliably complete the current task.
+
+Prohibited behavior:
+
+- fixed `GPT-5.6 Sol (High)` for every substantive task;
+- automatically inheriting the previous turn's recommendation;
+- exposing internal labels such as `LIGHT / STANDARD / HIGH / MAX` as the final user recommendation;
+- pretending an unavailable model or effort is selectable;
+- recommending `GPT-5.6 Luna` in this Router.
+
+Luna is intentionally excluded from this Router by policy.
+
+### 29A.2 Model Scope
+
+Default candidate set:
+
+```text
+GPT-5.6 Terra
+→ GPT-5.6 Sol
+→ GPT-5.6 Sol Pro
+```
+
+Model tier and reasoning effort are separate axes:
+
+```text
+Model tier
+= required baseline capability
+
+Reasoning effort
+= required depth within that model
+```
+
+Do not treat routing as a rigid linear ladder such as `Terra max → Sol low → Sol medium`.
+A short but conceptually difficult, ambiguous task may jump directly to Sol.
+A long but mechanical or repetitive task may remain on Terra.
+
+### 29A.3 Runtime Capability Check
+
+Immediately before recommending a model, inspect the current product surface and the actual selectable model/effort controls.
+
+Use current GPT-5.6 official guidance as a reference, but treat model availability as a Living Runtime Capability.
+
+- When Terra is actually available in Work / Codex / API, it may be recommended.
+- Where explicit GPT-5.6 Terra / Sol reasoning effort is available, use the exact runtime-exposed value among `none`, `low`, `medium`, `high`, `xhigh`, `max`.
+- If Terra cannot be selected in a standard ChatGPT conversation, translate the Terra intent to the closest actually selectable Sol option.
+- Recommend Sol Pro only when it is actually exposed by the current account/plan/workspace and highest-end quality is justified.
+
+Default standard-Chat fallback:
+
+| Intended routing | Standard Chat when Terra is not selectable |
+|---|---|
+| Terra (none) | GPT-5.6 Sol (Instant) |
+| Terra (low) | GPT-5.6 Sol (Instant) |
+| Terra (medium) | GPT-5.6 Sol (Medium) |
+| Terra (high) | GPT-5.6 Sol (Medium) |
+| Terra (xhigh) | GPT-5.6 Sol (High) |
+| Terra (max) | GPT-5.6 Sol (High) |
+| Sol (xhigh / max) | GPT-5.6 Sol (Extra High) |
+| top escalation | GPT-5.6 Sol Pro (Pro), only when actually available |
+
+A fallback does **not** claim identical capability. It is the closest recommendation the user can actually select on that surface.
+
+### 29A.4 Five Routing Dimensions
+
+Evaluate each substantive task on five dimensions:
+
+1. **Cognitive complexity**
+   - How many interacting constraints, abstractions, or reasoning steps are involved?
+2. **Ambiguity / uncertainty**
+   - How unclear are the goal, evidence, causal structure, or competing hypotheses?
+3. **Consequence of error**
+   - Is a mistake cheap and reversible, or costly in schedule, design, operations, or strategy?
+4. **Verification burden**
+   - Is this a direct answer, or does it require cross-checking Sources, files, code, Tests, or alternatives?
+5. **Context / coordination burden**
+   - Does it require long-context consistency or coordination across artifacts, tools, agents, files, or dependent decisions?
+
+Do not upgrade merely because a task is long. Upgrade only when one or more dimensions materially require greater capability or reasoning depth.
+
+### 29A.5 Detailed Routing Guidance
+
+#### GPT-5.6 Terra (none)
+
+Almost mechanical transformation.
+
+Examples:
+- simple formatting;
+- direct extraction;
+- obvious classification;
+- deterministic transformation with essentially no judgment.
+
+#### GPT-5.6 Terra (low)
+
+Light judgment, clear goal, low error cost.
+
+Examples:
+- short rewrite;
+- tone adjustment;
+- simple summary;
+- basic categorization;
+- straightforward explanation.
+
+#### GPT-5.6 Terra (medium)
+
+Default center of gravity for ordinary knowledge work.
+
+Examples:
+- normal planning;
+- routine comparison;
+- standard business writing;
+- common troubleshooting;
+- ordinary document review;
+- simple prioritization under clear constraints.
+
+#### GPT-5.6 Terra (high)
+
+Bounded multi-step analysis with a well-scoped problem.
+
+Examples:
+- operational judgment with several constraints;
+- moderate debugging;
+- comparing options with tradeoffs;
+- structured root-cause analysis;
+- reversible workflow design.
+
+#### GPT-5.6 Terra (xhigh)
+
+Demanding but still bounded work where Terra's speed/cost advantage remains sensible.
+
+Examples:
+- difficult debugging in a contained codebase;
+- complex but well-defined analysis;
+- substantial technical review;
+- multi-source synthesis with limited strategic ambiguity.
+
+If novel judgment, high ambiguity, long-context synthesis, or strategic tradeoffs dominate, move to Sol instead of only increasing Terra effort.
+
+#### GPT-5.6 Terra (max)
+
+Use conditionally when Terra is explicitly preferable for cost/throughput and the task remains sufficiently bounded.
+
+Do not require exhausting Terra to `max` before moving to Sol.
+When baseline model capability matters, `Sol (medium)` may be better than `Terra (max)`.
+
+#### GPT-5.6 Sol (medium)
+
+First Sol tier when stronger baseline capability matters more than more Terra effort.
+
+Examples:
+- ambiguous root-cause analysis;
+- system design with interacting subsystems;
+- important technical judgment;
+- long-context synthesis;
+- nontrivial research synthesis;
+- multi-step artifact creation where consistency matters;
+- complex coding/debugging requiring broader reasoning.
+
+#### GPT-5.6 Sol (high)
+
+Deep analysis with meaningful consequences or substantial verification burden.
+
+Examples:
+- architecture decisions;
+- difficult research with competing evidence;
+- complex project recovery;
+- high-impact operational planning;
+- multi-file / multi-tool engineering;
+- benchmark or experiment design;
+- decisions where hidden assumptions can materially change the result.
+
+#### GPT-5.6 Sol (xhigh) / Standard Chat: Extra High
+
+Use when unusually deep reasoning, broad consistency, or aggressive challenge of assumptions is required.
+
+Examples:
+- novel system architecture;
+- difficult causal diagnosis with multiple viable hypotheses;
+- adversarial review / red-team analysis;
+- strategic decisions with high switching cost;
+- large design changes with expensive rollback;
+- rigorous evaluation of a new methodology.
+
+If standard Chat exposes `Extra High` rather than `xhigh`, display:
+
+`GPT-5.6 Sol (Extra High)`
+
+#### GPT-5.6 Sol (max) / Standard Chat: Extra High
+
+Use when the runtime actually exposes `max` and the task is among the hardest single-model reasoning workloads.
+
+Examples:
+- frontier-level technical synthesis;
+- very difficult long-horizon coding/design;
+- complex research requiring repeated internal verification;
+- high-consequence architecture with many interacting failure modes.
+
+If standard Chat does not expose `max`, fall back to `Extra High` without claiming that the settings are identical.
+
+#### GPT-5.6 Sol Pro (Pro)
+
+Use sparingly.
+
+Recommend Pro only when all of the following are true:
+
+- it is actually available in the current runtime;
+- the highest available quality materially affects the outcome;
+- the task is genuinely difficult or long-running;
+- ordinary Sol at the highest available effort is not the best efficiency point.
+
+Pro is an escalation tier, not a prestige default.
+
+### 29A.6 Escalation / De-escalation
+
+Escalate model tier and/or effort when material:
+
+- multiple dependent constraints;
+- conflicting evidence;
+- hidden-assumption risk;
+- expensive or hard-to-reverse decisions;
+- broad long-context consistency requirements;
+- repeated tool use or multi-artifact coordination;
+- complex debugging with uncertain root cause;
+- benchmark / experiment methodology;
+- novel architecture or methodology;
+- strong verification / adversarial checking requirements.
+
+Prefer Terra or lower effort when:
+
+- the task is routine and well-specified;
+- output is mostly transformation rather than reasoning;
+- errors are cheap and easy to correct;
+- latency or cost is a priority;
+- meaningful ambiguity or cross-checking is absent;
+- a previous high-effort analysis already resolved the difficult part.
+
+Route each **substantive task independently**.
+
+### 29A.7 User-Facing Output
+
+For substantive work, print exactly one short recommendation line at the very end:
+
+```text
+Recommended model for this task: <ACTUAL_MODEL> (<ACTUAL_REASONING_LEVEL>)
+```
+
+Examples:
+
+```text
+Recommended model for this task: GPT-5.6 Terra (Medium)
+Recommended model for this task: GPT-5.6 Sol (High)
+Recommended model for this task: GPT-5.6 Sol (Extra High)
+Recommended model for this task: GPT-5.6 Sol Pro (Pro)
+```
+
+Do not expose internal tiers, scores, or routing tables unless the user explicitly asks.
+
+Do not print the recommendation line for:
+
+- greetings;
+- casual chat;
+- tiny acknowledgements;
+- requests where model choice adds no practical value.
+
+### 29A.8 Legacy Cleanup
+
+The following legacy behavior is deprecated:
+
+- all substantive tasks → `GPT-5.6 Sol (High)`;
+- treating `GPT-5.6 Sol (High)` as a default Template value;
+- exposing internal `LIGHT / STANDARD / HIGH / MAX` as the final recommendation;
+- copying the previous turn's recommendation without rerouting;
+- recommending Luna in this Router.
+
+When older Project Instructions, Memory, or Source-derived rules conflict, this Adapter overrides them **only for model recommendation behavior**. All unrelated Root Engineering rules remain unchanged.
+
+### 29A.9 Conformance Test
+
+After install or Upgrade, mentally test at least:
+
+```text
+one-line rewrite
+→ Terra low or runtime fallback
+
+routine meeting/action summary
+→ Terra medium
+
+bounded multi-constraint analysis
+→ Terra high/xhigh
+
+ambiguous system architecture
+→ Sol medium/high
+
+benchmark design with competing failure modes
+→ Sol high/xhigh
+
+exceptionally difficult long-running final synthesis
+→ Sol max or Sol Pro
+```
+
+If every substantive case produces the same model/effort, the Router has failed.
+
+---
+
 # PART G. Global Skill Library
 
 ## 30. Role of the Skill Library
@@ -1207,6 +1524,9 @@ reconfirm Google Drive Capability
 → verify each Branch ID and Parent
 → verify access to Protocol / Skill Root
 → verify Question-Driven Deepening rules in Protocol and Project Instructions
+→ verify the Model Recommendation Adapter exists in Project Instructions
+→ verify legacy fixed Sol High behavior is removed
+→ verify current Runtime Capability mapping for model/effort recommendations
 → inspect Project Manifest status
 → perform a minimal Write / Read Back test
 ```
@@ -1246,6 +1566,8 @@ Read current Global / Project Manifest
 - Do not permanently add the Package Installer as a Project Source.
 - When appropriate, update an old Protocol in the same Document ID so Google Drive Revision History remains available for recovery.
 - If a schema change requires moving semantic content, verify the destination first and then clean the old location.
+- When upgrading from v0.1.1 or earlier, replace only the model-recommendation block in `Project Instructions` if a fixed recommendation or older Adapter exists.
+- Treat model availability, UI labels, and effort levels as Living Runtime Capability; do not persist them as project Canonical Knowledge.
 
 ---
 
@@ -1314,7 +1636,7 @@ Next action: paste Project Instructions
 Only after the Fresh-Chat Acceptance Test passes:
 
 ```text
-Root Engineering v0.1.1 installation complete
+Root Engineering v0.1.2 installation complete
 
 - Google Drive connection: PASS
 - Read / Create / Update / Move: PASS
@@ -1325,6 +1647,7 @@ Root Engineering v0.1.1 installation complete
 - Global Skill Library: PASS
 - Fresh-chat automatic boot: PASS
 - Question-Driven Root Deepening: PASS
+- Model Recommendation Adapter: PASS
 - Manifest status: ACTIVE
 ```
 
@@ -1337,6 +1660,7 @@ There is no need to repeat every internal ID to the user. Preserve them in Proje
 The Templates below are used by the Installer when creating actual Google Docs. Replace every `<PLACEHOLDER>` with the actual value. If any required Placeholder remains unresolved, do not declare installation complete.
 
 ---
+
 <!-- BEGIN TEMPLATE: GLOBAL_MANIFEST -->
 
 # ROOT ENGINEERING — GLOBAL MANIFEST
@@ -1872,6 +2196,7 @@ Add only when History grows enough to create an actual independent retrieval pat
 <!-- END TEMPLATE: SOURCE_NOTE -->
 
 ---
+
 <!-- BEGIN TEMPLATE: PROJECT_INSTRUCTIONS -->
 
 # ROOT ENGINEERING BINDING
@@ -1977,6 +2302,88 @@ Fresh-read the relevant ROOT or Branch when:
 5. If unavailable, use the Skill's Fallback procedure.
 6. Do not store project-specific facts or sensitive material in Global Skills.
 
+## Model Recommendation Adapter
+
+Model recommendation is a Runtime Adapter, not project Canonical Knowledge.
+For each substantive task, select the **smallest sufficient actual model + reasoning effort** again.
+
+### Policy
+
+- Do not recommend `GPT-5.6 Luna` in this Router.
+- Default candidates are `GPT-5.6 Terra → GPT-5.6 Sol → GPT-5.6 Sol Pro`.
+- Treat model tier and Reasoning Effort as separate axes.
+- Do not upgrade merely because a task is long.
+- Do not automatically inherit the previous turn's high recommendation.
+- Do not use `GPT-5.6 Sol (High)` as a fixed default.
+- Do not expose internal `LIGHT / STANDARD / HIGH / MAX` as the final recommendation.
+- Do not pretend an option is selectable when the current Runtime does not expose it.
+
+### Runtime Capability
+
+Immediately before recommending, inspect the current product surface and the actual selectable model/effort settings.
+
+When actually available in Work / Codex / API:
+
+- GPT-5.6 Terra: `none / low / medium / high / xhigh / max`
+- GPT-5.6 Sol: `none / low / medium / high / xhigh / max`
+
+If Terra cannot be selected in standard ChatGPT, fall back to the closest currently selectable Sol option:
+
+```text
+Terra none/low   → Sol Instant
+Terra medium     → Sol Medium
+Terra high       → Sol Medium
+Terra xhigh/max  → Sol High
+Sol xhigh/max    → Sol Extra High
+top escalation   → Sol Pro (Pro), only when actually available
+```
+
+A fallback does not imply identical capability. It is the closest recommendation the user can actually select on the current surface.
+
+### Routing Dimensions
+
+Evaluate five dimensions:
+
+1. cognitive complexity;
+2. ambiguity / competing hypotheses;
+3. consequence of error / reversibility;
+4. verification burden;
+5. long-context / artifact / tool / agent coordination burden.
+
+### Smallest-Sufficient Routing
+
+- Terra (none): almost mechanical transformation
+- Terra (low): short rewrite, tone, simple summary
+- Terra (medium): ordinary knowledge work, planning, comparison, business writing, routine troubleshooting
+- Terra (high): bounded multi-step analysis, moderate debugging, tradeoff comparison
+- Terra (xhigh): difficult but bounded technical analysis/debugging
+- Terra (max): conditional when keeping Terra is explicitly favorable for cost/throughput
+- Sol (medium): ambiguous root cause, system design, long-context synthesis, complex coding
+- Sol (high): architecture, consequential decisions, competing evidence, multi-tool engineering, benchmark design
+- Sol (xhigh/max): novel architecture/methodology, strong adversarial checking, very difficult research/design
+- Sol Pro (Pro): exceptional work where highest quality materially matters and top Sol is not the best efficiency point
+
+Do not treat this as a linear requirement to exhaust Terra effort before moving to Sol.
+Move directly to Sol when baseline capability is the limiting factor.
+
+### Display
+
+For substantive work, print exactly one line at the end:
+
+`Recommended model for this task: <ACTUAL_MODEL> (<ACTUAL_REASONING_LEVEL>)`
+
+Do not print the recommendation for greetings, casual chat, or tiny acknowledgements.
+
+### Legacy Cleanup
+
+For model recommendation only, override these legacy behaviors:
+
+- all substantive tasks → `GPT-5.6 Sol (High)`;
+- fixed `GPT-5.6 Sol (High)` Template default;
+- internal tier shown as final user-facing value;
+- previous-turn recommendation copied without rerouting;
+- Luna recommendation.
+
 ## Failure
 
 If ROOT is required for a task but cannot be read, do not pretend that Memory or prior conversations are equivalent to the Canonical Root. Report the failed step, target ID, actual error, and next safe action.
@@ -1985,9 +2392,9 @@ If ROOT is required for a task but cannot be read, do not pretend that Memory or
 
 ---
 
-# PART K. Official Connection References
+# PART K. Official Connection and Model References
 
-Current UI names and capabilities may change. During installation, prioritize the actual app menu and capabilities exposed by the current environment.
+Current UI names and capabilities may change. During installation and runtime routing, prioritize the actual app menu and capabilities exposed by the current environment.
 
 Official references:
 
@@ -2000,12 +2407,23 @@ Official references:
 - OpenAI Help — Projects in ChatGPT  
   https://help.openai.com/en/articles/10169521-using-projects-in-chatgpt
 
+- OpenAI Help — GPT-5.6 in ChatGPT  
+  https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt/
+
+- OpenAI API — Model guidance  
+  https://developers.openai.com/api/docs/guides/latest-model
+
+- OpenAI — GPT-5.6 overview  
+  https://openai.com/index/gpt-5-6/
+
 Current core assumptions:
 
 - Google Drive may provide Docs, Sheets, and Slides capabilities through ChatGPT's integrated app system.
 - Whether read, create, update, move, and delete are available depends on the current Plan, Workspace settings, Google permissions, and approved Actions, so Preflight must test them directly.
 - Personal-account live connection and administrator-managed Sync are different capabilities.
 - A Google Drive file or Folder link may be addable as a Project Source, but this package uses one ROOT Doc as the default entry point.
+- GPT-5.6 model availability and effort controls vary by product surface, plan, workspace policy, and rollout state; the Model Recommendation Adapter must therefore check actual Runtime Capability before emitting a recommendation.
+- Luna is excluded from this Router by package policy even if a runtime still exposes it.
 
 ---
 
@@ -2021,6 +2439,8 @@ Google Drive Preflight PASS
 + ROOT Doc added as Project Source
 + ROOT boot in a fresh Chat without the package
 + Question-Driven Deepening Protocol verified
++ Model Recommendation Adapter applied
++ fixed-Sol-High regression test PASS
 + Manifest Write / Read Back
 + Status ACTIVE
 = installation complete
