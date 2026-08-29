@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.2
+package_version: 0.1.3
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -17,9 +17,12 @@ model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
 model_recommendation_excludes:
   - GPT-5.6 Luna
+write_policy: checkpoint-batched
+root_update_buffer: in-context-noncanonical
+verification_policy: risk-tiered
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.2
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.3
 
 > **한국어 배포본입니다. Canonical English specification:** [ROOT_ENGINEERING_INSTALLER.md](./ROOT_ENGINEERING_INSTALLER.md)
 >
@@ -870,13 +873,30 @@ AI Inference
 
 ## 22. Root Write Trigger와 시점
 
-매 답변마다 쓰지 않는다. 의미 있는 상태 변화가 발생할 때만 쓴다.
+매 답변마다 쓰지 않는다. 작업 중 Root Update 후보를 분류하고, 안전성을 유지하는 최소 횟수의 Google Drive 작업으로 Commit한다.
+
+### Root Update Buffer
+
+현재 대화 Context에 임시 **Root Update Buffer**를 유지한다. 이 Buffer는 Canonical Knowledge가 아니며 기본적으로 별도의 Google Drive 문서로 만들지 않는다.
+
+각 후보에는 올바른 Commit에 필요한 최소 정보만 둔다.
+
+- 대상 Root / Branch Document ID
+- Semantic Key 또는 Section
+- 추가 / 수정 / 대체 작업
+- Authority와 Verification 근거
+- Write Class: `IMMEDIATE`, `CHECKPOINT`, `DISCARD`
+
+여러 후보가 같은 Semantic Key에 영향을 주면 쓰기 전에 합친다. 가장 최근의 검증된 사실 또는 사용자의 명시적 결정이 우선하며, 취소나 대체를 이해하는 데 필요한 이유만 보존한다.
 
 ### 즉시 쓰기
 
 - 사용자가 중요한 결정을 명백히 확정
 - 기존 중요한 사실·결정이 취소 또는 변경
 - 다음 Turn부터 판단 기준이 달라짐
+- 미룰 경우 이 Chat 또는 다른 Session의 다음 행동이 안전하지 않거나 실질적으로 잘못된 상태를 사용할 수 있음
+
+즉시 쓰기는 영향받은 Branch를 신속히 Flush한다는 뜻이지, 매 대화 Turn마다 쓴다는 뜻이 아니다.
 
 ### 의미 있는 작업 Checkpoint에서 쓰기
 
@@ -884,19 +904,77 @@ AI Inference
 - 반복 가치 있는 성공·실패 패턴이 검증
 - 중요한 원인이 규명
 - 업무 Branch의 현재 상태가 실질적으로 갱신
+- 사용자가 저장·동기화·Checkpoint·인계·작업 종료를 요청
+- 같은 Branch의 여러 관련 후보를 하나의 일관된 Patch로 Commit할 수 있음
+
+Working Discussion, 중복 후보, History 가치가 없는 대체 후보, 검증되지 않은 추론은 `DISCARD`이며 Google Drive에 보내지 않는다.
+
+### Checkpoint Flush 절차
+
+> **Buffer 후보 → Branch별 Group → Dirty Branch당 한 번 읽기 → 한 번 Patch → 위험도별 검증.**
+
+```text
+Buffer 후보 분류 및 중복 제거
+→ 남은 후보를 대상 Branch별로 Group
+→ Dirty Branch 식별
+→ Batch Patch 직전에 Dirty Branch당 최신본 한 번 읽기
+→ 가능하면 Revision 확인
+→ 같은 Branch의 호환 가능한 변경을 하나의 최소 Patch로 병합
+→ 접촉 범위의 중복·대체·낡은 내용만 정리
+→ 도구가 지원하면 Dirty Branch당 한 번 쓰기
+→ Verification Tier에 따라 검증
+→ 검증된 Write의 후보만 Buffer에서 제거
+```
+
+현재 Runtime과 도구가 안전한 병렬 호출을 지원하면 서로 독립적인 Read 또는 Verification은 병렬 수행할 수 있다. 같은 문서의 Write나 의존 관계가 있는 Parent/Child 구조 변경은 병렬 처리하지 않는다.
+
+Branch Topology, Routing Metadata 또는 ROOT Digest가 실제로 바뀔 때만 ROOT Map을 갱신한다. 기존 Branch 내부의 일반 내용 변경에는 ROOT Map Write가 필요하지 않다.
+
+현재 Google Drive Action이 호환 가능한 Edit 병합을 지원하지 않으면 Semantic Correctness를 약화하지 않는 범위에서 지원 가능한 최소 Write 횟수를 사용한다. 문서 전체 재작성으로 Batch를 흉내 내지 않는다.
+
+### Verification Tier
+
+변경 위험에 맞는 가장 낮은 안전한 검증 등급을 사용한다.
+
+#### 일반 내용 Patch
+
+- 변경된 Section 또는 반환된 갱신 내용을 확인
+- 의도한 Semantic Key, Value, Boundary 확인
+- Runtime이 제공하면 Revision 확인
+
+#### 중요 상태 Patch
+
+중요 결정, 취소, 안전·규정 제약, Authority 변경, 다음 행동을 통제하는 상태에 사용한다.
+
+- 영향받은 논리 Section 전체를 다시 읽음
+- 대체된 상태가 Current로 남지 않았는지 확인
+- 가능하면 Authority, Provenance, Revision 확인
+
+#### 구조 Patch
+
+Branch 생성·이동·병합·보관·Pointer 복구·Parent/Child Map 변경에 사용한다.
+
+- 목적지 내용을 먼저 검증
+- Child와 Parent Map 확인
+- Navigation Path와 Folder Boundary 확인
+- 모든 확인이 통과한 뒤 Cleanup 또는 Trash 수행
+
+검증 실패 시 영향받은 후보를 Buffer에 유지하고 저장 완료로 보고하지 않는다. 실패한 Document ID, Operation, 다음 안전한 행동을 보고한다.
 
 ### 쓰기 절차
 
-> **Read current → Patch minimum → Local cleanup → Read back.**
+즉시 단일 변경과 Checkpoint Batch 모두 다음을 따른다.
+
+> **Read current once → Patch minimum once → Local cleanup → Verify touched scope.**
 
 ```text
 대상 Branch 최신본 읽기
 → 가능하면 현재 Revision 확인
-→ 필요한 항목만 추가/수정/삭제
+→ 호환 가능한 Buffer 후보 병합
+→ 하나의 최소 Patch로 필요한 항목만 추가/수정/삭제
 → 접촉 범위 안의 중복·대체·낡은 포인터 정리
 → 쓰기
-→ 변경된 부분 재조회
-→ 의도한 내용과 경계 확인
+→ 적절한 Verification Tier 적용
 ```
 
 문서 전체를 AI가 새로 생성해 대체하지 않는다.
@@ -1522,6 +1600,8 @@ Google Drive Capability 재확인
 → 각 Branch ID와 Parent 확인
 → Protocol / Skill Root 접근 확인
 → Protocol과 Project Instructions의 Question-Driven Deepening 규칙 확인
+→ Protocol과 Project Instructions의 Root Update Buffer / Checkpoint Batch Write 규칙 확인
+→ 위험도별 Write Verification 규칙 확인
 → Project Instructions의 Model Recommendation Adapter 존재와 Legacy 고정 추천 제거 확인
 → 현재 Runtime Capability에 맞는 모델/추론 매핑 확인
 → Project Manifest 상태 확인
@@ -1556,7 +1636,7 @@ Upgrade는 Root 지식을 다시 만드는 작업이 아니다.
 → Protocol과 Template 변경점만 적용
 → 기존 Foundation / Current Knowledge / Learned Knowledge / History 보존
 → 필요한 새 필드나 Node만 최소 추가
-→ 모든 Write Read Back
+→ 변경 범위를 위험도에 맞게 검증
 → Acceptance Test
 ```
 
@@ -1564,6 +1644,7 @@ Upgrade는 Root 지식을 다시 만드는 작업이 아니다.
 - 구버전 Protocol은 필요하면 Drive Revision History로 복구할 수 있게 같은 Document ID에서 수정한다.
 - Schema 변경이 의미적 내용 이동을 요구할 때는 이동 후 검증하고 기존 위치를 정리한다.
 - v0.1.1 이하에서 고정 모델 추천 또는 구형 Model Recommendation Adapter가 있으면 `Project Instructions`의 모델 추천 블록만 교체한다.
+- v0.1.2 이하에서 Upgrade할 때 Protocol과 Project Instructions에 Root Update Buffer, Checkpoint Batch Flush, ROOT Map Write Guard, 위험도별 Verification 규칙을 반영한다. 영구 Buffer 문서는 만들지 않는다.
 - 모델 가용성·UI 명칭·추론 단계는 Living Runtime Capability로 취급하며 Canonical Root 지식으로 고정 저장하지 않는다.
 
 ---
@@ -1633,7 +1714,7 @@ Root 구조 생성 완료 — Project 연결 대기
 Fresh-Chat Acceptance Test가 PASS한 뒤에만:
 
 ```text
-Root Engineering v0.1.2 설치 완료
+Root Engineering v0.1.3 설치 완료
 
 - Google Drive 연결: PASS
 - Read / Create / Update / Move: PASS
@@ -1644,6 +1725,8 @@ Root Engineering v0.1.2 설치 완료
 - Global Skill Library: PASS
 - 새 Chat 자동 부팅: PASS
 - 질문 기반 Root Deepening: PASS
+- Checkpoint Batch Root Write: PASS
+- 위험도별 Verification: PASS
 - Model Recommendation Adapter: PASS
 - Manifest 상태: ACTIVE
 ```
@@ -1715,8 +1798,8 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
 2. ROOT Map을 따라 현재 작업에 필요한 Branch만 읽는다.
 3. 같은 Chat에서 읽은 Root는 변경 신호 전까지 재사용한다.
 4. 결과를 바꿀 중요 정보가 부족하면 질문 기반 Root Deepening을 수행한다.
-5. Root 쓰기 직전 대상 Branch를 Fresh Read한다.
-6. `Read current → Patch minimum → Local cleanup → Read back`을 따른다.
+5. Write 후보를 대화 Context의 Root Update Buffer에서 `IMMEDIATE`, `CHECKPOINT`, `DISCARD`로 분류한다.
+6. 즉시 Flush 또는 의미 있는 Checkpoint에서 호환 가능한 후보를 Branch별로 묶고 `Read current once → Patch minimum once → Local cleanup → Verify touched scope`를 따른다.
 7. 저장 여부는 다음 질문으로 판단한다.
    - 이 정보가 없으면 다음 AI가 다시 알아내거나, 오판하거나, 같은 실패를 반복할 가능성이 유의미하게 높아지는가?
 8. AI Inference는 검증 또는 사용자 확인 없이 Canonical Fact/Rule이 될 수 없다.
@@ -2263,15 +2346,18 @@ History가 커져 실제 독립 조회 패턴이 생길 때만 추가한다.
 
 ## Write
 
-1. 매 답변마다 Root를 쓰지 않는다. 의미 있는 상태 변화가 있을 때만 갱신한다.
+1. 매 답변마다 Root를 쓰지 않는다. 임시 Root Update Buffer를 대화 Context에 유지하고 즉시 Trigger 또는 의미 있는 Checkpoint에서만 Drive를 갱신한다.
 2. 저장 판단 기준은 다음과 같다.
    - 이 정보가 없으면 다음 AI가 다시 알아내거나, 오판하거나, 같은 실패를 반복할 가능성이 유의미하게 높아지는가?
 3. 사용자 명시 결정, 중요한 현재 사실, 검증된 재사용 학습, 중요한 미결사항만 우선 저장한다.
 4. Working Discussion, 대화 전체, 장황한 내부 추론, 검증되지 않은 AI 추론은 Canonical Root에 저장하지 않는다.
-5. 쓰기 직전 대상 Branch 최신본을 읽는다.
-6. 문서 전체를 재작성하지 않고 필요한 부분만 최소 수정한다.
-7. 가능하면 Revision 충돌을 확인한다.
-8. 수정 후 변경된 내용을 다시 읽어 정상 반영을 확인한다.
+5. 후보를 `IMMEDIATE`, `CHECKPOINT`, `DISCARD`로 분류하고 Drive 호출 전에 중복 또는 대체 후보를 합친다.
+6. Flush 시 후보를 Branch별로 묶고 Dirty Branch당 최신본을 한 번 읽은 뒤, 도구가 지원하면 호환 가능한 Edit를 Branch당 하나의 최소 Patch로 병합한다.
+7. 문서 전체를 재작성하지 않고 필요한 부분만 최소 수정한다.
+8. 가능하면 Revision 충돌을 확인한다. 같은 문서 Write나 의존 관계가 있는 Parent/Child 구조 변경을 병렬 처리하지 않는다.
+9. Topology, Routing Metadata 또는 ROOT Digest가 바뀔 때만 ROOT Map을 갱신한다.
+10. 일반 Write는 변경 범위를 읽어 검증하고, 중요 상태는 논리 Section 전체, 구조 변경은 Parent/Child/Path를 검증한다.
+11. 검증 성공 후에만 Buffer 후보를 제거한다. Write 실패 시 후보를 유지하고 정확한 실패 대상과 다음 안전한 행동을 보고한다.
 
 ## Tree and Pruning
 

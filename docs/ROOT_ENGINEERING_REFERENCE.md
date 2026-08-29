@@ -486,25 +486,35 @@ The principle is:
 
 ---
 
-# Read → Patch → Verify
+# Buffer → Batch → Verify
 
 Persistent knowledge should not be edited casually.
 
-A minimal Root write cycle is:
+Root Engineering separates deciding **what should persist** from deciding **when Drive should be updated**.
+
+During active work, verified write candidates may be held in a temporary in-context **Root Update Buffer**. The Buffer is not Canonical Knowledge and is not a separate persistent document. Important decisions or state changes that could affect the next action are flushed promptly; compatible routine updates are grouped at a meaningful checkpoint.
+
+A storage-efficient Root write cycle is:
 
 ```text
-Read current state
+Classify candidates: Immediate / Checkpoint / Discard
       ↓
-Patch minimum required change
+Group compatible candidates by Branch
       ↓
-Clean local duplication / obsolete content
+Read each dirty Branch once
       ↓
-Read back
+Apply one minimum patch per dirty Branch when supported
       ↓
-Verify
+Verify the touched scope according to risk
 ```
 
-This avoids rewriting large knowledge structures unnecessarily.
+Routine content changes verify the changed scope. Critical decisions, cancellations, authority changes, and next-action state verify the complete affected logical section. Structural changes verify the Child, Parent Map, navigation path, and destination before cleanup.
+
+The ROOT Map is updated only when topology, routing metadata, or the Root Digest changes. Ordinary content changes inside an existing Branch do not require a second ROOT Map write.
+
+Independent reads or verification may be parallelized when the runtime supports it, but writes to the same document and dependent Parent/Child changes remain sequential.
+
+This avoids repeated Drive round trips and unnecessary large-document rewrites while retaining stronger checks for high-risk changes.
 
 It also reduces the risk of destroying valid context during updates.
 
@@ -1146,9 +1156,10 @@ Root contains usable project knowledge.
 
 Read only the branch you need.
 
-Read current.
-Patch minimum.
-Read back.
+Buffer candidates.
+Batch by branch.
+Patch once.
+Verify by risk.
 
 Prune on contact.
 

@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.2
+package_version: 0.1.3
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -17,9 +17,12 @@ model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
 model_recommendation_excludes:
   - GPT-5.6 Luna
+write_policy: checkpoint-batched
+root_update_buffer: in-context-noncanonical
+verification_policy: risk-tiered
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.2
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.3
 
 > **This is the canonical English installer for Root Engineering.**  
 > Korean translation: [ROOT_ENGINEERING_INSTALLER_KO.md](./ROOT_ENGINEERING_INSTALLER_KO.md)
@@ -871,33 +874,108 @@ AI Inference
 
 ## 22. Root Write Triggers and Timing
 
-Do not write after every response. Write only when a meaningful state change occurs.
+Do not write after every response. Classify Root Update candidates during the work and commit them with the fewest safe Google Drive operations.
+
+### Root Update Buffer
+
+Maintain a temporary **Root Update Buffer** in the current conversation Context. It is not Canonical Knowledge and must not be created as a new Google Drive document by default.
+
+Each candidate records only the minimum needed to commit it correctly:
+
+- target Root / Branch Document ID;
+- semantic key or section;
+- proposed add / modify / supersede operation;
+- authority and verification basis;
+- write class: `IMMEDIATE`, `CHECKPOINT`, or `DISCARD`.
+
+When several candidates affect the same semantic key, collapse them before writing. The latest verified fact or explicit user decision wins, while any rationale required to understand a cancellation or supersession is preserved.
 
 ### Immediate Write
 
 - the user clearly finalizes an important decision;
 - an important existing fact or decision is cancelled or changed;
-- the judgment basis for subsequent turns changes.
+- the judgment basis for subsequent turns changes;
+- deferring the update could cause the next action in this or another session to use unsafe or materially incorrect state.
+
+Immediate means flush the affected Branch promptly. It does not mean writing after every conversational turn.
 
 ### Write at a Meaningful Work Checkpoint
 
 - an important fact is confirmed through an actual test;
 - a reusable success or failure pattern is verified;
 - an important cause is identified;
-- the current state of a work Branch is materially updated.
+- the current state of a work Branch is materially updated;
+- the user asks to save, sync, checkpoint, hand off, or close the work;
+- several related candidates for the same Branch can be committed as one coherent patch.
+
+Working Discussion, duplicate candidates, superseded candidates with no History value, and unverified inference are `DISCARD` and never reach Google Drive.
+
+### Checkpoint Flush Procedure
+
+> **Buffer candidates → Group by Branch → Read each dirty Branch once → Patch once → Verify by risk.**
+
+```text
+Classify and deduplicate buffered candidates
+→ group remaining candidates by target Branch
+→ identify dirty Branches
+→ fresh-read each dirty Branch once, immediately before its batch patch
+→ inspect Revision when available
+→ merge all compatible changes for that Branch into one minimum patch
+→ clean only duplicate, superseded, or stale content in the touched scope
+→ write once per dirty Branch when the available tool supports it
+→ verify according to the Verification Tier
+→ clear only candidates whose writes were verified
+```
+
+Independent reads or verifications may run in parallel when the current Runtime and tool support safe parallel calls. Never parallelize writes to the same document or dependent Parent/Child structural changes.
+
+Update the ROOT Map only when Branch topology, routing metadata, or the ROOT Digest actually changes. Ordinary content changes inside an existing Branch do not require a ROOT Map write.
+
+If the available Google Drive action cannot combine compatible edits, use the smallest number of writes it supports without weakening semantic correctness. Do not simulate batching by rewriting the entire document.
+
+### Verification Tiers
+
+Use the lowest verification tier that safely matches the change.
+
+#### Routine content patch
+
+- verify the changed section or returned updated content;
+- confirm the intended semantic key, value, and boundary;
+- confirm Revision when the Runtime exposes it.
+
+#### Critical state patch
+
+Use for important decisions, cancellations, safety/compliance constraints, authority changes, or state that controls the next action.
+
+- re-read the complete affected logical section;
+- confirm superseded state is no longer presented as current;
+- verify authority, provenance, and Revision when available.
+
+#### Structural patch
+
+Use for Branch creation, move, merge, archival, pointer repair, or Parent/Child Map changes.
+
+- verify destination content first;
+- verify the Child and Parent Map;
+- verify the navigation path and Folder boundary;
+- perform cleanup or Trash only after those checks pass.
+
+If verification fails, keep the affected candidates in the Buffer, do not report them as persisted, and report the failed Document ID, operation, and next safe action.
 
 ### Write Procedure
 
-> **Read current → Patch minimum → Local cleanup → Read back.**
+For an immediate single change or a checkpoint batch, follow:
+
+> **Read current once → Patch minimum once → Local cleanup → Verify touched scope.**
 
 ```text
 Read the latest target Branch
 → inspect the current Revision when available
-→ add / modify / remove only what is necessary
+→ merge compatible buffered candidates
+→ add / modify / remove only what is necessary in one minimum patch
 → clean duplicate, superseded, or stale pointers within the touched scope
 → write
-→ re-read the changed portion
-→ verify intended content and boundary
+→ apply the appropriate Verification Tier
 ```
 
 Do not regenerate and replace an entire document.
@@ -1524,6 +1602,8 @@ reconfirm Google Drive Capability
 → verify each Branch ID and Parent
 → verify access to Protocol / Skill Root
 → verify Question-Driven Deepening rules in Protocol and Project Instructions
+→ verify Root Update Buffer / checkpoint-batched write rules in Protocol and Project Instructions
+→ verify risk-tiered write verification rules
 → verify the Model Recommendation Adapter exists in Project Instructions
 → verify legacy fixed Sol High behavior is removed
 → verify current Runtime Capability mapping for model/effort recommendations
@@ -1559,7 +1639,7 @@ Read current Global / Project Manifest
 → apply only Protocol and Template changes
 → preserve existing Foundation / Current Knowledge / Learned Knowledge / History
 → add only required new fields or Nodes
-→ Read Back every Write
+→ verify each changed scope according to its risk tier
 → Acceptance Test
 ```
 
@@ -1567,6 +1647,7 @@ Read current Global / Project Manifest
 - When appropriate, update an old Protocol in the same Document ID so Google Drive Revision History remains available for recovery.
 - If a schema change requires moving semantic content, verify the destination first and then clean the old location.
 - When upgrading from v0.1.1 or earlier, replace only the model-recommendation block in `Project Instructions` if a fixed recommendation or older Adapter exists.
+- When upgrading from v0.1.2 or earlier, update the Protocol and Project Instructions with the Root Update Buffer, checkpoint-batched flush, ROOT Map write guard, and risk-tiered verification rules. Do not create a persistent Buffer document.
 - Treat model availability, UI labels, and effort levels as Living Runtime Capability; do not persist them as project Canonical Knowledge.
 
 ---
@@ -1636,7 +1717,7 @@ Next action: paste Project Instructions
 Only after the Fresh-Chat Acceptance Test passes:
 
 ```text
-Root Engineering v0.1.2 installation complete
+Root Engineering v0.1.3 installation complete
 
 - Google Drive connection: PASS
 - Read / Create / Update / Move: PASS
@@ -1647,6 +1728,8 @@ Root Engineering v0.1.2 installation complete
 - Global Skill Library: PASS
 - Fresh-chat automatic boot: PASS
 - Question-Driven Root Deepening: PASS
+- Checkpoint-batched Root writes: PASS
+- Risk-tiered verification: PASS
 - Model Recommendation Adapter: PASS
 - Manifest status: ACTIVE
 ```
@@ -1718,8 +1801,8 @@ Do not recreate the AI's native reasoning ability as a detailed state machine. M
 2. Follow the ROOT Map and read only the Branches required for the current task.
 3. Reuse Roots already read in the same chat until a change signal appears.
 4. When important information that could change the result is missing, perform Question-Driven Root Deepening.
-5. Fresh-read the target Branch immediately before a Root write.
-6. Follow `Read current → Patch minimum → Local cleanup → Read back`.
+5. Classify write candidates as `IMMEDIATE`, `CHECKPOINT`, or `DISCARD` in the in-context Root Update Buffer.
+6. At an immediate flush or meaningful checkpoint, group compatible candidates by Branch and follow `Read current once → Patch minimum once → Local cleanup → Verify touched scope`.
 7. Decide whether to persist information by asking:
    - If this information disappears, would a future AI be meaningfully more likely to rediscover it, make a wrong judgment, or repeat the same failure?
 8. AI Inference cannot become a Canonical Fact/Rule without verification or user confirmation.
@@ -2266,15 +2349,18 @@ Fresh-read the relevant ROOT or Branch when:
 
 ## Write
 
-1. Do not write to the Root after every response. Update only when a meaningful state change occurs.
+1. Do not write to the Root after every response. Maintain a temporary in-context Root Update Buffer and update Drive only for an immediate trigger or meaningful checkpoint.
 2. Use this persistence criterion:
    - If this information disappears, would a future AI be meaningfully more likely to rediscover it, make a wrong judgment, or repeat the same failure?
 3. Prioritize explicit user decisions, important current facts, verified reusable learning, and important unresolved items.
 4. Do not store Working Discussion, entire conversations, verbose internal reasoning, or unverified AI inference in the Canonical Root.
-5. Fresh-read the target Branch immediately before writing.
-6. Do not rewrite the entire document. Modify only the minimum required portion.
-7. Check Revision conflicts when possible.
-8. Re-read the changed content after the update and verify that it was correctly applied.
+5. Classify candidates as `IMMEDIATE`, `CHECKPOINT`, or `DISCARD`; collapse duplicate or superseded candidates before any Drive call.
+6. At flush time, group candidates by Branch, fresh-read each dirty Branch once, and merge compatible edits into one minimum patch per Branch when the available tool supports it.
+7. Do not rewrite the entire document. Modify only the minimum required portion.
+8. Check Revision conflicts when possible. Never parallelize writes to the same document or dependent Parent/Child structural changes.
+9. Update the ROOT Map only when topology, routing metadata, or the ROOT Digest changes.
+10. Verify routine writes by reading the changed scope; use full logical-section verification for critical state and Parent/Child/path verification for structural changes.
+11. Clear buffered candidates only after successful verification. If a write fails, retain the candidates and report the exact failed target and next safe action.
 
 ## Tree and Pruning
 
