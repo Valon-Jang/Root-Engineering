@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.9
+package_version: 0.1.10
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -22,6 +22,13 @@ project_instructions_scope: connection-only
 knowledge_lookup: root-resident-routing-index
 knowledge_lookup_coverage: complete-before-negative
 knowledge_lookup_write_scope: routing-changes-only
+startup_read_policy: parallel-when-independent
+read_merge_save_policy: revision-leased-conditional-batch
+routine_write_verification: atomic-response-and-returned-revision
+critical_write_verification: affected-logical-scope
+stable_selector_policy: reuse-tab-or-named-range-without-extra-write
+machine_timestamp_format: plain-iso-8601
+scope_merge_policy: authority-and-configuration-lot-sub-lot-serial-preserving
 question_driven_root_deepening: true
 model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
@@ -34,7 +41,7 @@ runtime_communication: production-quiet
 user_facing_storage_language: plain
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.9
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.10
 
 > **한국어 배포본입니다. Canonical English specification:** [ROOT_ENGINEERING_INSTALLER.md](./ROOT_ENGINEERING_INSTALLER.md)
 >
@@ -53,7 +60,7 @@ user_facing_storage_language: plain
 1. 프로젝트별 장기 지식을 모델 밖의 Google Drive에 Canonical Root로 유지한다.
 2. 새 Chat에서도 정확한 프로젝트 Root를 빠르게 찾고, 이름이 있는 지식 영역의 존재 여부를 Branch 전체 조회 없이 판정하게 한다.
 3. 중요한 정보가 부족한 문제는 AI가 핵심 불확실성을 찾아 최소 질문으로 현실을 구체화한다.
-4. 필요한 Branch만 읽고, 의미 있는 상태 변화가 있을 때만 Root를 갱신한다.
+4. 필요한 Branch만 읽고, 의미 있는 상태 변화가 있을 때만 Root를 갱신한다. 첫 Target 조회와 Revision을 재사용하고, 실제 Revision 충돌이나 위험도에 따른 범위 검증이 필요할 때만 다시 읽는다.
 5. 지식을 저장하는 것뿐 아니라 성장·분리·통합·History 이동·Silent Pruning까지 지속 가능하게 한다.
 6. 텍스트 기반 Skill을 축적하고, 현재 환경에 실제 사용 가능한 앱·도구·웹 Skill이 있으면 연결해 실행할 수 있게 한다.
 7. 이 단일 패키지에서 설치·검증·복구와 경로 단위 업데이트를 처리한다.
@@ -234,6 +241,9 @@ Preflight는 현재 실행 환경에 Google Drive 앱 또는 동등한 공식 �
 
 - 파일 또는 폴더를 Trash로 이동
 - Revision 또는 동시 수정 충돌 제어
+- 새 Revision 또는 Write Control 상태를 돌려주는 Native Google Docs Batch Update
+- Revision만 확인하는 경우를 포함한 부분 문서 필드 조회
+- Tab ID, Named Range 또는 동등한 안정적 Target Selector
 
 Trash가 불가능해도 핵심 Root 읽기·쓰기가 가능하면 설치는 진행할 수 있다. 단, `PROJECT_MANIFEST`의 Capability Matrix와 완료 보고에 제한을 기록한다.
 
@@ -249,6 +259,8 @@ Google Doc 생성 기능이 있는가?
 Google Doc 수정 기능이 있는가?
 Drive Folder 생성/이동 기능이 있는가?
 Trash/Delete 기능이 있는가?
+Runtime이 Required Revision을 건 순서 있는 문서 Batch를 한 번에 보낼 수 있는가?
+필요한 문서 필드나 Tab만 조회할 수 있는가?
 ```
 
 도구 이름이나 UI 이름은 버전에 따라 달라질 수 있다. `Google Drive`, `Apps`, `Plugins`, `Connected apps`, `Apps & Connectors` 등 현재 환경에 실제 표시되는 명칭을 따른다.
@@ -615,8 +627,8 @@ AI는 실제 값이 채워진 전체 Project Instructions를 하나의 복사 �
 새 Chat은 연결 전용 Project Instructions로 공통 Protocol과 프로젝트 Root를 불러올 수 있어야 한다.
 
 ```text
-1. Binding ID로 Global Protocol 직접 읽기
-2. Binding ID로 ROOT 직접 읽기
+1. 지원하면 Binding ID로 Global Protocol과 ROOT 직접 Read를 동시에 시작하고, 아니면 같은 두 ID를 순서대로 읽기
+2. 두 결과가 반환되면 Global Protocol 따르기
 3. ROOT 내부 Project ID / Root ID를 Binding과 대조
 4. ROOT File의 Parent가 Project Root Folder인지 확인
 5. ROOT Knowledge Lookup 존재와 COMPLETE Coverage 확인
@@ -686,7 +698,8 @@ ROOT를 읽지 않아도 되는 경우:
 
 ```text
 Project Binding 확인
-→ ROOT Document ID 직접 조회
+→ 지원하면 Global Protocol과 ROOT를 정확한 Document ID로 동시에 조회
+→ 두 결과가 반환되면 Protocol 따르기
 → Root ID와 Folder 경계 확인
 → ROOT Digest, Knowledge Lookup, Root Map 확인
 → 필요한 Branch만 읽기
@@ -793,7 +806,7 @@ Route State는 `PENDING`, `ACTIVE`, `HISTORY`를 사용한다. `PENDING`은 상�
 - 독립 조회 가치가 있으면 전용 Child Document를 우선한다. 작은 영역은 기존 Owner Document의 정확한 Heading을 가리킬 수 있다.
 - Key, Alias, 위치, Owner, Route State가 바뀔 때만 Lookup을 갱신한다. Target 내부의 일반 사실 변경은 ROOT 쓰기를 요구하지 않는다.
 - 신규 또는 변경 경로는 필요하면 Target Document ID를 먼저 확보하고, `PENDING` 행 하나를 쓰고 검증한 뒤 Target/Parent를 수정하며, 마지막에 그 행을 `ACTIVE` 또는 `HISTORY`로 확정한다. `PENDING` Hit는 복구 상태이며 현재 내용이나 부재의 증거가 아니다.
-- 같은 작업에서 ROOT를 읽었고 변경 신호 없이 Revision이 여전히 현재라면, Lookup 쓰기 직전이라는 이유만으로 ROOT를 다시 읽지 않고 그 Read를 재사용한다.
+- 같은 작업에서 ROOT를 읽었다면 그 내용과 Revision을 조건부 Lookup Batch에 재사용하고, Lookup Write가 이어진다는 이유만으로 ROOT를 다시 읽지 않는다. Required Revision 거부를 변경 신호로 보고 그때만 다시 읽는다.
 - Lookup 관리 시각은 ISO-8601 일반 텍스트를 사용한다. Index 관리를 위해 Native Date Chip을 만들거나 갱신하지 않는다.
 
 ### Coverage 안전 규칙
@@ -970,31 +983,51 @@ AI Inference
 
 Working Discussion, 중복 후보, History 가치가 없는 대체 후보, 검증되지 않은 추론은 `DISCARD`이며 Google Drive에 보내지 않는다.
 
+### Scope 보존 병합
+
+더 최신인 문장을 대체로 처리하기 전에 의미를 바꿀 수 있는 적용 차원을 각각 비교한다.
+
+- Authority와 문서 유형
+- Configuration, Revision, Material, Option, Variant
+- Lot, Sub-Lot, Batch, Unit, Serial 범위
+- 발행 시점, 발효 시점, 생산 Cutoff, 만료, 사용 횟수 제한
+- 정규 권한, 임시 권한, 시험 Evidence, 상업 조건, 미결 품질 상태
+- 명시적 예외, 제외, 비소급 조건
+
+새 문장은 Authority와 적용 범위가 실제로 겹치는 부분에서만 이전 문장을 대체한다. 넓은 Lot 단위 규칙과 더 좁은 Sub-Lot/Serial 예외가 모두 유효하면 동시에 보존한다. Serial 범위 예외를 Lot 전체의 단일 상태로 합치지 않고, 시험 결과나 견적이 더 최신이라는 이유로 승인 규칙을 덮어쓰지 않는다.
+
 ### Checkpoint Flush 절차
 
-> **Buffer 후보 → Branch별 Group → Dirty Branch당 한 번 읽기 → 한 번 Patch → 위험도별 검증.**
+> **Buffer 후보 → Target Document별 Group → 보관한 Read와 Revision 재사용 → 조건부 Batch 한 번 → 위험도별 검증.**
 
 ```text
 Buffer 후보 분류 및 중복 제거
-→ 남은 후보를 대상 Branch별로 Group
-→ Dirty Branch 식별
-→ Batch Patch 직전에 Dirty Branch당 최신본 한 번 읽기
-→ 가능하면 Revision 확인
-→ 같은 Branch의 호환 가능한 변경을 하나의 최소 Patch로 병합
+→ 남은 후보를 Target Document별로 Group
+→ Dirty Document 식별
+→ 현재 작업 단위에서 Dirty Document를 읽지 않았다면 부분 조회 지원 시 필요한 Tab/Section과 Revision만 한 번 읽고, 아니면 Document를 한 번 읽음
+→ 반환된 내용·Target Selector·Revision 보관
+→ 이미 읽었다면 Write가 이어진다는 이유만으로 다시 읽지 않음
+→ 같은 Document의 호환 가능한 변경을 순서 있는 최소 Batch 하나로 병합
+→ Authority / Configuration / Lot / Sub-Lot / Serial / 발효 시점 경계 보존
 → 접촉 범위의 중복·대체·낡은 내용만 정리
-→ 도구가 지원하면 Dirty Branch당 한 번 쓰기
+→ 지원하면 보관한 Revision을 requiredRevisionId로 건 순서 있는 Batch를 Dirty Document당 한 번 전송
+→ Revision 거부가 발생한 경우에만 한 번 다시 읽고 병합을 재평가한 뒤 새 Revision으로 재시도
 → Routing Metadata가 바뀐 경우에만 Knowledge Lookup 한 행 갱신
 → Verification Tier에 따라 검증
 → 검증된 Write의 후보만 Buffer에서 제거
 ```
 
-현재 Runtime과 도구가 안전한 병렬 호출을 지원하면 서로 독립적인 Read 또는 Verification은 병렬 수행할 수 있다. 같은 문서의 Write나 의존 관계가 있는 Parent/Child 구조 변경은 병렬 처리하지 않는다.
+현재 Runtime과 도구가 안전한 병렬 호출을 지원하면 독립적인 Startup Read, Dirty Document Read, 서로 무관한 Document Write, Verification을 병렬 수행할 수 있다. 같은 문서의 Write나 의존 관계가 있는 Parent/Child 구조 변경은 병렬 처리하지 않는다.
 
 Branch Topology, Routing Metadata 또는 ROOT Digest가 실제로 바뀔 때만 ROOT Map을 갱신한다. 기존 Branch 내부의 일반 내용 변경에는 ROOT Map Write가 필요하지 않다.
 
 Knowledge Lookup 행은 Routing Metadata로 본다. 필요한 Lookup 변경은 같은 Checkpoint에 묶되, 일반 내용만 바뀐 경우 Lookup을 다시 쓰지 않는다.
 
-현재 Google Drive Action이 호환 가능한 Edit 병합을 지원하지 않으면 Semantic Correctness를 약화하지 않는 범위에서 지원 가능한 최소 Write 횟수를 사용한다. 문서 전체 재작성으로 Batch를 흉내 내지 않는다.
+현재 Google Drive Action이 호환 가능한 Edit 병합이나 Required Revision을 지원하지 않으면 Semantic Correctness를 약화하지 않는 범위에서 지원 가능한 최소 안전 Fallback을 사용하고 제한을 기록한다. 문서 전체 재작성으로 Batch를 흉내 내지 않는다.
+
+기존 Immutable Tab ID, Named Range ID 또는 동등한 안정적 Selector가 있으면 사용한다. 없으면 보관한 Target Read에서 확인한 정확한 Index나 Heading을 재사용한다. 최적화 Metadata만 만들기 위해 별도 Drive Write를 하지 않으며, 같은 필수 내용 Batch 안에 들어갈 때만 안정적 Selector를 기회적으로 추가할 수 있다.
+
+기계용 관리 시각은 일반 ISO-8601 Text로 같은 내용 Batch에 포함한다. 사용자가 보는 문서에 Date Chip 자체가 필요할 때만 Native Date Chip을 만들거나 갱신한다.
 
 ### Verification Tier
 
@@ -1002,9 +1035,10 @@ Knowledge Lookup 행은 Routing Metadata로 본다. 필요한 Lookup 변경은 �
 
 #### 일반 내용 Patch
 
-- 변경된 Section 또는 반환된 갱신 내용을 확인
-- 의도한 Semantic Key, Value, Boundary 확인
-- Runtime이 제공하면 Revision 확인
+- 보관한 Required Revision으로 보호된 Batch가 성공하고 새 Revision 또는 Write Control 상태가 반환되면 이를 기본 전송 검증으로 사용
+- 준비한 Patch Payload에서 의도한 Semantic Key, Value, Scope Boundary 확인
+- 이미 확인된 일반 Batch의 수락만 증명하기 위한 Read Back은 하지 않음
+- Runtime이 Revision이나 동등한 Write 결과를 돌려주지 못할 때만 변경 범위를 읽는 Fallback 사용
 
 #### 중요 상태 Patch
 
@@ -1012,7 +1046,8 @@ Knowledge Lookup 행은 Routing Metadata로 본다. 필요한 Lookup 변경은 �
 
 - 영향받은 논리 Section 전체를 다시 읽음
 - 대체된 상태가 Current로 남지 않았는지 확인
-- 가능하면 Authority, Provenance, Revision 확인
+- 가능하면 Authority, Provenance, Configuration, Lot/Sub-Lot/Serial Scope, 발효 조건, 미결 예외, Revision 확인
+- 성공한 조건부 Batch 뒤 이 범위 검증 한 번만 수행하며, 충돌이 드러난 경우에만 추가 처리
 
 #### 구조 Patch
 
@@ -1029,15 +1064,17 @@ Branch 생성·이동·병합·보관·Pointer 복구·Parent/Child Map 변경�
 
 즉시 단일 변경과 Checkpoint Batch 모두 다음을 따른다.
 
-> **Read current once → Patch minimum once → Local cleanup → Verify touched scope.**
+> **Target 한 번 읽기 → Revision 보관 → 조건부 Batch 한 번 → 충돌 또는 위험 시에만 재조회.**
 
 ```text
-대상 Branch 최신본 읽기
-→ 가능하면 현재 Revision 확인
+현재 작업 단위에서 이미 읽은 Target 내용과 Revision 사용
+→ 없다면 Target 한 번 읽기
 → 호환 가능한 Buffer 후보 병합
+→ 적용되는 Authority와 계층 Scope Boundary 모두 보존
 → 하나의 최소 Patch로 필요한 항목만 추가/수정/삭제
 → 접촉 범위 안의 중복·대체·낡은 포인터 정리
-→ 쓰기
+→ 지원하면 requiredRevisionId를 건 순서 있는 Batch 한 번 쓰기
+→ Revision 충돌로 거부되면 최신본 한 번 읽고 재병합 후 재시도
 → 적절한 Verification Tier 적용
 ```
 
@@ -1090,7 +1127,7 @@ UPGRADE는 이 패키지 안에서 수행하는 최소 수정 작업이다.
 - 확인한 버전을 Section 35의 설치 수준표와 맞춘다.
 - 그 행의 순서가 있는 Patch Queue만 불러오고 첫 Patch ID가 맞는지 확인한다.
 - 기존 Document ID, 관계없는 사용자 작성 지침, Queue에 없는 모든 경로를 보존한다.
-- `P-019-ROOT-LOOKUP`만 Backfill을 위해 Current Knowledge를 한 번 순회하고 ROOT의 `Knowledge Lookup`을 수정할 수 있다. 상세 프로젝트 내용은 다시 쓰지 않는다.
+- `P-019-ROOT-LOOKUP`만 Backfill을 위해 Current Knowledge를 한 번 순회하고 ROOT의 `Knowledge Lookup`을 수정할 수 있다. 상세 프로젝트 내용은 다시 쓰지 않는다. P-020 Patch는 선언된 Global Protocol 섹션, `시작 연결` Subsection, Project Manifest의 Capability 행 3개만 교체할 수 있다.
 - Queue의 모든 관리 경로를 검증한 뒤 마지막에 두 Manifest의 Package Version을 한 번만 갱신한다.
 - 설치 버전, 대상 문서, 섹션 경계 또는 필요한 구간을 입증할 수 없으면 추측하지 않고 중단한다.
 
@@ -1274,14 +1311,19 @@ Trash 기능이 없으면 Parent Map에서 연결을 제거하고 문서 제목�
 가능하면 Google Docs/Drive의 현재 Revision 또는 write control을 사용한다.
 
 ```text
-읽은 Revision = 현재 Revision
-→ 최소 Patch 허용
+작업 중 읽은 Target 내용 + Revision 보관
+→ requiredRevisionId를 건 최소 Batch 전송
 
-Revision 변경됨
-→ 최신본 재읽기
+조건부 Write 수락
+→ 반환된 새 Revision 보관
+→ 무조건 Read Back하지 않고 위험도에 맞춰 검증
+
+Revision 변경으로 조건부 Write 거부
+→ 최신 Target 한 번 재조회
 → Update Candidate 재평가
 → 자동 Merge 가능하면 Merge
 → 의미적 Human Intent 충돌이면 사용자 질문
+→ 새 Required Revision으로 재시도
 ```
 
 Blind overwrite를 하지 않는다.
@@ -1716,6 +1758,10 @@ Google Drive Capability 재확인
 → Protocol의 Fast Knowledge Lookup 규칙 확인
 → Protocol의 Question-Driven Deepening 규칙 확인
 → Protocol의 Root Update Buffer / Checkpoint Batch Write 규칙 확인
+→ 보관한 Revision 기반 조건부 Batch와 충돌 시에만 재조회하는 규칙 확인
+→ Authority / Configuration / Lot / Sub-Lot / Serial Scope 보존 병합 규칙 확인
+→ 일반 응답 기반 검증과 중요 상태 범위 검증 규칙 확인
+→ 기계용 일반 Text 시각과 최적화 전용 Write 금지 규칙 확인
 → 위험도별 Write Verification 규칙 확인
 → Protocol의 Production Quiet 사용자 언어 규칙 확인
 → Protocol의 Model Recommendation Adapter 존재와 Legacy 고정 추천 제거 확인
@@ -1723,6 +1769,20 @@ Google Drive Capability 재확인
 → 현재 Runtime Capability에 맞는 모델/추론 매핑 확인
 → Project Manifest 상태 확인
 → 최소 Write / Read Back 테스트
+```
+
+프로젝트 데이터를 읽거나 쓰지 않고 다음 메모리 내 회귀시험을 실행한다.
+
+```text
+기존 규칙: 한 Configuration의 생산 Cutoff 이후 Lot에 정규 권한이 적용된다.
+신규 Evidence: 이후 Lot에서 `Sub-Lot A / Serial 001-040`에만 좁은 예외가 생기고 인접한 `Serial 041-120`은 넓은 규칙 아래에 남으며, 별도 시험·견적 문서는 각자 다른 Scope를 가진다.
+
+다음 조건을 모두 만족해야 PASS:
+- 적용되는 넓은 Lot 규칙 유지
+- `Serial 001-040` 예외가 넓은 규칙과 공존하고 그 상태가 `Serial 041-120`이나 Lot 전체로 번지지 않음
+- 시험과 상업 Scope가 승인 Scope를 덮어쓰지 않음
+- 기존 영역 갱신 계획이 보관한 Target Read와 Revision 하나를 재사용
+- 조건부 Batch 한 번을 사용하고, 중요 상태이므로 사후 Scope Read는 한 번만 계획
 ```
 
 정상인 항목을 다시 만들거나 덮어쓰지 않는다.
@@ -1763,15 +1823,16 @@ ChatGPT는 두 Manifest의 Package Version이 일치할 때만 그 값을 현재
 
 | 확인된 설치 수준 | 이미 갖춘 기능 | 첫 Patch ID | 순서가 있는 Patch Queue |
 |---|---|---|---|
-| `0.1.1` | 기본 설치와 질문 기반 구체화 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.2` | `0.1.1` + Runtime 기반 모델 추천 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.3` | `0.1.2` + Checkpoint 묶음 쓰기와 위험도별 검증 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.4` | `0.1.3` + 일반 사용자 응답의 조용한 처리 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.5` | `0.1.4` + 폐기된 분리 파일 방식 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.6` | 단일 파일 내장 경로 단위 Upgrade | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.7` | `0.1.6` + 실제 변경 경로 완료 보고 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.8` | 공용 Core 정책 + 연결 전용 Project Instructions | `P-019-PROTOCOL-LOOKUP` | `P-019-PROTOCOL-LOOKUP → P-019-ROOT-LOOKUP` |
-| `0.1.9` | Complete-Coverage 빠른 Knowledge Lookup | `NONE` | `EMPTY; VERIFY만 실행` |
+| `0.1.1` | 기본 설치와 질문 기반 구체화 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.2` | `0.1.1` + Runtime 기반 모델 추천 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.3` | `0.1.2` + Checkpoint 묶음 쓰기와 위험도별 검증 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.4` | `0.1.3` + 일반 사용자 응답의 조용한 처리 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.5` | `0.1.4` + 폐기된 분리 파일 방식 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.6` | 단일 파일 내장 경로 단위 Upgrade | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.7` | `0.1.6` + 실제 변경 경로 완료 보고 | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.8` | 공용 Core 정책 + 연결 전용 Project Instructions | `P-019-PROTOCOL-LOOKUP` | `P-019-PROTOCOL-LOOKUP → P-019-ROOT-LOOKUP → P-020-PROTOCOL-COMMIT → P-020-INSTRUCTIONS-BOOT → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.9` | Complete-Coverage 빠른 Knowledge Lookup | `P-020-PROTOCOL-COMMIT` | `P-020-PROTOCOL-COMMIT → P-020-INSTRUCTIONS-BOOT → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.10` | 병렬 Boot + 보관 Revision 조건부 Batch + Scope 보존 병합 | `NONE` | `EMPTY; VERIFY만 실행` |
 
 행이 일치하면 쓰기 전에 다음 내부 경로 값을 정한다.
 
@@ -1779,12 +1840,12 @@ ChatGPT는 두 Manifest의 Package Version이 일치할 때만 그 값을 현재
 INSTALLED_LEVEL = <확인한 Manifest 버전>
 FIRST_PATCH_ID = <일치한 행의 첫 Patch ID 또는 NONE>
 PATCH_QUEUE = <일치한 행의 순서가 있는 Patch Queue 또는 EMPTY>
-TARGET_LEVEL = 0.1.9
+TARGET_LEVEL = 0.1.10
 ```
 
 `PATCH_QUEUE`가 비어 있지 않을 때 첫 활성 Patch가 `FIRST_PATCH_ID`와 맞고 전체 Queue가 그 행과 정확히 같은지 확인한다. 빈 Queue는 현재 Target Level에서만 허용하며 쓰지 않고 VERIFY를 실행한다.
 
-### 35.2 0.1.9 활성 패치 목록
+### 35.2 0.1.10 활성 패치 목록
 
 | Patch ID | 대상 문서 | 관리 경로 | 이 파일 안의 최신 내용 위치 | 교체 경계 |
 |---|---|---|---|---|
@@ -1792,8 +1853,11 @@ TARGET_LEVEL = 0.1.9
 | `P-018-INSTRUCTIONS-CONNECTION` | Project Instructions | `Managed Root Engineering Connection Block` | `ROOT_ENGINEERING_CONNECTION_START`와 `ROOT_ENGINEERING_CONNECTION_END` 사이 | 기존 Root Engineering Block만 교체하고 바깥의 사용자 작성 지침은 보존 |
 | `P-019-PROTOCOL-LOOKUP` | Global Protocol | `Fast Knowledge Lookup` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Fast Knowledge Lookup` | `## Runtime Summary` 뒤에 삽입하고 이미 있으면 그 섹션만 교체 |
 | `P-019-ROOT-LOOKUP` | ROOT | `Knowledge Lookup` | `TEMPLATE: ROOT` → `## Knowledge Lookup` | `## Root Map` 바로 앞에 삽입하거나 재시도 시 그 섹션만 교체하고 확인된 기존 Routing Unit으로 행 Backfill |
+| `P-020-PROTOCOL-COMMIT` | Global Protocol | `Runtime Summary` + `Fast Knowledge Lookup` + `Write` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL`의 해당 정확한 섹션 | 지원하면 세 섹션 중 다른 내용만 한 Document Batch에서 교체 |
+| `P-020-INSTRUCTIONS-BOOT` | Project Instructions | `시작 연결` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## 시작 연결` | 해당 관리 Subsection만 교체하고 나머지 관리 Block과 관계없는 사용자 지침 보존 |
+| `P-020-MANIFEST-CAPABILITIES` | Project Manifest | `Capability Matrix`의 신규 행 3개 | `TEMPLATE: PROJECT_MANIFEST` → `## Capability Matrix` | `Partial Document Read`, `Native Document Batch`, `Returned Revision / Write Control`만 Upsert하고 나머지 행과 값 보존 |
 
-일치한 설치 수준 행의 Queue만 사용한다. `P-018-PROTOCOL-CORE` 최신 본문에 `Fast Knowledge Lookup`이 이미 있으므로 구버전은 `P-019-PROTOCOL-LOOKUP`을 별도로 실행하지 않는다. 지원되는 모든 구버전은 `P-019-ROOT-LOOKUP`을 정확히 한 번 실행한다.
+일치한 설치 수준 행의 Queue만 사용한다. `P-018-PROTOCOL-CORE`와 `P-018-INSTRUCTIONS-CONNECTION` 최신 Payload에는 P-019와 P-020 동작 본문이 이미 있으므로 구버전은 동등한 Protocol 또는 Instructions Patch를 반복하지 않는다. 지원되는 모든 구버전은 `P-020-MANIFEST-CAPABILITIES`를 한 번 실행하고, `0.1.9` 미만은 `P-019-ROOT-LOOKUP`도 정확히 한 번 실행한다.
 
 #### 대체된 기능 변경 이력
 
@@ -1820,15 +1884,16 @@ TARGET_LEVEL = 0.1.9
 4. Package ID가 이 패키지와 같고 두 Package Version이 같은지 확인한다.
 5. 확인한 버전만 `INSTALLED_LEVEL`로 정하고 설치 수준표의 한 행과 정확히 맞춘다.
 6. 대상 경로를 읽기 전에 그 행에서 `FIRST_PATCH_ID`, `PATCH_QUEUE`, `TARGET_LEVEL`을 정한다.
-7. `INSTALLED_LEVEL`이 `0.1.9`이면 쓰지 않고 VERIFY만 실행한다.
+7. `INSTALLED_LEVEL`이 `0.1.10`이면 쓰지 않고 VERIFY만 실행한다.
 8. 그 외에는 `PATCH_QUEUE`의 각 Patch ID를 Section 35.2와 맞추고 선언된 순서를 보존한다.
 9. 첫 선택 Patch ID가 `FIRST_PATCH_ID`와 같고 Queue의 모든 ID가 정확히 한 번씩 존재하는지 확인한다. 맞지 않으면 수정하지 않고 중단한다.
 10. 대체된 과거 Patch 또는 일치한 행에 없는 활성 Patch는 Queue에 넣지 않는다.
 
 예:
 
-- `0.1.2` 설치는 `P-018-PROTOCOL-CORE`에서 시작해 연결 Block을 갱신한 뒤 `Knowledge Lookup`을 생성·Backfill한다. `P-012`부터 `P-017`까지 재실행하지 않고 `P-019-PROTOCOL-LOOKUP`도 별도로 실행하지 않는다.
-- `0.1.8` 설치는 `P-019-PROTOCOL-LOOKUP`에서 시작한 뒤 `Knowledge Lookup`을 생성·Backfill한다. Project Instructions는 다시 쓰지 않는다.
+- `0.1.2` 설치는 `P-018-PROTOCOL-CORE`에서 시작해 연결 Block을 갱신하고 `Knowledge Lookup`을 생성·Backfill한 뒤 Capability 행 3개만 추가한다. `P-012`부터 `P-017`까지 재실행하지 않고 `P-019-PROTOCOL-LOOKUP`도 별도로 실행하지 않는다.
+- `0.1.8` 설치는 `P-019-PROTOCOL-LOOKUP`에서 시작해 `Knowledge Lookup`을 생성·Backfill한 뒤 P-020 동작 경로와 Capability 행 3개만 수정한다. Protocol, Project Instructions, Project Manifest 전체를 교체하지 않는다.
+- `0.1.9` 설치는 `P-020-PROTOCOL-COMMIT`에서 시작해 지원하면 선언된 Protocol 섹션 세 곳을 한 Document Batch로 수정하고 연결 Block의 `시작 연결` Subsection을 교체한 뒤 Capability 행 3개만 추가한다.
 
 ### 35.4 최소 수정 규칙
 
@@ -1838,31 +1903,37 @@ TARGET_LEVEL = 0.1.9
 - Runtime이 ChatGPT Project Instructions를 직접 수정할 수 없으면 새 연결 Block만 사용자에게 주고 기존 Root Engineering Block 하나를 교체하도록 안내한다. 다시 설치하거나 Global Protocol을 Project Instructions에 붙여넣게 하지 않는다.
 - `P-019-PROTOCOL-LOOKUP`은 기존 Global Protocol Document ID의 `## Fast Knowledge Lookup`만 삽입하거나 교체한다.
 - `P-019-ROOT-LOOKUP`은 기존 ROOT Document ID에서 `## Root Map` 바로 앞의 `## Knowledge Lookup`만 삽입하거나 교체한다.
+- `P-020-PROTOCOL-COMMIT`은 기존 Global Protocol Document ID의 `## Runtime Summary`, `## Fast Knowledge Lookup`, `## Write` 중 Payload가 다른 섹션만 교체한다. 지원하면 Required Revision을 건 한 Batch로 묶고 섹션 사이에 Fresh Read하거나 이미 일치하는 섹션의 Operation을 보내지 않는다.
+- `P-020-INSTRUCTIONS-BOOT`은 기존 Root Engineering 관리 연결 Block 안의 `## 시작 연결`만 교체한다. 다른 관리 Subsection과 관계없는 사용자 작성 지침은 Byte 단위로 보존한다.
+- `P-020-MANIFEST-CAPABILITIES`는 기존 Project Manifest의 `## Capability Matrix` 안에서 `Partial Document Read`, `Native Document Batch`, `Returned Revision / Write Control`만 Upsert한다. 현재 Preflight 결과로 값을 채우고 나머지 행·값·섹션을 Byte 단위로 보존한다.
 - 1회 `P-019-ROOT-LOOKUP` Backfill을 위해 Current Knowledge와 선언된 각 Child Map을 한 번씩 순회한다. 명시적으로 이름이 있고 독립 조회되는 영역만 행으로 추가한다. 관계없는 Sources·History를 읽거나 Alias를 만들거나 비슷한 이름을 같은 영역으로 추론하지 않는다.
 - 기존의 상세 사실, 결정, Source Link, Heading, Document ID, Folder, Child 관계를 모두 보존한다. 이 Upgrade에서 프로젝트 내용을 이동하거나 다시 쓰지 않는다.
 - Current Knowledge Subtree의 현재 활성 독립 조회 영역이 각각 한 번씩 포함되고 Target ID/Heading이 모두 확인된 뒤에만 Lookup `Coverage`를 `COMPLETE`로 설정한다. 입증하지 못하면 `PARTIAL`로 두고 Patch를 실패 처리하며 두 Manifest 버전을 갱신하지 않는다.
 - `Last Reconciled`는 ISO-8601 일반 텍스트로 쓰고 Lookup Metadata를 위해 Native Date Chip을 만들거나 갱신하지 않는다.
-- 선언된 ROOT Lookup 삽입과 Queue에 포함된 Protocol/Instructions 경로 밖에서는 Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, 프로젝트 내용, 폴더 구조, 문서 ID를 수정하지 않는다.
+- 이번 Upgrade에서 Named Range 추가를 위해 프로젝트 문서를 순회하지 않는다. 안정적 Selector는 이미 있거나 이후 필수 내용 Batch 안에 별도 최적화 Write 없이 포함할 수 있을 때만 접촉 시 채택한다.
+- 선언된 ROOT Lookup 삽입, Queue에 포함된 Protocol/Instructions 경로, Project Manifest Capability 행 3개 밖에서는 Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, 프로젝트 내용, 폴더 구조, 다른 Manifest 필드, 문서 ID를 수정하지 않는다.
 - 이 Installer를 Project Source에 영구 추가하지 않는다.
-- 다운그레이드하지 않는다. 버전이 `0.1.1`보다 낮거나 `0.1.9`보다 높거나 서로 다르거나 해석할 수 없으면 아무것도 수정하지 않고 정확한 값을 알린다.
+- 다운그레이드하지 않는다. 버전이 `0.1.1`보다 낮거나 `0.1.10`보다 높거나 서로 다르거나 해석할 수 없으면 아무것도 수정하지 않고 정확한 값을 알린다.
 
 ### 35.5 검증과 완료
 
-1. Global Protocol을 다시 읽어 `Fast Knowledge Lookup`을 포함한 필수 Core Heading이 각각 한 번씩 있는지 확인한다.
-2. `P-018-INSTRUCTIONS-CONNECTION`이 Queue에 있으면 관리 Block에 Binding, 시작 연결, 설치 검증, 연결 실패 동작만 있는지 확인한다. Queue에 없으면 Project Instructions가 바뀌지 않았는지 확인한다.
-3. ROOT를 다시 읽어 `Knowledge Lookup`이 한 번만 있고, `Coverage`가 `COMPLETE`이며, `PENDING` 행이 남아 있지 않고, 각 Key가 고유하고, 명시적 Alias가 모호하지 않으며, 모든 Target Document ID/Heading이 연결되는지 확인한다.
-4. Current Knowledge, Child Document, 관계없는 사용자 작성 Project Instructions, Queue에 없는 모든 프로젝트 문서가 바뀌지 않았는지 확인한다.
-5. 행이 하나 이상이면 기존 Key 하나의 Hit를 Target으로 확인한다. 표가 비어 있으면 Reconciliation에서 독립 조회 영역이 없었는지 확인한다. 어느 경우든 존재할 수 없는 Synthetic Key 하나를 시험해 Complete-Coverage Miss가 부재 입증만을 위한 Current Knowledge 전체 조회를 일으키지 않는지 확인한다.
-6. `PATCH_QUEUE`의 모든 Patch가 PASS한 뒤에만 두 Manifest의 Package Version을 `0.1.9`로 갱신한다.
-7. 두 버전 필드를 다시 읽고 기존 Binding으로 Fresh-Chat Acceptance Test를 실행한다.
-8. Queue Patch 하나라도 실패하면 두 Manifest 버전을 갱신하지 않는다. 실패한 Patch ID, 문서, 관리 경로를 알리고 중단한다.
+1. 변경된 Global Protocol 섹션만 한 번 다시 읽고 필수 Core Heading이 각각 한 번씩 있는지 확인한다. `P-020-PROTOCOL-COMMIT`이 Queue에 있으면 `Runtime Summary`, `Fast Knowledge Lookup`, `Write`에 보관 Revision 조건부 Batch, 충돌 시에만 재조회, Scope 보존 병합, 일반 응답 기반 검증, 중요 상태 범위 검증, 안정적 Selector 재사용, 일반 Text 관리 시각이 모두 있는지 확인한다.
+2. `P-018-INSTRUCTIONS-CONNECTION` 또는 `P-020-INSTRUCTIONS-BOOT`이 Queue에 있으면 관리 연결 Block만 다시 읽어 연결 동작만 포함하고 지원 시 독립 Protocol/ROOT Read를 동시에 시작하는지 확인한다. Queue에 없으면 Project Instructions가 바뀌지 않았는지 확인한다.
+3. `P-020-MANIFEST-CAPABILITIES`가 Queue에 있으면 Project Manifest의 Capability Matrix만 다시 읽어 신규 행 3개가 각각 한 번 존재하고 현재 Preflight 결과와 맞는지 확인한다. Queue에 없으면 이미 존재하는지 확인하고 Capability Write를 하지 않는다.
+4. ROOT를 다시 읽어 `Knowledge Lookup`이 한 번만 있고, `Coverage`가 `COMPLETE`이며, `PENDING` 행이 남아 있지 않고, 각 Key가 고유하고, 명시적 Alias가 모호하지 않으며, 모든 Target Document ID/Heading이 연결되는지 확인한다.
+5. Current Knowledge, Child Document, 관계없는 사용자 작성 Project Instructions, 다른 모든 Manifest 필드, Queue에 없는 모든 프로젝트 문서가 바뀌지 않았는지 확인한다.
+6. 행이 하나 이상이면 기존 Key 하나의 Hit를 Target으로 확인한다. 표가 비어 있으면 Reconciliation에서 독립 조회 영역이 없었는지 확인한다. 어느 경우든 존재할 수 없는 Synthetic Key 하나를 시험해 Complete-Coverage Miss가 부재 입증만을 위한 Current Knowledge 전체 조회를 일으키지 않는지 확인한다.
+7. Section 33의 계층 Scope 메모리 내 회귀시험을 실행한다. Drive Read/Write 없이 넓은 Lot 규칙과 좁은 Sub-Lot/Serial 예외를 모두 보존해야 한다.
+8. `PATCH_QUEUE`의 모든 Patch가 PASS한 뒤에만 두 Manifest의 Package Version을 `0.1.10`으로 갱신하고 함께 쓰는 기계용 시각은 일반 ISO-8601 Text로 기록한다.
+9. 두 버전 필드를 다시 읽고 기존 Binding으로 Fresh-Chat Acceptance Test를 실행한다.
+10. Queue Patch 하나라도 실패하면 두 Manifest 버전을 갱신하지 않는다. 실패한 Patch ID, 문서, 관리 경로를 알리고 중단한다.
 
 ### 35.6 업데이트 완료 보고
 
 Upgrade가 성공하면 실제로 수정한 경로를 사용자에게 정확히 알린다. 다음의 짧은 형식을 사용한다.
 
 ```text
-업데이트 완료: <시작 버전> → 0.1.9
+업데이트 완료: <시작 버전> → 0.1.10
 
 수정한 항목:
 - <PATCH_ID> — <대상 문서> → <관리 경로>
@@ -1944,7 +2015,7 @@ Root 구조 생성 완료 — Project 연결 대기
 Fresh-Chat Acceptance Test가 PASS한 뒤에만:
 
 ```text
-Root Engineering v0.1.9 설치 완료
+Root Engineering v0.1.10 설치 완료
 
 - Google Drive 연결: PASS
 - Read / Create / Update / Move: PASS
@@ -1962,6 +2033,12 @@ Root Engineering v0.1.9 설치 완료
 - 연결 전용 Project Instructions: PASS
 - Complete-Coverage Knowledge Lookup: PASS
 - 색인 기반 존재 확인 빠른 경로: PASS
+- 독립 Startup Read 병렬 실행: PASS 또는 SERIAL-FALLBACK
+- 보관 Revision 조건부 Write: PASS 또는 LIMITED
+- Document당 단일 Batch Write 경로: PASS 또는 LIMITED
+- Scope 계층 병합 Guard: PASS
+- 일반 응답 / 중요 범위 검증: PASS
+- 일반 Text 기계용 시각: PASS
 - 경로 단위 Upgrade: PASS
 - Model Recommendation Adapter: PASS
 - Manifest 상태: ACTIVE
@@ -2030,13 +2107,13 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
 
 ## Runtime Summary
 
-1. 새 Chat 첫 실질 작업에서 프로젝트 ROOT를 읽는다.
+1. 새 Chat 첫 실질 작업에서 연결 Block을 사용해 Runtime이 지원하면 서로 독립적인 Global Protocol과 프로젝트 ROOT Read를 동시에 시작하고, 지원하지 않으면 순서대로 읽는다.
 2. ROOT Map을 따라 현재 작업에 필요한 Branch만 읽는다.
 3. 이름이 있는 영역의 존재 확인만을 위해 Branch 전체를 읽기 전에 ROOT Knowledge Lookup으로 경로를 찾는다.
-4. 같은 Chat에서 읽은 Root는 변경 신호 전까지 재사용한다.
+4. 현재 작업 단위에서 이미 읽은 Target 내용·Selector·Revision을 재사용하며, Write가 이어진다는 이유만으로 다시 읽지 않는다.
 5. 결과를 바꿀 중요 정보가 부족하면 질문 기반 Root Deepening을 수행한다.
 6. Write 후보를 대화 Context의 Root Update Buffer에서 `IMMEDIATE`, `CHECKPOINT`, `DISCARD`로 분류한다.
-7. 즉시 Flush 또는 의미 있는 Checkpoint에서 호환 가능한 후보를 Branch별로 묶고 `Read current once → Patch minimum once → Local cleanup → Verify touched scope`를 따른다.
+7. 즉시 Flush 또는 의미 있는 Checkpoint에서 호환 가능한 후보를 Document별로 묶고 `보관 Read + Revision → Scope 보존 병합 → 조건부 Batch 한 번 → 충돌 시에만 재조회 → 위험도별 검증`을 따른다.
 8. 저장 여부는 다음 질문으로 판단한다.
    - 이 정보가 없으면 다음 AI가 다시 알아내거나, 오판하거나, 같은 실패를 반복할 가능성이 유의미하게 높아지는가?
 9. AI Inference는 검증 또는 사용자 확인 없이 Canonical Fact/Rule이 될 수 없다.
@@ -2061,7 +2138,7 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
    Route State는 `PENDING`, `ACTIVE`, `HISTORY`이며 과거 이름은 Redirect Chain 대신 명시적 Alias로 보존한다.
 8. 이름 있는 독립 조회 영역의 생성·이름 변경·이동·통합·보관 또는 명시적 Alias 추가 때만 행을 바꾼다. 내용만 바뀌면 Lookup을 다시 쓰지 않는다.
 9. 복잡하고 독립적으로 읽는 영역은 전용 Child Document를 우선하고, 그렇지 않으면 기존 Owner Document의 정확한 Heading을 가리킨다.
-10. 같은 작업에서 ROOT를 읽었고 변경 신호 없이 Revision이 여전히 현재라면, Lookup 쓰기 직전이라는 이유만으로 ROOT를 다시 읽지 않고 그 Read를 재사용한다.
+10. 같은 작업에서 ROOT를 읽었다면 그 내용과 Revision을 조건부 Lookup Batch에 재사용하고, Lookup Write가 이어진다는 이유만으로 ROOT를 다시 읽지 않는다. Required Revision 거부를 변경 신호로 보고 그때만 다시 읽는다.
 11. Lookup 관리에는 ISO-8601 일반 텍스트를 사용하고 Native Date Chip을 만들지 않는다.
 12. 신규 또는 변경 경로는 필요하면 Target Document ID를 확보하고 `PENDING` 행 하나를 Patch·검증한 뒤 Target/Parent를 수정하며, 마지막에 행을 `ACTIVE` 또는 `HISTORY`로 확정·검증한다. `PENDING` Hit는 복구를 실행하며 현재 내용이나 부재의 증거가 아니다.
 
@@ -2096,13 +2173,20 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
 3. 사용자 명시 결정, 중요한 현재 사실, 검증된 재사용 학습, 중요한 미결사항만 우선 저장한다.
 4. Working Discussion, 대화 전체, 장황한 내부 추론, 검증되지 않은 AI 추론은 Canonical Root에 저장하지 않는다.
 5. 후보를 `IMMEDIATE`, `CHECKPOINT`, `DISCARD`로 분류하고 Drive 호출 전에 중복 또는 대체 후보를 합친다.
-6. Flush 시 후보를 Branch별로 묶고 Dirty Branch당 최신본을 한 번 읽은 뒤, 도구가 지원하면 호환 가능한 Edit를 Branch당 하나의 최소 Patch로 병합한다.
-7. 문서 전체를 재작성하지 않고 필요한 부분만 최소 수정한다.
-8. 가능하면 Revision 충돌을 확인한다. 같은 문서 Write나 의존 관계가 있는 Parent/Child 구조 변경을 병렬 처리하지 않는다.
-9. Topology, Routing Metadata 또는 ROOT Digest가 바뀔 때만 ROOT Map을 갱신한다.
-10. Key, Alias, 위치, Owner, Route State가 바뀔 때만 Knowledge Lookup 한 행을 갱신한다. 내용만 바뀌면 Lookup을 다시 쓰지 않는다.
-11. 일반 Write는 변경 범위를 읽어 검증하고, 중요 상태는 논리 Section 전체, 구조 변경은 Parent/Child/Path를 검증한다.
-12. 검증 성공 후에만 Buffer 후보를 제거한다. Write 실패 시 후보를 유지하고 Production Quiet 실패 규칙을 따른다.
+6. 대체 여부를 정하기 전에 Authority, 문서 유형, Configuration, Revision, Material/Option, Lot, Sub-Lot, Serial 범위, 발행/발효/만료 시점, 정규/임시 권한, 시험 Scope, 상업 Scope, 미결 품질 상태, 명시적 예외를 비교한다.
+7. 새 문장은 Authority와 적용 범위가 실제로 겹치는 부분에서만 이전 문장을 대체한다. 넓은 Lot 규칙과 좁은 Sub-Lot/Serial 예외를 동시에 보존하고 예외를 Lot 전체의 단일 상태로 합치지 않는다.
+8. Flush 시 후보를 Target Document별로 묶는다. 현재 작업 단위에서 Target을 읽지 않았다면 부분 조회 지원 시 필요한 Tab/Section과 Revision만 요청하고, 아니면 한 번 읽는다. 내용·정확한 Selector·Revision을 보관하며, 이미 읽었다면 Write 직전이라는 이유만으로 Fresh Read하지 않는다.
+9. 호환 가능한 Edit를 Dirty Document당 순서 있는 최소 Batch 하나로 합친다. 지원하면 보관한 Revision을 `requiredRevisionId`로 건다.
+10. Revision 변경으로 조건부 Write가 거부된 경우에만 해당 Target을 한 번 다시 읽고 Authority와 Scope를 재평가해 재병합한 뒤 새 Revision으로 재시도한다. Blind Overwrite나 매 Write 전 별도 Freshness Read를 하지 않는다.
+11. 문서 전체를 재작성하지 않고 필요한 부분만 최소 수정한다.
+12. 기존 Immutable Tab ID, Named Range ID 또는 동등한 안정적 Selector를 재사용한다. 없으면 보관한 Read에서 확인한 정확한 Heading이나 Index를 사용하며 최적화 Metadata만 만들기 위한 별도 Write는 하지 않는다.
+13. 기계용 관리 시각은 일반 ISO-8601 Text로 같은 Batch에 포함한다. 사용자가 보는 문서에 Date Chip 자체가 필요할 때만 Native Date Chip을 만든다.
+14. 지원하면 독립 Document Read, 서로 무관한 Document Write, Verification을 병렬 처리한다. 같은 문서 Write나 의존 관계가 있는 Parent/Child 구조 변경은 병렬 처리하지 않는다.
+15. Topology, Routing Metadata 또는 ROOT Digest가 바뀔 때만 ROOT Map을 갱신한다.
+16. Key, Alias, Selector, 위치, Owner, Route State가 바뀔 때만 Knowledge Lookup 한 행을 갱신한다. 내용만 바뀌면 Lookup을 다시 쓰지 않는다.
+17. 보관한 Required Revision으로 보호된 일반 Patch는 성공한 Atomic Response와 반환된 새 Revision/Write Control 상태를 기본 전송 검증으로 사용한다. 수락만 증명하기 위한 Read Back은 하지 않으며, 응답 근거가 없을 때만 변경 범위를 읽는다.
+18. 중요 결정, 취소, Authority 변경, 계층 Lot/Sub-Lot/Serial Scope, 품질 Gate, 다음 행동 상태는 조건부 Batch 뒤 영향받은 논리 Section 전체를 한 번 읽는다. 구조 변경은 목적지, Child, Parent Map, Route, Folder Boundary를 검증한다.
+19. 해당 응답 또는 범위 검증 성공 후에만 Buffer 후보를 제거한다. Write 실패 시 후보를 유지하고 Production Quiet 실패 규칙을 따른다.
 
 ## Production Quiet Communication
 
@@ -2122,7 +2206,7 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
 3. 그 행의 순서가 있는 Patch Queue만 불러오고 첫 ID가 선언된 First Patch ID와 같은지 확인한다.
 4. 대체된 기능 이력 항목은 설치 수준 설명으로만 사용하고 실행 Queue로 사용하지 않는다.
 5. Queue의 관리 경로만 읽고 수정하며 안전한 변경은 대상 문서별로 묶는다.
-6. 설치 문서 전체를 다시 만들거나 설치를 다시 생성하지 않는다. Queue Patch가 명시한 관리 경로만 프로젝트 지식에서 수정할 수 있으며, `P-019-ROOT-LOOKUP`은 ROOT Routing Index만 추가·Backfill할 수 있다.
+6. 설치 문서 전체를 다시 만들거나 설치를 다시 생성하지 않는다. Queue Patch가 명시한 관리 경로만 수정한다. `P-019-ROOT-LOOKUP`은 ROOT Routing Index만 추가·Backfill할 수 있고, P-020 Patch는 선언된 Protocol 섹션, `시작 연결` Subsection, Project Manifest Capability 행 3개만 수정할 수 있다.
 7. 변경 섹션을 모두 검증한 뒤 두 Manifest 버전을 갱신한다.
 8. 수준, 시작 경로 또는 필요한 섹션 경계를 입증할 수 없으면 수정하지 않고 중단한다. 다운그레이드하지 않는다.
 9. 성공 후 확인한 시작·최종 버전과 실제로 수정한 문서 → 섹션 경로를 합쳐진 항목별로 알린다. 변경되지 않은 경로는 나열하지 않는다. 쓰기가 없으면 이미 최신이라고만 말한다.
@@ -2377,6 +2461,9 @@ Root ID, Project ID, Folder Parent, Document ID를 기준으로 복구한다. �
 - Move: `<PASS_OR_FAIL>`
 - Trash: `<PASS_OR_LIMITED_OR_FAIL>`
 - Revision Guard: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Partial Document Read: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Native Document Batch: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Returned Revision / Write Control: `<PASS_OR_LIMITED_OR_UNKNOWN>`
 
 ## Verification
 
@@ -2687,17 +2774,18 @@ History가 커져 실제 독립 조회 패턴이 생길 때만 추가한다.
 
 ## 시작 연결
 
-1. 새 Chat의 첫 실질 작업에서 `Global Protocol Document ID`를 직접 읽고 그 문서를 공통 실행 규칙으로 따른다.
-2. `ROOT Document ID`를 직접 읽는다.
+1. 새 Chat의 첫 실질 작업에서 Runtime이 독립 호출을 지원하면 `Global Protocol Document ID`와 `ROOT Document ID`의 직접 Read를 동시에 시작한다. 지원하지 않으면 같은 두 정확한 ID를 순서대로 읽는다.
+2. 두 Read가 모두 반환되면 Global Protocol을 공통 실행 규칙으로 따른다.
 3. ROOT 안의 Project ID와 Root ID가 이 Binding과 일치하고 ROOT의 Parent가 `Project Root Folder ID`인지 확인한다.
-4. ROOT Map을 따라 현재 요청에 필요한 문서만 읽는다.
-5. 동명 Folder, 다른 프로젝트 문서, 모델 Memory, 과거 대화를 위 정확한 ID 대신 사용하지 않는다.
+4. ROOT Map과 Knowledge Lookup을 따라 현재 요청에 필요한 문서만 읽는다.
+5. 한 Startup Read가 끝날 때까지 기다리느라 다른 독립 Read 시작을 늦추지 않고, 변경 신호가 없으면 같은 Chat에서 둘 중 어느 것도 반복 조회하지 않는다.
+6. 동명 Folder, 다른 프로젝트 문서, 모델 Memory, 과거 대화를 위 정확한 ID 대신 사용하지 않는다.
 
 ## 설치 검증 Trigger
 
 사용자가 `설치 검증`을 입력했고 Project Manifest가 아직 `ACTIVE`가 아니면:
 
-1. 위의 정확한 ID로 Global Protocol, ROOT, Project Manifest를 읽는다.
+1. 지원하면 위의 정확한 ID로 Global Protocol, ROOT, Project Manifest Read를 동시에 시작하고, 지원하지 않으면 같은 정확한 ID를 순서대로 읽는다.
 2. Project ID, Root ID, Project Folder 경계를 확인한다.
 3. ROOT Map을 통해 Current Knowledge를 읽는다.
 4. Project Manifest에 임시 Acceptance Token을 쓰고 다시 읽어 확인한 뒤 제거한다.
@@ -2760,6 +2848,8 @@ Google Drive Preflight PASS
 + 패키지 없는 새 Chat에서 ROOT 부팅
 + Question-Driven Deepening Protocol 적용 확인
 + Model Recommendation Adapter 적용 및 고정 Sol High 회귀 테스트 PASS
++ Lot / Sub-Lot / Serial 중첩 Scope 회귀 테스트 PASS
++ 보관 Revision 조건부 Batch 경로 PASS 또는 LIMITED
 + Manifest Write / Read Back
 + 상태 ACTIVE
 = 설치 완료

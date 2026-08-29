@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.9
+package_version: 0.1.10
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -22,6 +22,13 @@ project_instructions_scope: connection-only
 knowledge_lookup: root-resident-routing-index
 knowledge_lookup_coverage: complete-before-negative
 knowledge_lookup_write_scope: routing-changes-only
+startup_read_policy: parallel-when-independent
+read_merge_save_policy: revision-leased-conditional-batch
+routine_write_verification: atomic-response-and-returned-revision
+critical_write_verification: affected-logical-scope
+stable_selector_policy: reuse-tab-or-named-range-without-extra-write
+machine_timestamp_format: plain-iso-8601
+scope_merge_policy: authority-and-configuration-lot-sub-lot-serial-preserving
 question_driven_root_deepening: true
 model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
@@ -34,7 +41,7 @@ runtime_communication: production-quiet
 user_facing_storage_language: plain
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.9
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.10
 
 > **This is the canonical English installer for Root Engineering.**  
 > Korean translation: [ROOT_ENGINEERING_INSTALLER_KO.md](./ROOT_ENGINEERING_INSTALLER_KO.md)
@@ -54,7 +61,7 @@ Its purposes are to:
 1. Maintain long-term, project-specific knowledge outside the model in Google Drive as a Canonical Root.
 2. Allow a new chat to quickly locate the correct project Root and determine whether a named knowledge area already exists without scanning an entire Branch.
 3. When important information is missing, have the AI identify the highest-impact uncertainty and clarify reality with the minimum necessary questions.
-4. Read only the Branches required for the current task and update the Root only when a meaningful state change occurs.
+4. Read only the Branches required for the current task and update the Root only when a meaningful state change occurs, reusing the first target read and re-reading only after an actual Revision conflict or when risk requires scoped confirmation.
 5. Make knowledge not only storable, but sustainably growable, separable, mergeable, movable to History, and silently prunable.
 6. Accumulate text-based Skills and, when apps, tools, or web Skills are actually available in the current environment, connect them for execution.
 7. Handle installation, verification, repair, and path-scoped upgrades through this single package.
@@ -235,6 +242,9 @@ Preflight checks whether the current runtime actually has Google Drive or an equ
 
 - Move a file or folder to Trash
 - Revision or concurrent-write conflict control
+- Native Google Docs batch update with returned Revision or write-control state
+- Partial document-field retrieval, including Revision-only reads
+- Tab IDs, Named Ranges, or equivalent stable target selectors
 
 If Trash is unavailable but core Root read/write works, installation may proceed. Record the limitation in the `PROJECT_MANIFEST` Capability Matrix and the completion report.
 
@@ -250,6 +260,8 @@ Is Google Doc creation available?
 Is Google Doc update available?
 Is Drive Folder create/move available?
 Is Trash/Delete available?
+Can the Runtime submit one ordered document batch with a required Revision?
+Can it retrieve only the document fields or tab needed for the task?
 ```
 
 Tool and UI names may differ by version. Follow the names actually exposed in the current environment, such as `Google Drive`, `Apps`, `Plugins`, `Connected apps`, or `Apps & Connectors`.
@@ -614,8 +626,8 @@ Tell the user:
 The new chat must be able to use the connection-only Project Instructions to load the shared Protocol and project Root:
 
 ```text
-1. Read Global Protocol directly by its Binding ID
-2. Read ROOT directly by its Binding ID
+1. Start Global Protocol and ROOT reads by their exact Binding IDs concurrently when supported; otherwise use the same two IDs sequentially
+2. Wait for both results and follow the Protocol
 3. Compare Project ID / Root ID inside ROOT against the Binding
 4. Confirm that the ROOT File Parent is the Project Root Folder
 5. Confirm ROOT Knowledge Lookup is present with COMPLETE coverage
@@ -685,7 +697,8 @@ Boot flow:
 
 ```text
 Check Project Binding
-→ retrieve ROOT directly by Document ID
+→ start Global Protocol and ROOT reads by their exact Document IDs concurrently when supported
+→ wait for both results and follow the Protocol
 → verify Root ID and Folder boundary
 → inspect ROOT Digest, Knowledge Lookup, and Root Map
 → read only the required Branches
@@ -792,7 +805,7 @@ Extract the exact requested knowledge key
 - Prefer a dedicated Child document when an area has independent retrieval value. A small area may point to an exact heading in its existing owner document.
 - Update the Lookup only when a Key, Alias, location, owner, or Route State changes. Ordinary facts inside an unchanged target do not require a ROOT write.
 - For a new or changing route, obtain/reserve the Target Document ID when needed, write and verify one `PENDING` row first, perform the target/Parent mutation, then finalize that row as `ACTIVE` or `HISTORY`. A `PENDING` Hit is a recovery state, never proof of current content or absence.
-- If ROOT was read in the same operation and its Revision remains current with no change signal, reuse that read for the Lookup patch instead of fetching ROOT again solely because a write follows.
+- If ROOT was read in the same operation, reuse that content and Revision for the conditional Lookup batch instead of fetching ROOT again solely because a write follows. Treat a required-Revision rejection as the change signal and re-read only then.
 - Use plain ISO-8601 text for Lookup bookkeeping. Do not create or refresh native date chips only to maintain this index.
 
 ### Coverage Safety
@@ -969,31 +982,51 @@ Immediate means flush the affected Branch promptly. It does not mean writing aft
 
 Working Discussion, duplicate candidates, superseded candidates with no History value, and unverified inference are `DISCARD` and never reach Google Drive.
 
+### Scope-Preserving Merge
+
+Before treating a newer statement as a replacement, compare every applicability dimension that can change its meaning:
+
+- authority and document type;
+- configuration, Revision, material, option, or variant;
+- Lot, Sub-Lot, batch, unit, or Serial range;
+- issue time, effective time, production cutoff, expiry, and use-count limit;
+- regular authority, temporary authority, test evidence, commercial terms, and unresolved quality status; and
+- explicit exceptions, exclusions, and non-retroactivity.
+
+A newer statement replaces an older statement only inside the scope where authority and applicability actually overlap. Preserve a broad Lot-level rule and a narrower Sub-Lot/Serial exception at the same time when both remain valid. Never collapse a Serial-scoped exception into one state for the whole Lot, and never let a test result or quotation overwrite an approval rule merely because it is newer.
+
 ### Checkpoint Flush Procedure
 
-> **Buffer candidates → Group by Branch → Read each dirty Branch once → Patch once → Verify by risk.**
+> **Buffer candidates → Group by target document → Reuse the retained read and Revision → Conditional batch once → Verify by risk.**
 
 ```text
 Classify and deduplicate buffered candidates
-→ group remaining candidates by target Branch
-→ identify dirty Branches
-→ fresh-read each dirty Branch once, immediately before its batch patch
-→ inspect Revision when available
-→ merge all compatible changes for that Branch into one minimum patch
+→ group remaining candidates by target document
+→ identify dirty documents
+→ if a dirty document has not been read for the current work unit, read the required tab/section and Revision once when partial retrieval is supported; otherwise read the document once
+→ retain the returned content, target selector, and Revision
+→ if it has already been read, do not re-read it solely because a write follows
+→ merge all compatible changes for that document into one ordered minimum batch
+→ preserve authority / configuration / Lot / Sub-Lot / Serial / effective-time boundaries
 → clean only duplicate, superseded, or stale content in the touched scope
-→ write once per dirty Branch when the available tool supports it
+→ submit one ordered batch per dirty document with the retained Revision as requiredRevisionId when supported
+→ on Revision rejection only, re-read once, reevaluate the merge, and retry against the new Revision
 → update one Knowledge Lookup row only if its routing metadata changed
 → verify according to the Verification Tier
 → clear only candidates whose writes were verified
 ```
 
-Independent reads or verifications may run in parallel when the current Runtime and tool support safe parallel calls. Never parallelize writes to the same document or dependent Parent/Child structural changes.
+Independent startup reads, dirty-document reads, unrelated document writes, and verifications may run in parallel when the current Runtime and tool support safe parallel calls. Never parallelize writes to the same document or dependent Parent/Child structural changes.
 
 Update the ROOT Map only when Branch topology, routing metadata, or the ROOT Digest actually changes. Ordinary content changes inside an existing Branch do not require a ROOT Map write.
 
 Treat a Knowledge Lookup row as routing metadata. Batch a required Lookup change with the same checkpoint, but do not rewrite the Lookup for an ordinary content-only edit.
 
-If the available Google Drive action cannot combine compatible edits, use the smallest number of writes it supports without weakening semantic correctness. Do not simulate batching by rewriting the entire document.
+If the available Google Drive action cannot combine compatible edits or enforce a required Revision, use the smallest safe fallback it supports and record the limitation. Do not simulate batching by rewriting the entire document.
+
+Use an immutable Tab ID, existing Named Range ID, or equivalent stable selector when available. Otherwise reuse the exact indexes or heading resolved by the retained target read. Do not make a separate Drive write merely to create optimization metadata; a stable selector may be added opportunistically only when it fits inside the same required content batch.
+
+Use plain ISO-8601 text for machine bookkeeping timestamps and include them in the same content batch. Create or refresh a native date chip only when the user-facing document actually requires that chip.
 
 ### Verification Tiers
 
@@ -1001,9 +1034,10 @@ Use the lowest verification tier that safely matches the change.
 
 #### Routine content patch
 
-- verify the changed section or returned updated content;
-- confirm the intended semantic key, value, and boundary;
-- confirm Revision when the Runtime exposes it.
+- when the batch was protected by the retained required Revision, a successful atomic response plus the returned new Revision/write-control state is the default transport verification;
+- confirm the intended semantic key, value, and scope boundary in the prepared patch payload;
+- do not perform a read-back solely to prove that an already-confirmed routine batch was accepted;
+- if the Runtime cannot return a Revision or equivalent write result, read only the changed scope as fallback.
 
 #### Critical state patch
 
@@ -1011,7 +1045,8 @@ Use for important decisions, cancellations, safety/compliance constraints, autho
 
 - re-read the complete affected logical section;
 - confirm superseded state is no longer presented as current;
-- verify authority, provenance, and Revision when available.
+- verify authority, provenance, configuration, Lot/Sub-Lot/Serial scope, effective conditions, unresolved exceptions, and Revision when available;
+- perform only this one scoped verification after a successful conditional batch unless it exposes a conflict.
 
 #### Structural patch
 
@@ -1028,15 +1063,17 @@ If verification fails, keep the affected candidates in the Buffer and do not rep
 
 For an immediate single change or a checkpoint batch, follow:
 
-> **Read current once → Patch minimum once → Local cleanup → Verify touched scope.**
+> **Read target once → Retain Revision → Conditional batch once → Re-read only on conflict or risk.**
 
 ```text
-Read the latest target Branch
-→ inspect the current Revision when available
+Use the target content and Revision already read for the current work unit
+→ if absent, read the target once
 → merge compatible buffered candidates
+→ preserve every applicable authority and nested scope boundary
 → add / modify / remove only what is necessary in one minimum patch
 → clean duplicate, superseded, or stale pointers within the touched scope
-→ write
+→ write one ordered batch with requiredRevisionId when supported
+→ if rejected for Revision conflict, read latest once, re-merge, and retry
 → apply the appropriate Verification Tier
 ```
 
@@ -1089,7 +1126,7 @@ UPGRADE is a minimum-patch operation inside this package.
 - Match the verified version to the Section 35 Installed-Level Index.
 - Load only that row's ordered Patch Queue and require the first Patch ID to match.
 - Preserve all existing Document IDs, unrelated user-authored instructions, and every non-queued path.
-- Only `P-019-ROOT-LOOKUP` may traverse Current Knowledge once for backfill and modify ROOT's `Knowledge Lookup`; it must not rewrite detailed project content.
+- Only `P-019-ROOT-LOOKUP` may traverse Current Knowledge once for backfill and modify ROOT's `Knowledge Lookup`; it must not rewrite detailed project content. P-020 patches may replace only their declared Global Protocol sections, Startup Connection subsection, and three Project Manifest capability rows.
 - Verify every queued managed path, then update the Package Version in both Manifests once at the end.
 - If the installed version, target document, section boundary, or required transition cannot be proven, stop without guessing.
 
@@ -1273,14 +1310,19 @@ If Trash is unavailable, remove the Branch from the Parent Map and prefix the do
 Use Google Docs/Drive Revision or write controls when available.
 
 ```text
-Revision read = current Revision
-→ minimal Patch allowed
+Target content + Revision retained from the task read
+→ submit the minimum batch with requiredRevisionId
 
-Revision changed
-→ re-read latest version
+Conditional write accepted
+→ retain the returned new Revision
+→ verify according to risk without an unconditional read-back
+
+Conditional write rejected because Revision changed
+→ re-read the latest target once
 → reevaluate Update Candidate
 → auto-merge if semantics are compatible
 → ask the user only when Human Intent conflicts semantically
+→ retry with the new required Revision
 ```
 
 Never blind-overwrite.
@@ -1718,6 +1760,10 @@ reconfirm Google Drive Capability
 → verify Fast Knowledge Lookup rules in Protocol
 → verify Question-Driven Deepening rules in Protocol
 → verify Root Update Buffer / checkpoint-batched write rules in Protocol
+→ verify retained-Revision conditional batch rules and conflict-only re-read behavior
+→ verify authority / configuration / Lot / Sub-Lot / Serial scope-preserving merge rules
+→ verify routine response-based and critical scoped verification rules
+→ verify plain-text machine timestamps and no optimization-only write rule
 → verify risk-tiered write verification rules
 → verify Production Quiet user-facing language rules in Protocol
 → verify the Model Recommendation Adapter exists in Protocol
@@ -1726,6 +1772,20 @@ reconfirm Google Drive Capability
 → verify current Runtime Capability mapping for model/effort recommendations
 → inspect Project Manifest status
 → perform a minimal Write / Read Back test
+```
+
+Run this in-memory regression without reading or writing project data:
+
+```text
+Existing rule: a regular authorization applies to one configuration for production Lots after a cutoff.
+New evidence: in a later Lot, `Sub-Lot A / Serial 001-040` receives a narrower exception while adjacent `Serial 041-120` remains under the broad rule; separate test and quotation documents have their own scopes.
+
+PASS only if:
+- the broad applicable Lot rule remains current;
+- the `Serial 001-040` exception coexists with the broad rule and neither it nor its state leaks into `Serial 041-120` or the entire Lot;
+- test and commercial scopes do not overwrite authorization scope;
+- a planned existing-area update reuses one retained target read and Revision;
+- the plan uses one conditional batch, with one scoped post-write read only because this is critical state.
 ```
 
 Do not recreate or overwrite healthy items.
@@ -1766,15 +1826,16 @@ The agent determines its installed Root Engineering level only from the matching
 
 | Verified installed level | Capabilities already present | First Patch ID | Ordered Patch Queue |
 |---|---|---|---|
-| `0.1.1` | baseline installation and question-driven deepening | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.2` | `0.1.1` + runtime-aware model recommendation | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.3` | `0.1.2` + checkpoint-batched writes and risk-tiered verification | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.4` | `0.1.3` + production-quiet communication | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.5` | `0.1.4` + superseded split-file routing | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.6` | embedded path-scoped single-file upgrade | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.7` | `0.1.6` + changed-path completion reporting | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP` |
-| `0.1.8` | shared Core policy + connection-only Project Instructions | `P-019-PROTOCOL-LOOKUP` | `P-019-PROTOCOL-LOOKUP → P-019-ROOT-LOOKUP` |
-| `0.1.9` | complete-coverage fast Knowledge Lookup | `NONE` | `EMPTY; VERIFY only` |
+| `0.1.1` | baseline installation and question-driven deepening | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.2` | `0.1.1` + runtime-aware model recommendation | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.3` | `0.1.2` + checkpoint-batched writes and risk-tiered verification | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.4` | `0.1.3` + production-quiet communication | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.5` | `0.1.4` + superseded split-file routing | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.6` | embedded path-scoped single-file upgrade | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.7` | `0.1.6` + changed-path completion reporting | `P-018-PROTOCOL-CORE` | `P-018-PROTOCOL-CORE → P-018-INSTRUCTIONS-CONNECTION → P-019-ROOT-LOOKUP → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.8` | shared Core policy + connection-only Project Instructions | `P-019-PROTOCOL-LOOKUP` | `P-019-PROTOCOL-LOOKUP → P-019-ROOT-LOOKUP → P-020-PROTOCOL-COMMIT → P-020-INSTRUCTIONS-BOOT → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.9` | complete-coverage fast Knowledge Lookup | `P-020-PROTOCOL-COMMIT` | `P-020-PROTOCOL-COMMIT → P-020-INSTRUCTIONS-BOOT → P-020-MANIFEST-CAPABILITIES` |
+| `0.1.10` | parallel boot + retained-Revision conditional batch + scope-preserving merge | `NONE` | `EMPTY; VERIFY only` |
 
 After matching a row, set these internal routing values before any write:
 
@@ -1782,12 +1843,12 @@ After matching a row, set these internal routing values before any write:
 INSTALLED_LEVEL = <verified manifest version>
 FIRST_PATCH_ID = <First Patch ID in the matched row, or NONE>
 PATCH_QUEUE = <Ordered Patch Queue in the matched row, or EMPTY>
-TARGET_LEVEL = 0.1.9
+TARGET_LEVEL = 0.1.10
 ```
 
 When `PATCH_QUEUE` is not empty, the first selected active patch must match `FIRST_PATCH_ID`, and the full queue must match the row exactly. An empty queue is valid only for the current target level and runs VERIFY without writing.
 
-### 35.2 Active Patch List to 0.1.9
+### 35.2 Active Patch List to 0.1.10
 
 | Patch ID | Target document | Managed path | Latest payload source in this file | Replacement boundary |
 |---|---|---|---|---|
@@ -1795,8 +1856,11 @@ When `PATCH_QUEUE` is not empty, the first selected active patch must match `FIR
 | `P-018-INSTRUCTIONS-CONNECTION` | Project Instructions | `Managed Root Engineering Connection Block` | content between `ROOT_ENGINEERING_CONNECTION_START` and `ROOT_ENGINEERING_CONNECTION_END` | replace the old Root Engineering block; preserve unrelated user-authored instructions outside it |
 | `P-019-PROTOCOL-LOOKUP` | Global Protocol | `Fast Knowledge Lookup` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Fast Knowledge Lookup` | insert after `## Runtime Summary`; replace that exact section if already present |
 | `P-019-ROOT-LOOKUP` | ROOT | `Knowledge Lookup` | `TEMPLATE: ROOT` → `## Knowledge Lookup` | insert immediately before `## Root Map`, or replace that exact section on retry; backfill rows from verified existing routing units |
+| `P-020-PROTOCOL-COMMIT` | Global Protocol | `Runtime Summary` + `Fast Knowledge Lookup` + `Write` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → those exact sections | replace only differing sections among those three in one document batch when supported |
+| `P-020-INSTRUCTIONS-BOOT` | Project Instructions | `Startup Connection` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Startup Connection` | replace only that exact managed subsection; preserve the rest of the managed block and all unrelated user instructions |
+| `P-020-MANIFEST-CAPABILITIES` | Project Manifest | three new `Capability Matrix` rows | `TEMPLATE: PROJECT_MANIFEST` → `## Capability Matrix` | upsert only `Partial Document Read`, `Native Document Batch`, and `Returned Revision / Write Control`; preserve every other row and value |
 
-Use only the queue in the matched Installed-Level row. The `P-018-PROTOCOL-CORE` payload already contains the current `Fast Knowledge Lookup` section, so older levels do not also run `P-019-PROTOCOL-LOOKUP`. Every supported older level runs `P-019-ROOT-LOOKUP` exactly once.
+Use only the queue in the matched Installed-Level row. The `P-018-PROTOCOL-CORE` and `P-018-INSTRUCTIONS-CONNECTION` payloads already contain the current P-019 and behavioral P-020 content, so older levels do not replay equivalent Protocol or Instructions patches. Every supported older level runs `P-020-MANIFEST-CAPABILITIES` once; every level below `0.1.9` also runs `P-019-ROOT-LOOKUP` exactly once.
 
 #### Superseded capability history
 
@@ -1823,15 +1887,16 @@ The two Manifest version fields are completion metadata, not ordinary change row
 4. Require the Package ID to match this package and both Package Versions to be identical.
 5. Set `INSTALLED_LEVEL` only from that verified version and match exactly one row in the Installed-Level Index.
 6. Set `FIRST_PATCH_ID`, `PATCH_QUEUE`, and `TARGET_LEVEL` from that row before reading any patch target.
-7. If `INSTALLED_LEVEL` equals `0.1.9`, run VERIFY and make no Upgrade write.
+7. If `INSTALLED_LEVEL` equals `0.1.10`, run VERIFY and make no Upgrade write.
 8. Otherwise, resolve each Patch ID in `PATCH_QUEUE` against Section 35.2 and preserve the declared order.
 9. Require the first resolved Patch ID to equal `FIRST_PATCH_ID` and require every queued Patch ID to exist exactly once. If not, stop without mutation.
 10. Do not enqueue any superseded historical patch or any active patch absent from the matched row.
 
 Examples:
 
-- `0.1.2` starts at `P-018-PROTOCOL-CORE`, refreshes the connection block, then creates and backfills `Knowledge Lookup`. It does not replay `P-012` through `P-017` or separately run `P-019-PROTOCOL-LOOKUP`.
-- `0.1.8` starts at `P-019-PROTOCOL-LOOKUP`, then creates and backfills `Knowledge Lookup`. It does not rewrite Project Instructions.
+- `0.1.2` starts at `P-018-PROTOCOL-CORE`, refreshes the connection block, creates and backfills `Knowledge Lookup`, and adds only the three capability rows. It does not replay `P-012` through `P-017` or separately run `P-019-PROTOCOL-LOOKUP`.
+- `0.1.8` starts at `P-019-PROTOCOL-LOOKUP`, creates and backfills `Knowledge Lookup`, then patches the behavioral P-020 paths and three capability rows. It does not replace the full Protocol, full Project Instructions, or full Project Manifest.
+- `0.1.9` starts at `P-020-PROTOCOL-COMMIT`, patches the three declared Protocol sections in one document batch when supported, replaces only the connection block's `Startup Connection` subsection, and adds only the three capability rows.
 
 ### 35.4 Minimum Patch Contract
 
@@ -1841,31 +1906,37 @@ Examples:
 - If the runtime cannot edit ChatGPT Project Instructions directly, give the user only the new connection block and one instruction to replace the old Root Engineering block. Do not make the user reinstall or paste the Global Protocol into Project Instructions.
 - `P-019-PROTOCOL-LOOKUP` inserts or replaces only `## Fast Knowledge Lookup` in the existing Global Protocol Document ID.
 - `P-019-ROOT-LOOKUP` inserts or replaces only `## Knowledge Lookup` immediately before `## Root Map` in the existing ROOT Document ID.
+- `P-020-PROTOCOL-COMMIT` replaces only differing payloads among `## Runtime Summary`, `## Fast Knowledge Lookup`, and `## Write` in the existing Global Protocol Document ID. Group them into one required-Revision batch when supported; do not fresh-read between section replacements and do not send an operation for an already-matching section.
+- `P-020-INSTRUCTIONS-BOOT` replaces only `## Startup Connection` inside the existing Root Engineering managed connection block. Preserve every other managed subsection and every unrelated user-authored instruction byte-for-byte.
+- `P-020-MANIFEST-CAPABILITIES` upserts only `Partial Document Read`, `Native Document Batch`, and `Returned Revision / Write Control` inside the existing Project Manifest `## Capability Matrix`. Populate them from the current Preflight result and preserve every other row, value, and section byte-for-byte.
 - For the one-time `P-019-ROOT-LOOKUP` backfill, traverse Current Knowledge and each declared Child Map once. Add rows only for explicit named independently retrievable areas. Do not read unrelated Sources or History, invent Aliases, or infer that similar names are the same area.
 - Preserve every existing detailed fact, decision, source link, heading, document ID, folder, and Child relationship. Do not move or rewrite project content during this Upgrade.
 - Mark Lookup `Coverage` as `COMPLETE` only after every active independently retrievable area in the Current Knowledge subtree is represented exactly once and every target ID/heading resolves. If that cannot be proven, keep it `PARTIAL`, fail the Patch, and do not update either Manifest version.
 - Use plain ISO-8601 text for `Last Reconciled`; do not create or update native date chips for Lookup metadata.
-- Outside the declared ROOT Lookup insertion and any queued Protocol/Instructions path, do not modify Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, project content, folder structure, or document IDs.
+- Do not scan project documents to add Named Ranges during this Upgrade. Stable selectors are adopted on contact only when they already exist or can be included in the same future content batch without an optimization-only write.
+- Outside the declared ROOT Lookup insertion, queued Protocol/Instructions path, and three declared Project Manifest capability rows, do not modify Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, project content, folder structure, other Manifest fields, or document IDs.
 - Do not add this Installer permanently as a Project Source.
-- Do not downgrade. If the version is older than `0.1.1`, newer than `0.1.9`, inconsistent, or unparseable, stop without mutation and report the exact value.
+- Do not downgrade. If the version is older than `0.1.1`, newer than `0.1.10`, inconsistent, or unparseable, stop without mutation and report the exact value.
 
 ### 35.5 Verification and Completion
 
-1. Re-read the Global Protocol and confirm all required Core headings, including `Fast Knowledge Lookup`, exist exactly once.
-2. If `P-018-INSTRUCTIONS-CONNECTION` was queued, re-read the managed block and confirm it contains only Binding, startup connection, installation verification, and connection failure behavior. Otherwise confirm Project Instructions are unchanged.
-3. Re-read ROOT and confirm `Knowledge Lookup` exists exactly once, `Coverage` is `COMPLETE`, no `PENDING` row remains, each Key is unique, explicit Aliases are unambiguous, and every target Document ID/heading resolves.
-4. Confirm that Current Knowledge, its Child documents, unrelated user-authored Project Instructions, and every non-queued project document are unchanged.
-5. If at least one row exists, test one Key Hit through its declared target. If the table is empty, verify that the reconciliation found no independently retrievable area. In either case, test one guaranteed-nonexistent synthetic Key and confirm a complete-coverage Miss does not trigger a full Current Knowledge read solely to prove absence.
-6. Only after every Patch in `PATCH_QUEUE` passes, update both Manifest Package Versions to `0.1.9`.
-7. Re-read both version fields and run the Fresh-Chat Acceptance Test against the existing Binding.
-8. If any queued Patch fails, do not update either Manifest version. Report the failed Patch ID, document, and managed path, then stop.
+1. Re-read the changed Global Protocol sections once and confirm all required Core headings exist exactly once. If `P-020-PROTOCOL-COMMIT` was queued, confirm `Runtime Summary`, `Fast Knowledge Lookup`, and `Write` require retained-Revision conditional batching, conflict-only re-read, scope-preserving merge, response-based routine verification, critical scoped verification, stable-selector reuse, and plain machine timestamps.
+2. If `P-018-INSTRUCTIONS-CONNECTION` or `P-020-INSTRUCTIONS-BOOT` was queued, re-read only the managed connection block and confirm it contains connection behavior only and starts independent Protocol/ROOT reads concurrently when supported. Otherwise confirm Project Instructions are unchanged.
+3. If `P-020-MANIFEST-CAPABILITIES` was queued, re-read only the Project Manifest Capability Matrix and confirm the three new rows each exist once with the current Preflight result. Otherwise confirm those rows are already present and make no capability write.
+4. Re-read ROOT and confirm `Knowledge Lookup` exists exactly once, `Coverage` is `COMPLETE`, no `PENDING` row remains, each Key is unique, explicit Aliases are unambiguous, and every target Document ID/heading resolves.
+5. Confirm that Current Knowledge, its Child documents, unrelated user-authored Project Instructions, every other Manifest field, and every non-queued project document are unchanged.
+6. If at least one row exists, test one Key Hit through its declared target. If the table is empty, verify that the reconciliation found no independently retrievable area. In either case, test one guaranteed-nonexistent synthetic Key and confirm a complete-coverage Miss does not trigger a full Current Knowledge read solely to prove absence.
+7. Run the Section 33 in-memory nested-scope regression. It must preserve the broad Lot rule and narrower Sub-Lot/Serial exceptions without any Drive read or write.
+8. Only after every Patch in `PATCH_QUEUE` passes, update both Manifest Package Versions to `0.1.10` using plain ISO-8601 text for accompanying machine timestamps.
+9. Re-read both version fields and run the Fresh-Chat Acceptance Test against the existing Binding.
+10. If any queued Patch fails, do not update either Manifest version. Report the failed Patch ID, document, and managed path, then stop.
 
 ### 35.6 Upgrade Completion Report
 
 After a successful Upgrade, tell the user exactly which resolved paths were actually changed. Use this short format:
 
 ```text
-Update complete: <START_VERSION> → 0.1.9
+Update complete: <START_VERSION> → 0.1.10
 
 Changed:
 - <PATCH_ID> — <TARGET_DOCUMENT> → <MANAGED_PATH>
@@ -1947,7 +2018,7 @@ Next action: paste Project Instructions
 Only after the Fresh-Chat Acceptance Test passes:
 
 ```text
-Root Engineering v0.1.9 installation complete
+Root Engineering v0.1.10 installation complete
 
 - Google Drive connection: PASS
 - Read / Create / Update / Move: PASS
@@ -1965,6 +2036,12 @@ Root Engineering v0.1.9 installation complete
 - Connection-only Project Instructions: PASS
 - Complete-coverage Knowledge Lookup: PASS
 - Indexed existence fast path: PASS
+- Parallel independent startup reads: PASS or SERIAL-FALLBACK
+- Retained-Revision conditional writes: PASS or LIMITED
+- One-batch-per-document write path: PASS or LIMITED
+- Scope hierarchy merge guard: PASS
+- Routine response / critical scoped verification: PASS
+- Plain machine timestamps: PASS
 - Path-scoped Upgrade: PASS
 - Model Recommendation Adapter: PASS
 - Manifest status: ACTIVE
@@ -2033,13 +2110,13 @@ Do not recreate the AI's native reasoning ability as a detailed state machine. M
 
 ## Runtime Summary
 
-1. On the first substantive task in a new chat, read the project ROOT.
+1. On the first substantive task in a new chat, use the connection block to start independent Global Protocol and project ROOT reads concurrently when the Runtime supports it; otherwise read them sequentially.
 2. Follow the ROOT Map and read only the Branches required for the current task.
 3. Use the ROOT Knowledge Lookup to resolve named areas before reading a full Branch only to test existence.
-4. Reuse Roots already read in the same chat until a change signal appears.
+4. Reuse target content, selector, and Revision already read for the current work unit; do not re-read solely because a write follows.
 5. When important information that could change the result is missing, perform Question-Driven Root Deepening.
 6. Classify write candidates as `IMMEDIATE`, `CHECKPOINT`, or `DISCARD` in the in-context Root Update Buffer.
-7. At an immediate flush or meaningful checkpoint, group compatible candidates by Branch and follow `Read current once → Patch minimum once → Local cleanup → Verify touched scope`.
+7. At an immediate flush or meaningful checkpoint, group compatible candidates by document and follow `Retained read + Revision → scope-preserving merge → one conditional batch → conflict-only re-read → risk-matched verification`.
 8. Decide whether to persist information by asking:
    - If this information disappears, would a future AI be meaningfully more likely to rediscover it, make a wrong judgment, or repeat the same failure?
 9. AI Inference cannot become a Canonical Fact/Rule without verification or user confirmation.
@@ -2064,7 +2141,7 @@ Do not recreate the AI's native reasoning ability as a detailed state machine. M
    Route State is `PENDING`, `ACTIVE`, or `HISTORY`; preserve a former name as an explicit Alias instead of creating a redirect chain.
 8. Add or change a row only when a named independently retrievable area is created, renamed, moved, merged, archived, or gains an explicit Alias. Content-only changes do not rewrite the Lookup.
 9. Prefer a dedicated Child document for a complex independently retrieved area; otherwise point to an exact heading in the existing owner document.
-10. If ROOT was read in the same operation and its Revision remains current with no change signal, reuse it for the Lookup patch instead of reading ROOT again solely because a write follows.
+10. If ROOT was read in the same operation, reuse that content and Revision for the conditional Lookup batch instead of reading ROOT again solely because a write follows. Treat a required-Revision rejection as the change signal and re-read only then.
 11. Use plain ISO-8601 text for Lookup bookkeeping; do not create native date chips for index maintenance.
 12. For a new or changing route, obtain/reserve the Target Document ID when needed, patch and verify one `PENDING` row first, perform the target/Parent mutation, then finalize and verify the row as `ACTIVE` or `HISTORY`. A `PENDING` Hit triggers recovery and is never proof of current content or absence.
 
@@ -2099,13 +2176,20 @@ Do not recreate the AI's native reasoning ability as a detailed state machine. M
 3. Prioritize explicit user decisions, important current facts, verified reusable learning, and important unresolved items.
 4. Do not store Working Discussion, entire conversations, verbose internal reasoning, or unverified AI inference in the Canonical Root.
 5. Classify candidates as `IMMEDIATE`, `CHECKPOINT`, or `DISCARD`; collapse duplicate or superseded candidates before any Drive call.
-6. At flush time, group candidates by Branch, fresh-read each dirty Branch once, and merge compatible edits into one minimum patch per Branch when the available tool supports it.
-7. Do not rewrite the entire document. Modify only the minimum required portion.
-8. Check Revision conflicts when possible. Never parallelize writes to the same document or dependent Parent/Child structural changes.
-9. Update the ROOT Map only when topology, routing metadata, or the ROOT Digest changes.
-10. Update one Knowledge Lookup row only when its Key, Alias, location, owner, or Route State changes; do not rewrite it for content-only edits.
-11. Verify routine writes by reading the changed scope; use full logical-section verification for critical state and Parent/Child/path verification for structural changes.
-12. Clear buffered candidates only after successful verification. If a write fails, retain the candidates and follow the Production Quiet failure rule.
+6. Before replacement, compare authority, document type, configuration, Revision, material/option, Lot, Sub-Lot, Serial range, issue/effective/expiry time, regular/temporary authority, test scope, commercial scope, unresolved quality status, and explicit exceptions.
+7. A newer statement replaces an older one only inside the scope where authority and applicability overlap. Preserve a broad Lot rule and a narrower Sub-Lot/Serial exception simultaneously; never collapse the exception into one state for the whole Lot.
+8. At flush time, group candidates by target document. If a target was not read for the current work unit, request only its required tab/section and Revision when partial retrieval is supported; otherwise read it once. Retain the content, exact selector, and Revision. If it was already read, do not fresh-read it solely because a write follows.
+9. Merge all compatible edits into one ordered minimum batch per dirty document. When supported, submit it with the retained Revision as `requiredRevisionId`.
+10. If the conditional write is rejected because the Revision changed, re-read that target once, reevaluate authority and scope, re-merge, and retry with the new Revision. Never blind-overwrite or perform a separate freshness read before every write.
+11. Do not rewrite the entire document. Modify only the minimum required portion.
+12. Reuse an immutable Tab ID, existing Named Range ID, or equivalent stable selector when available; otherwise reuse the exact heading or indexes resolved by the retained read. Do not make a separate write solely to create optimization metadata.
+13. Use plain ISO-8601 text for machine bookkeeping timestamps and include them in the same batch. Create a native date chip only when the user-facing document actually requires one.
+14. Independent document reads, unrelated document writes, and verifications may run in parallel when supported. Never parallelize writes to the same document or dependent Parent/Child structural changes.
+15. Update the ROOT Map only when topology, routing metadata, or the ROOT Digest changes.
+16. Update one Knowledge Lookup row only when its Key, Alias, selector, location, owner, or Route State changes; do not rewrite it for content-only edits.
+17. For a routine patch protected by the retained required Revision, treat a successful atomic response plus returned new Revision/write-control state as the default transport verification; do not read back solely to prove acceptance. If that response evidence is unavailable, read only the changed scope.
+18. For critical decisions, cancellations, authority changes, nested Lot/Sub-Lot/Serial scope, quality gates, or next-action state, read the complete affected logical section once after the conditional batch. For structural changes, verify the destination, Child, Parent Map, route, and Folder boundary.
+19. Clear buffered candidates only after the applicable response or scoped verification succeeds. If a write fails, retain the candidates and follow the Production Quiet failure rule.
 
 ## Production Quiet Communication
 
@@ -2125,7 +2209,7 @@ Do not recreate the AI's native reasoning ability as a detailed state machine. M
 3. Load only that row's ordered Patch Queue and require its first ID to match the declared First Patch ID.
 4. Treat superseded capability-history entries as level descriptions only, never as an execution queue.
 5. Read and patch only each queued managed path; group safe changes by target document.
-6. Do not regenerate a complete installed document or recreate the installation. Modify project knowledge only when a queued Patch explicitly names that managed path; `P-019-ROOT-LOOKUP` may add and backfill only ROOT's routing index.
+6. Do not regenerate a complete installed document or recreate the installation. Modify only a queued managed path. `P-019-ROOT-LOOKUP` may add and backfill only ROOT's routing index; P-020 patches may change only their declared Protocol sections, Startup Connection subsection, and three Project Manifest capability rows.
 7. Verify every changed section before updating either Manifest version.
 8. If the level, start path, or a required section boundary cannot be proven, stop without mutation. Never downgrade.
 9. After success, report the verified start and final versions and list each deduplicated document → section path actually changed. Do not list unchanged paths. If no write was needed, say the installation was already current.
@@ -2380,6 +2464,9 @@ This may be empty immediately after installation. Add only Skills whose reusable
 - Move: `<PASS_OR_FAIL>`
 - Trash: `<PASS_OR_LIMITED_OR_FAIL>`
 - Revision Guard: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Partial Document Read: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Native Document Batch: `<PASS_OR_LIMITED_OR_UNKNOWN>`
+- Returned Revision / Write Control: `<PASS_OR_LIMITED_OR_UNKNOWN>`
 
 ## Verification
 
@@ -2690,17 +2777,18 @@ This managed block contains only the project-specific connection. Shared operati
 
 ## Startup Connection
 
-1. On the first substantive task in a new chat, read `Global Protocol Document ID` directly and follow that document as the shared operating policy.
-2. Read `ROOT Document ID` directly.
+1. On the first substantive task in a new chat, start direct reads of `Global Protocol Document ID` and `ROOT Document ID` concurrently when the Runtime supports independent calls. If it does not, read the same two exact IDs sequentially.
+2. After both reads return, follow the Global Protocol as shared operating policy.
 3. Require the Project ID and Root ID inside ROOT to match this Binding and require ROOT's parent to equal `Project Root Folder ID`.
-4. Follow the ROOT Map and read only the documents needed for the current request.
-5. Never substitute a same-named folder, another project's documents, model memory, or an old conversation for these exact IDs.
+4. Follow the ROOT Map and Knowledge Lookup and read only the documents needed for the current request.
+5. Never delay one independent startup read merely to wait for the other, and never repeat either read in the same chat without a change signal.
+6. Never substitute a same-named folder, another project's documents, model memory, or an old conversation for these exact IDs.
 
 ## Installation Verification Trigger
 
 When the user enters `Verify installation` and the Project Manifest is not yet `ACTIVE`:
 
-1. Read Global Protocol, ROOT, and Project Manifest by the exact IDs above.
+1. Start reads of Global Protocol, ROOT, and Project Manifest by the exact IDs above concurrently when supported; otherwise use the same exact IDs sequentially.
 2. Verify Project ID, Root ID, and the Project Folder boundary.
 3. Read Current Knowledge through the ROOT Map.
 4. Write and re-read a temporary Acceptance Token in Project Manifest, then remove it.
@@ -2766,6 +2854,8 @@ Google Drive Preflight PASS
 + Question-Driven Deepening Protocol verified
 + Model Recommendation Adapter applied
 + fixed-Sol-High regression test PASS
++ nested Lot / Sub-Lot / Serial scope regression PASS
++ retained-Revision conditional batch path PASS or LIMITED
 + Manifest Write / Read Back
 + Status ACTIVE
 = installation complete

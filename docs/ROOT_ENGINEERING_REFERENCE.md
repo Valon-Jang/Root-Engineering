@@ -20,7 +20,7 @@ Current reference implementation: **ChatGPT Project + Google Drive live app acce
 3. Say: **“Read the package and install it.”**
 4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
 
-The same installer handles an existing installation in UPGRADE mode. Shared operating policy stays in the Global Protocol, while Project Instructions retain only the project-specific connection block. Each installed level maps to an explicit patch queue. Version 0.1.9 adds Lookup behavior to the Global Protocol and backfills only ROOT's routing Lookup while preserving detailed project knowledge and existing document IDs.
+The same installer handles an existing installation in UPGRADE mode. Shared operating policy stays in the Global Protocol, while Project Instructions retain only the project-specific connection block. Each installed level maps to an explicit patch queue. Version 0.1.10 keeps the complete-coverage Lookup introduced in 0.1.9 and adds concurrent independent startup reads, retained-revision conditional batches, conflict-only re-reads, risk-matched verification, and scope-preserving merge rules without relocating detailed project knowledge or changing existing document IDs.
 
 Korean users can use the separate [Korean installer](../installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
@@ -514,20 +514,26 @@ A storage-efficient Root write cycle is:
 ```text
 Classify candidates: Immediate / Checkpoint / Discard
       ↓
-Group compatible candidates by Branch
+Group compatible candidates by target document
       ↓
-Read each dirty Branch once
+Reuse the first target read and its revision, or read each dirty document once
       ↓
-Apply one minimum patch per dirty Branch when supported
+Merge authority, applicability, and nested scope in memory
       ↓
-Verify the touched scope according to risk
+Apply one revision-guarded batch per dirty document when supported
+      ↓
+Accept the atomic response for routine writes; read the affected logical scope once for critical writes
 ```
 
-Routine content changes verify the changed scope. Critical decisions, cancellations, authority changes, and next-action state verify the complete affected logical section. Structural changes verify the Child, Parent Map, navigation path, and destination before cleanup.
+The revision captured by the retained read acts as a short write lease. When the target is known and partial retrieval is available, that read requests only the required tab or section plus revision fields. A successful conditional batch returns the new revision and does not require a second read merely to prove that the service accepted the write. A stale-revision conflict triggers one fresh read, re-merge, and retry. If native conditional batch or returned revisions are unavailable, the runtime records the limitation and falls back to the safest supported path.
+
+Scope-preserving merge compares authority, document type, configuration, revision, material, Lot, Sub-Lot, Serial, issue and effective times, expiry, regular or temporary permission, test and commercial scope, exclusions, and unresolved quality issues. A newer record replaces only the scope it actually governs. A broad Lot rule and a narrower Sub-Lot or Serial exception therefore remain simultaneously current when both are still valid; an internal test or a newer quotation cannot silently overwrite an approval issued by a different authority.
+
+Routine content changes use the successful atomic response and returned revision as verification. Critical decisions, cancellations, authority changes, and next-action state receive one read of the complete affected logical section, including any nested Lot, Sub-Lot, or Serial exceptions. Structural changes verify the Child, Parent Map, navigation path, and destination before cleanup.
 
 The ROOT Map and Knowledge Lookup are updated only when topology or routing metadata changes, or when the Root Digest changes. Ordinary content changes inside an existing Branch do not require a second ROOT write.
 
-Independent reads or verification may be parallelized when the runtime supports it, but writes to the same document and dependent Parent/Child changes remain sequential.
+Independent startup reads and unrelated reads or verification may be parallelized when the runtime supports it, but writes to the same document and dependent Parent/Child changes remain sequential. Stable tab IDs or named ranges are reused when already present, without performing a write solely to create optimization metadata. Machine timestamps are stored as plain ISO-8601 text unless a user-facing document specifically benefits from a rich date object.
 
 This avoids repeated Drive round trips and unnecessary large-document rewrites while retaining stronger checks for high-risk changes.
 
