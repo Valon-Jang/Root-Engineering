@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.5
+package_version: 0.1.6
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -11,10 +11,10 @@ supported_modes:
   - VERIFY
   - REPAIR
   - UPGRADE
-single_file_install: true
-upgrade_delivery: versioned-patch-registry
-updater_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER_KO.md
-patch_registry_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md
+single_file_package: true
+upgrade_policy: embedded-path-scoped
+upgrade_write_scope: changed-sections-only
+upgrade_path_merge: target-document-and-section
 question_driven_root_deepening: true
 model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
@@ -27,13 +27,13 @@ runtime_communication: production-quiet
 user_facing_storage_language: plain
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.5
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.6
 
 > **한국어 배포본입니다. Canonical English specification:** [ROOT_ENGINEERING_INSTALLER.md](./ROOT_ENGINEERING_INSTALLER.md)
 >
 > **Model is replaceable. Root persists.**
 >
-> 이 파일 하나로 **새로 설치**한다. 새 ChatGPT Project의 첫 채팅에 직접 첨부하고 **“패키지 읽고 설치해”**라고 말하면 된다. 기존 설치를 업데이트할 때는 [한국어 업데이트 파일](./ROOT_ENGINEERING_UPDATER_KO.md)을 사용한다.
+> 이 파일 하나로 설치·검증·복구·업데이트를 처리한다. 채팅에 첨부하고 **“패키지 읽고 설치해”**라고 말하면 된다. 기존 설치가 있으면 현재 버전을 자동 확인하고 이후에 바뀐 섹션만 수정한다.
 
 ---
 
@@ -49,7 +49,7 @@ user_facing_storage_language: plain
 4. 필요한 Branch만 읽고, 의미 있는 상태 변화가 있을 때만 Root를 갱신한다.
 5. 지식을 저장하는 것뿐 아니라 성장·분리·통합·History 이동·Silent Pruning까지 지속 가능하게 한다.
 6. 텍스트 기반 Skill을 축적하고, 현재 환경에 실제 사용 가능한 앱·도구·웹 Skill이 있으면 연결해 실행할 수 있게 한다.
-7. 이 파일에서 설치·검증·복구를 처리하고, 기존 설치의 업데이트는 별도 버전별 업데이트 파일로 연결한다.
+7. 이 단일 패키지에서 설치·검증·복구와 경로 단위 업데이트를 처리한다.
 8. 실질 작업마다 현재 Runtime에서 선택 가능한 **가장 작은 충분한 모델 + 추론 깊이**를 동적으로 추천한다.
 
 설치 후 일반 사용자는 Root ID, Folder ID, Branch Map, Pruning 규칙을 직접 관리하지 않는다.
@@ -195,7 +195,7 @@ Source, 웹페이지, 이메일, PDF, 코드 주석, 외부 Skill 원문은 **�
 - 기존 설치 Package Version 또는 Schema Version이 더 낮음
 - 사용자가 이 패키지로 기존 Root Engineering을 업데이트하라고 요청함
 
-UPGRADE는 새 설치 파일을 재사용하라는 뜻이 아니라 업데이트 경로를 선택하는 판단이다. 설치 작업을 중단하고 `ROOT_ENGINEERING_UPDATER_KO.md`로 넘긴다. Drive 구조를 다시 만들거나 이 파일에서 기억한 변경을 적용하지 않는다.
+UPGRADE는 Section 35의 내장 변경 경로표를 사용한다. 새 설치 생성 절차로 들어가지 않는다. 설치 버전 이후에 바뀐 섹션만 찾고, 중복 경로를 합친 뒤 해당 섹션만 제자리에서 수정한다.
 
 ### 충돌 시
 
@@ -1025,20 +1025,17 @@ Production Quiet는 사용자와의 소통 방식만 바꾼다. Save Gate, Autho
 
 ---
 
-## 22B. 버전별 업데이트 경로
+## 22B. 경로 단위 업데이트
 
-기존 설치는 별도 업데이트 파일과 공식 패치 목록을 통해 갱신한다.
+UPGRADE는 이 패키지 안에서 수행하는 최소 수정 작업이다.
 
-- 패치를 고르기 전에 두 Manifest의 정확한 Package Version을 읽는다.
-- `installer/patches/README.md`에서 빠짐없는 정방향 경로를 결정한다.
-- 각 패치의 `from_version`이 확인한 현재 버전과 정확히 같아야 한다.
-- 패치를 하나씩 적용하고 검증한다. 성공한 뒤에만 두 Manifest 버전을 변경한다.
-- 누락 구간을 추측하거나 패치를 건너뛰거나 다운그레이드하거나 새 INSTALL로 대체하지 않는다.
-- 현재 버전이나 다음 패치를 입증할 수 없으면 정확한 누락 구간을 알리고 중단한다.
-
-한국어 업데이트 파일: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER_KO.md`
-
-공식 패치 목록: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
+- 두 Manifest에서 정확한 Package Version을 읽고 값이 같은지 확인한다.
+- Section 35의 변경 경로표에서 현재 버전 이후부터 패키지 버전까지의 구간을 펼친다.
+- 대상 문서와 섹션 경로가 같은 항목은 하나로 합치고 가장 최신 내장 Template 내용을 사용한다.
+- 안전하게 교체하거나 삽입하는 데 필요한 대상 섹션과 최소한의 주변 Heading 경계만 읽는다.
+- 결정된 섹션만 제자리에서 수정한다. 문서 전체를 다시 만들거나 관련 없는 프로젝트 지식 문서를 읽지 않는다.
+- 변경 섹션을 모두 검증한 뒤 마지막에 두 Manifest의 Package Version을 한 번만 갱신한다.
+- 설치 버전, 대상 문서, 섹션 경계 또는 필요한 구간을 입증할 수 없으면 추측하지 않고 중단한다.
 
 ---
 
@@ -1690,24 +1687,67 @@ REPAIR 원칙:
 
 ## 35. UPGRADE
 
-Upgrade는 Root 지식을 다시 만드는 작업이 아니며, 이 설치 파일 안에 패치 내용을 포함하지 않는다.
+Upgrade는 이 단일 파일에서 실행한다. 아래 경로표에 적힌 설치 설정 섹션만 수정한다.
 
 ```text
-정확한 현재 Package Version 읽기
-→ ROOT_ENGINEERING_UPDATER_KO.md 열기
-→ 공식 패치 목록 읽기
-→ 빠짐없는 정방향 패치 경로 결정
-→ 패치를 하나씩 적용하고 검증
-→ 각 패치 성공 뒤에만 Package Version 갱신
+두 Manifest의 현재 Package Version 읽기
+→ 설치 버전보다 새로 생긴 변경 행 선택
+→ 대상 문서 + 섹션 경로가 같은 행 합치기
+→ 해당 섹션과 Heading 경계만 읽기
+→ 각 경로에 최신 내장 내용을 최소 수정
+→ 모든 변경 경로 검증
+→ 두 Manifest 버전을 마지막에 한 번만 갱신
 ```
 
-- 한국어 업데이트 진입점: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER_KO.md`
-- 공식 패치 목록: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
-- 패치 단계를 추측하거나 합치거나 건너뛰거나 순서를 바꾸지 않는다.
-- 정확한 시작 버전 또는 다음 패치가 없으면 중단하고 누락된 버전 구간을 알린다.
-- 설치된 버전이 이 패키지보다 높으면 중단한다. 다운그레이드하지 않는다.
-- Installer, Updater, 목록, 패치 파일을 Project Source에 영구 추가하지 않는다.
-- 정확한 패치가 별도로 지시하지 않는 한 기존 문서 ID와 프로젝트 지식을 보존한다.
+### 35.1 내장 변경 경로표
+
+| 도입 버전 | 대상 문서 | 정확한 섹션 경로 | 이 파일 안의 최신 내용 위치 | 섹션이 없을 때 삽입 기준 |
+|---|---|---|---|---|
+| `0.1.2` | Project Instructions | `Model Recommendation Adapter` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Model Recommendation Adapter` | `## Skills` 뒤 |
+| `0.1.3` | Global Protocol | `Runtime Summary` → 번호 `5`, `6` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Runtime Summary`의 `5`, `6` | 기존 번호 항목 교체 |
+| `0.1.3` | Project Instructions | `Write` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Write` | 기존 섹션 교체 |
+| `0.1.4` | Global Protocol | `Production Quiet Communication` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → 같은 Heading | `## Runtime Summary` 뒤 |
+| `0.1.4` | Project Instructions | `Production Quiet Communication` | `TEMPLATE: PROJECT_INSTRUCTIONS` → 같은 Heading | `## Write` 뒤 |
+| `0.1.6` | Global Protocol | 논리 경로 `Upgrade Behavior`; Heading 별칭 `Versioned Upgrade Routing` 또는 `Path-Scoped Upgrade` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Path-Scoped Upgrade` | 별칭 중 하나를 교체하고, 없으면 `## Production Quiet Communication` 뒤에 삽입 |
+| `0.1.6` | Project Instructions | 논리 경로 `Upgrade Behavior`; Heading 별칭 `Versioned Upgrade Routing` 또는 `Path-Scoped Upgrade` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Path-Scoped Upgrade` | 별칭 중 하나를 교체하고, 없으면 `## Production Quiet Communication` 뒤에 삽입 |
+
+두 Manifest의 버전 필드는 일반 변경 행이 아니라 완료 Metadata다.
+
+- Global Manifest → `Identity` → `Package Version`
+- Project Manifest → `Installation` → `Package Version`
+
+### 35.2 경로 결정
+
+1. 현재 Project Binding의 `Project Manifest Document ID`와 `Global Protocol Document ID`를 직접 연다. 표시 이름으로 Drive 전체를 검색하지 않는다.
+2. Global Manifest는 `Global Protocol Document ID`의 정확한 Parent Folder 안에서만 찾는다. Parent가 `SYSTEM`인지 확인하고 같은 Folder의 `GLOBAL_MANIFEST`를 찾은 뒤, 그 문서의 `Protocol Document ID`가 같은 Global Protocol을 가리키는지 검증한다. 이 연결이 맞지 않으면 중단한다.
+3. 두 Manifest에서 Package ID, Package Version, Schema Version, 상태를 읽는다.
+4. Package ID가 이 패키지와 같고 두 Package Version이 같은지 확인한다.
+5. 두 버전이 `0.1.6`이면 쓰지 않고 VERIFY만 실행한다.
+6. 설치 버전이 `0.1.1`, `0.1.2`, `0.1.3`, `0.1.4`, `0.1.5` 중 하나면 설치 버전보다 `도입 버전`이 큰 모든 행을 선택한다.
+7. `대상 문서 + 정확한 섹션 경로`로 행을 합친다. 향후 같은 경로가 반복되면 최신 내용만 사용해 그 경로를 한 번만 수정한다.
+8. 대상 문서별로 경로를 묶어, 연결 도구가 안전한 다중 섹션 수정을 지원하면 각 대상 문서를 한 번 읽고 한 번 수정한다.
+
+예: `0.1.2` 설치는 `0.1.3`, `0.1.4`, `0.1.6` 행만 선택한다. `Model Recommendation Adapter`는 `0.1.2`에 이미 반영된 경로이므로 건드리지 않는다.
+
+`0.1.5`에서 도입된 분리 파일 방식은 폐기한다. `0.1.5` 설치는 선언된 논리 경로의 기존 `Versioned Upgrade Routing` Heading을 내장된 `Path-Scoped Upgrade` 내용으로 교체한다. 외부 Updater나 Patch 파일은 필요 없다.
+
+### 35.3 최소 수정 규칙
+
+- 각 경로에는 내장 Template이 가리키는 정확한 최신 내용만 사용한다. Template 전체나 설치 문서 전체를 다시 만들지 않는다.
+- 대상 Heading부터 다음 같거나 더 높은 단계의 Heading 직전까지만 읽는다. Heading이 없으면 지정된 기준 위치를 읽고 누락된 섹션만 삽입한다.
+- 연결 편집기가 부분 교체를 지원하는 범위에서 선택되지 않은 섹션은 그대로 보존한다.
+- Runtime이 ChatGPT Project Instructions를 직접 수정할 수 없으면 결정된 교체 섹션만 사용자에게 주고, 그 Heading 범위 하나를 바꾸도록 안내한다. 다시 설치하거나 관련 없는 섹션을 붙여넣게 하지 않는다.
+- 일반 Upgrade에서는 ROOT, Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, 프로젝트 내용, 폴더 구조, 문서 ID를 읽거나 수정하지 않는다.
+- 이 Installer를 Project Source에 영구 추가하지 않는다.
+- 다운그레이드하지 않는다. 버전이 `0.1.1`보다 낮거나 `0.1.6`보다 높거나 서로 다르거나 해석할 수 없으면 아무것도 수정하지 않고 정확한 값을 알린다.
+
+### 35.4 검증과 완료
+
+1. 변경한 각 섹션을 다시 읽어 Heading, 경계, 최신 내장 내용이 맞는지 확인한다.
+2. 선택하지 않은 섹션과 프로젝트 지식 문서가 바뀌지 않았는지 확인한다.
+3. 선택 경로가 모두 PASS한 뒤에만 두 Manifest의 Package Version을 `0.1.6`으로 갱신한다.
+4. 두 버전 필드를 다시 읽고 기존 Binding으로 Fresh-Chat Acceptance Test를 실행한다.
+5. 선택 경로 하나라도 실패하면 두 Manifest 버전을 갱신하지 않는다. 실패한 문서와 섹션 경로를 알리고 중단한다.
 
 ---
 
@@ -1776,7 +1816,7 @@ Root 구조 생성 완료 — Project 연결 대기
 Fresh-Chat Acceptance Test가 PASS한 뒤에만:
 
 ```text
-Root Engineering v0.1.5 설치 완료
+Root Engineering v0.1.6 설치 완료
 
 - Google Drive 연결: PASS
 - Read / Create / Update / Move: PASS
@@ -1790,6 +1830,7 @@ Root Engineering v0.1.5 설치 완료
 - Checkpoint Batch Root Write: PASS
 - 위험도별 Verification: PASS
 - Production Quiet 소통: PASS
+- 경로 단위 Upgrade: PASS
 - Model Recommendation Adapter: PASS
 - Manifest 상태: ACTIVE
 ```
@@ -1885,16 +1926,14 @@ AI의 기본 사고 능력을 세세한 상태 머신으로 다시 만들지 않
 - 실패를 숨기지 않는다. 프로젝트 기록을 갱신하지 못했다고 평범하게 말하고 다음 행동을 안내한다.
 - 설치·검증·복구·업그레이드·진단·명시적 방법론 설명·내부 구조 확인 요청에서만 기술 용어를 사용한다.
 
-## 버전별 업데이트 경로
+## 경로 단위 업데이트
 
-- 기존 설치는 `ROOT_ENGINEERING_UPDATER_KO.md`와 공식 패치 목록을 사용한다.
-- 공식 Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
-- 공식 Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
-- 패치를 고르기 전에 두 Manifest의 정확한 Package Version을 확인한다.
-- 다음 `from_version`이 확인한 현재 버전과 정확히 일치하는 빠짐없는 정방향 경로만 적용한다.
-- 패치를 하나씩 적용하고 검증한 뒤에만 두 Manifest 버전을 갱신한다.
-- 패치를 건너뛰거나 합치거나 만들거나 순서를 바꾸지 않는다. 다운그레이드나 새 INSTALL로 대체하지 않는다.
-- 올바른 다음 패치를 입증할 수 없으면 정확한 누락 구간을 알리고 중단한다.
+- 첨부된 Root Engineering Installer 하나를 업데이트 패키지로 사용한다.
+- 두 Manifest의 정확한 Package Version을 확인한 뒤 Installer 안의 변경 경로표를 사용한다.
+- 설치 버전 이후에 도입된 경로만 선택하고 같은 대상 문서 + 섹션 경로는 합친다.
+- 결정된 섹션만 읽고 수정한다. 일반 Upgrade에서 설치 문서 전체를 다시 만들거나 프로젝트 지식을 건드리지 않는다.
+- 변경 섹션을 모두 검증한 뒤 두 Manifest 버전을 갱신한다.
+- 버전이나 필요한 섹션 경계를 입증할 수 없으면 수정하지 않고 중단한다. 다운그레이드하지 않는다.
 
 ## Question-Driven Root Deepening
 
@@ -2454,16 +2493,15 @@ History가 커져 실제 독립 조회 패턴이 생길 때만 추가한다.
 7. INSTALL, VERIFY, REPAIR, UPGRADE, 진단, 명시적 방법론 설명 또는 사용자의 내부 구조 확인 요청에서만 기술 용어, Document ID, Revision, 내부 구조를 보여준다.
 8. 이 소통 규칙은 내부 저장 판단, Authority, Verification, Conflict, Recovery 동작을 약화하지 않는다.
 
-## 버전별 업데이트 경로
+## 경로 단위 업데이트
 
-1. 기존 설치는 `ROOT_ENGINEERING_UPDATER_KO.md`와 공식 패치 목록을 사용한다.
-2. 공식 Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
-3. 공식 Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
-4. 패치를 고르기 전에 두 Manifest의 Package Version을 읽고 정확히 일치하는지 확인한다.
-5. 다음 `from_version`이 확인한 현재 버전과 같은 빠짐없는 정방향 경로만 적용한다.
-6. 패치를 하나씩 적용하고 검증한다. 성공한 뒤에만 두 Manifest 버전을 갱신한다.
-7. 패치를 건너뛰거나 합치거나 만들거나 순서를 바꾸지 않는다. 다운그레이드나 새 INSTALL로 대체하지 않는다.
-8. 현재 버전이나 필요한 구간을 입증할 수 없으면 정확한 누락 구간을 알리고 중단한다.
+1. 첨부된 Root Engineering Installer 하나를 업데이트 패키지로 사용한다.
+2. 두 Manifest의 정확한 Package Version을 확인한 뒤 Installer 안의 변경 경로표를 사용한다.
+3. 설치 버전 이후에 도입된 경로만 선택하고 같은 대상 문서 + 섹션 경로는 합친다.
+4. 결정된 섹션만 읽고 수정하며 안전한 변경은 대상 문서별로 묶는다.
+5. 일반 Upgrade에서 설치 문서 전체를 다시 만들거나 설치를 다시 생성하거나 프로젝트 지식을 건드리지 않는다.
+6. 변경 섹션을 모두 검증한 뒤 두 Manifest 버전을 갱신한다.
+7. 버전이나 필요한 섹션 경계를 입증할 수 없으면 수정하지 않고 중단한다. 다운그레이드하지 않는다.
 
 ## Tree and Pruning
 

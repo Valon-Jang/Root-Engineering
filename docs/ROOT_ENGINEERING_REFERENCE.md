@@ -15,16 +15,14 @@ The goal is simple:
 
 Current reference implementation: **ChatGPT Project + Google Drive live app access**.
 
-For a new installation:
-
 1. Download or open the [canonical English installer](../installer/ROOT_ENGINEERING_INSTALLER.md).
 2. Create or open a new ChatGPT Project and attach the installer to its first chat.
 3. Say: **“Read the package and install it.”**
 4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
 
-For an existing installation, use the [canonical updater](../installer/ROOT_ENGINEERING_UPDATER.md). It verifies both Manifest versions and follows the exact forward-only chain in the [patch registry](../installer/patches/README.md), applying and verifying one version transition at a time. It never substitutes a fresh installation for a missing patch.
+The same installer handles an existing installation in UPGRADE mode. It reads the installed version, resolves only the document-section paths changed since that version, and patches the deduplicated affected sections without recreating the installation or modifying project knowledge.
 
-Korean users can use the separate [Korean installer](../installer/ROOT_ENGINEERING_INSTALLER_KO.md) or [Korean updater](../installer/ROOT_ENGINEERING_UPDATER_KO.md). The versioned patch files remain canonical English documents.
+Korean users can use the separate [Korean installer](../installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
 The installer is designed to create and verify the Root structure rather than merely explain the setup process.
 

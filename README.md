@@ -41,27 +41,16 @@ It is usually unnecessary for one-off prompts, disposable tasks, or information 
 
 The current reference implementation uses **ChatGPT Project + Google Drive live app access**.
 
-Choose the path that matches the project:
-
-| Project state | Use |
-|---|---|
-| New project with no Root Engineering installation | [English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
-| Existing Root Engineering installation | [English updater](./installer/ROOT_ENGINEERING_UPDATER.md) |
-
-For a new installation:
-
 1. Open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
 2. Attach it to the first chat of a new ChatGPT Project.
 3. Say: **“Read the package and install it.”**
 4. Follow the prompts for Google Drive preflight, Root creation, Project Binding, and fresh-chat verification.
 
-For an existing installation, open the [updater](./installer/ROOT_ENGINEERING_UPDATER.md) and say: **“Read the updater and update the existing installation.”** It verifies the installed version and follows the exact ordered path in the [patch registry](./installer/patches/README.md); it does not rerun fresh installation.
-
-Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) or [Korean updater](./installer/ROOT_ENGINEERING_UPDATER_KO.md). Both updater paths use the same canonical English patch files.
+Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
 The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
 
-Installer v0.1.5 reduces recurring Google Drive overhead by batching compatible updates at meaningful checkpoints and matching verification depth to change risk. After installation is active, this storage work stays silent in ordinary conversation and uses plain language only when the user asks to save something or an update fails. Existing installations now update through explicit, contiguous versioned patches.
+Installer v0.1.6 is a single-file package for installation, verification, repair, and upgrade. During an upgrade it resolves only the document sections changed since the installed version, deduplicates overlapping paths, and patches those sections without rebuilding the installation or touching project knowledge. Routine Google Drive updates remain checkpoint-batched and use risk-matched verification.
 
 ### What the installer establishes
 
@@ -89,7 +78,7 @@ Verify in a Fresh Chat
 Use and Update the Root
 ```
 
-→ [Choose the installation or update path](./installer/)
+→ [Open the English installer](./installer/ROOT_ENGINEERING_INSTALLER.md)
 
 ---
 
@@ -253,9 +242,7 @@ Start with the path that matches your goal:
 | Goal | Document |
 |---|---|
 | Install and verify a working Root | [English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
-| Update an existing installation | [English updater](./installer/ROOT_ENGINEERING_UPDATER.md) |
 | Install using Korean user guidance | [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
-| Update using Korean user guidance | [Korean updater](./installer/ROOT_ENGINEERING_UPDATER_KO.md) |
 | Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
 | Review the paired experiment | [Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) |
 | Reproduce the benchmark prompts | [Prompt package](./benchmarks/project-atlas-v0.1/prompts/README.md) |

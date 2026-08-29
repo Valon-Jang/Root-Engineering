@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.5
+package_version: 0.1.6
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -11,10 +11,10 @@ supported_modes:
   - VERIFY
   - REPAIR
   - UPGRADE
-single_file_install: true
-upgrade_delivery: versioned-patch-registry
-updater_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md
-patch_registry_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md
+single_file_package: true
+upgrade_policy: embedded-path-scoped
+upgrade_write_scope: changed-sections-only
+upgrade_path_merge: target-document-and-section
 question_driven_root_deepening: true
 model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
@@ -27,14 +27,14 @@ runtime_communication: production-quiet
 user_facing_storage_language: plain
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.5
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.6
 
 > **This is the canonical English installer for Root Engineering.**  
 > Korean translation: [ROOT_ENGINEERING_INSTALLER_KO.md](./ROOT_ENGINEERING_INSTALLER_KO.md)
 >
 > **Model is replaceable. Root persists.**
 >
-> This single file is for a **new installation**. Attach it directly to the first chat of a new ChatGPT Project and say **“Read the package and install it.”** For an existing installation, use the [updater](./ROOT_ENGINEERING_UPDATER.md) instead.
+> This single file handles installation, verification, repair, and upgrade. Attach it to the chat and say **“Read the package and install it.”** An existing installation is detected automatically and only the sections changed since its installed version are patched.
 
 ---
 
@@ -50,7 +50,7 @@ Its purposes are to:
 4. Read only the Branches required for the current task and update the Root only when a meaningful state change occurs.
 5. Make knowledge not only storable, but sustainably growable, separable, mergeable, movable to History, and silently prunable.
 6. Accumulate text-based Skills and, when apps, tools, or web Skills are actually available in the current environment, connect them for execution.
-7. Handle installation, verification, and repair here, while routing existing installations to the separate versioned updater.
+7. Handle installation, verification, repair, and path-scoped upgrades through this single package.
 8. For each substantive task, dynamically recommend the **smallest sufficient actual model + reasoning effort** that is selectable in the current runtime.
 
 After installation, ordinary users do not manually manage Root IDs, Folder IDs, Branch Maps, pruning rules, or internal model-routing tiers.
@@ -196,7 +196,7 @@ Use UPGRADE when:
 - the installed Package Version or Schema Version is older; or
 - the user explicitly asks to update an existing Root Engineering installation with this package.
 
-UPGRADE is a routing decision, not an instruction to reuse the fresh installer. Stop installation work and hand off to `ROOT_ENGINEERING_UPDATER.md`. Do not recreate the Drive structure or apply remembered changes from this file.
+UPGRADE uses the embedded change-path table in Section 35. Do not enter the fresh-install creation flow. Resolve only the sections changed after the installed version, merge duplicate paths, and patch those sections in place.
 
 ### Conflict Handling
 
@@ -1026,20 +1026,17 @@ Production Quiet changes communication only. It does not weaken Save Gate, autho
 
 ---
 
-## 22B. Versioned Upgrade Routing
+## 22B. Path-Scoped Upgrade
 
-Installed systems update through the separate updater and canonical patch registry.
+UPGRADE is a minimum-patch operation inside this package.
 
-- Read the exact installed Package Version from both Manifests before selecting a patch.
-- Resolve a contiguous forward-only chain in `installer/patches/README.md`.
-- Require each patch's `from_version` to equal the verified installed version.
-- Apply and verify one patch at a time. Change both Manifest versions only after that patch passes.
-- Never infer a missing transition, skip a patch, downgrade, or run fresh INSTALL as a substitute.
-- Stop with the exact missing transition when the installed version or next patch cannot be proven.
-
-Updater: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`
-
-Registry: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
+- Read the exact installed Package Version from both Manifests and require the values to match.
+- Expand every transition after that version through the package version using the Section 35 change-path table.
+- Merge entries with the same target document and section path. The newest embedded Template content wins.
+- Read only each target section and the minimum surrounding heading boundary needed to replace or insert it safely.
+- Patch each resolved section in place. Do not regenerate a complete document or inspect unrelated project-knowledge documents.
+- Verify every changed section, then update the Package Version in both Manifests once at the end.
+- If the installed version, target document, section boundary, or required transition cannot be proven, stop without guessing.
 
 ---
 
@@ -1693,24 +1690,67 @@ REPAIR principles:
 
 ## 35. UPGRADE
 
-Upgrade does not rebuild Root knowledge and is not embedded in this installer.
+Upgrade is executed from this single file. It changes only the installed instruction sections whose paths are listed below.
 
 ```text
-Read exact installed Package Version
-→ open ROOT_ENGINEERING_UPDATER.md
-→ read the canonical patch registry
-→ resolve an exact contiguous forward-only patch chain
-→ apply and verify one patch at a time
-→ update Package Version only after each patch passes
+Read both installed Package Versions
+→ select change rows newer than the installed version
+→ merge duplicate target document + section paths
+→ read only those sections and their heading boundaries
+→ patch the latest embedded payload into each resolved path
+→ verify every changed path
+→ update both Manifest versions once
 ```
 
-- Canonical updater: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`
-- Canonical patch registry: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
-- Do not infer, combine, skip, or reorder patch steps.
-- If the exact starting version or any required next patch is missing, stop and identify the missing transition.
-- If the installed version is newer than this package, stop. Never downgrade.
-- Do not permanently add the Installer, Updater, registry, or patch files as Project Sources.
-- Preserve existing document IDs and project knowledge unless an exact patch explicitly says otherwise.
+### 35.1 Embedded Change-Path Table
+
+| Introduced in | Target document | Exact section path | Latest payload source in this file | Insert anchor when absent |
+|---|---|---|---|---|
+| `0.1.2` | Project Instructions | `Model Recommendation Adapter` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Model Recommendation Adapter` | after `## Skills` |
+| `0.1.3` | Global Protocol | `Runtime Summary` → keyed items `5` and `6` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Runtime Summary` items `5` and `6` | replace the existing keyed items |
+| `0.1.3` | Project Instructions | `Write` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Write` | replace the existing section |
+| `0.1.4` | Global Protocol | `Production Quiet Communication` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → same heading | after `## Runtime Summary` |
+| `0.1.4` | Project Instructions | `Production Quiet Communication` | `TEMPLATE: PROJECT_INSTRUCTIONS` → same heading | after `## Write` |
+| `0.1.6` | Global Protocol | logical path `Upgrade Behavior`; heading alias `Versioned Upgrade Routing` or `Path-Scoped Upgrade` | `TEMPLATE: ROOT_ENGINEERING_PROTOCOL` → `## Path-Scoped Upgrade` | replace either alias; otherwise insert after `## Production Quiet Communication` |
+| `0.1.6` | Project Instructions | logical path `Upgrade Behavior`; heading alias `Versioned Upgrade Routing` or `Path-Scoped Upgrade` | `TEMPLATE: PROJECT_INSTRUCTIONS` → `## Path-Scoped Upgrade` | replace either alias; otherwise insert after `## Production Quiet Communication` |
+
+The two Manifest version fields are completion metadata, not ordinary change rows:
+
+- Global Manifest → `Identity` → `Package Version`
+- Project Manifest → `Installation` → `Package Version`
+
+### 35.2 Path Resolution
+
+1. From the current Project Binding, open `Project Manifest Document ID` and `Global Protocol Document ID` directly. Do not search Drive by display name.
+2. Resolve Global Manifest only inside the exact parent folder of `Global Protocol Document ID`: require that parent to be `SYSTEM`, find its `GLOBAL_MANIFEST` sibling, and verify that its `Protocol Document ID` points back to the same Global Protocol. If this chain fails, stop.
+3. Read Package ID, Package Version, Schema Version, and status from both Manifests.
+4. Require the Package ID to match this package and both Package Versions to be identical.
+5. If both versions equal `0.1.6`, run VERIFY and make no Upgrade write.
+6. If the installed version is one of `0.1.1`, `0.1.2`, `0.1.3`, `0.1.4`, or `0.1.5`, select every table row whose `Introduced in` version is newer than the installed version.
+7. Merge rows by `Target document + Exact section path`. If future rows repeat a path, use only the newest payload and write that path once.
+8. Group resolved paths by target document so each affected document is read once and patched once when the available tool supports safe multi-section edits.
+
+Example: an installation at `0.1.2` selects the `0.1.3`, `0.1.4`, and `0.1.6` rows. It does not touch `Model Recommendation Adapter`, because that path was already current in `0.1.2`.
+
+The split-file routing introduced in `0.1.5` is superseded. For an installation at `0.1.5`, replace the legacy `Versioned Upgrade Routing` heading at the declared logical path with the embedded `Path-Scoped Upgrade` payload. No external updater or patch file is required.
+
+### 35.3 Minimum Patch Contract
+
+- For each resolved path, copy only the exact latest payload identified in the embedded Template. Do not copy the whole Template or regenerate the whole installed document.
+- Read the target heading through the next same-or-higher-level heading. If the heading is absent, read the declared anchor and insert only the missing section there.
+- Preserve every unselected section byte-for-byte where the connected editor permits targeted replacement.
+- If the runtime cannot edit ChatGPT Project Instructions directly, give the user only the resolved replacement section and one instruction to replace that exact heading range. Do not make the user reinstall or paste unrelated sections.
+- Do not read or modify ROOT, Foundation, Current Knowledge, Learned Knowledge, History, Sources, Skills, project content, folder structure, or document IDs during a normal Upgrade.
+- Do not add this Installer permanently as a Project Source.
+- Do not downgrade. If the version is older than `0.1.1`, newer than `0.1.6`, inconsistent, or unparseable, stop without mutation and report the exact value.
+
+### 35.4 Verification and Completion
+
+1. Re-read each changed section and confirm its heading, boundaries, and latest embedded payload.
+2. Confirm that no unselected section and no project-knowledge document changed.
+3. Only after all selected paths pass, update both Manifest Package Versions to `0.1.6`.
+4. Re-read both version fields and run the Fresh-Chat Acceptance Test against the existing Binding.
+5. If any selected path fails, do not update either Manifest version. Report the failed document and section path, then stop.
 
 ---
 
@@ -1779,7 +1819,7 @@ Next action: paste Project Instructions
 Only after the Fresh-Chat Acceptance Test passes:
 
 ```text
-Root Engineering v0.1.5 installation complete
+Root Engineering v0.1.6 installation complete
 
 - Google Drive connection: PASS
 - Read / Create / Update / Move: PASS
@@ -1793,6 +1833,7 @@ Root Engineering v0.1.5 installation complete
 - Checkpoint-batched Root writes: PASS
 - Risk-tiered verification: PASS
 - Production Quiet communication: PASS
+- Path-scoped Upgrade: PASS
 - Model Recommendation Adapter: PASS
 - Manifest status: ACTIVE
 ```
@@ -1888,16 +1929,14 @@ After installation status is `ACTIVE`, keep internal storage work invisible duri
 - Do not hide failures. Say plainly that the project record could not be updated and give the next useful action.
 - Use technical terminology only for installation, verification, repair, upgrade, diagnostics, explicit methodology discussion, or a direct request to inspect the internal structure.
 
-## Versioned Upgrade Routing
+## Path-Scoped Upgrade
 
-- Use `ROOT_ENGINEERING_UPDATER.md` and the canonical patch registry for every existing installation.
-- Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
-- Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
-- Verify the exact installed Package Version in both Manifests before selecting a patch.
-- Apply only a contiguous forward-only chain whose next `from_version` exactly matches the verified current version.
-- Apply and verify one patch at a time; update both Manifest versions only after success.
-- Never skip, combine, invent, or reorder patches. Never downgrade or use fresh INSTALL as an upgrade substitute.
-- Stop and report the exact missing transition if a valid next patch cannot be proven.
+- Use the attached Root Engineering Installer as the single update package.
+- Verify the exact installed Package Version in both Manifests, then use the Installer's embedded change-path table.
+- Select only paths introduced after the installed version and merge repeated target document + section paths.
+- Read and patch only the resolved sections. Never regenerate a complete installed document or touch project knowledge during a normal Upgrade.
+- Verify all changed sections before updating either Manifest version.
+- Stop without mutation when the version or a required section boundary cannot be proven. Never downgrade.
 
 ## Question-Driven Root Deepening
 
@@ -2457,16 +2496,15 @@ Fresh-read the relevant ROOT or Branch when:
 7. Reveal technical terms, Document IDs, Revisions, and internal structure only for INSTALL, VERIFY, REPAIR, UPGRADE, diagnostics, explicit methodology discussion, or when the user asks for them.
 8. This communication rule does not weaken Save Gate, authority, verification, conflict, or recovery behavior.
 
-## Versioned Upgrade Routing
+## Path-Scoped Upgrade
 
-1. Existing installations use `ROOT_ENGINEERING_UPDATER.md` and the canonical patch registry.
-2. Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
-3. Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
-4. Read and match the exact Package Version in both Manifests before selecting a patch.
-5. Apply only a contiguous forward-only chain whose next `from_version` equals the verified current version.
-6. Apply and verify one patch at a time. Update both Manifest versions only after success.
-7. Do not skip, combine, invent, or reorder patches. Do not downgrade or use fresh INSTALL as an upgrade substitute.
-8. If the installed version or a required transition cannot be proven, stop and report the exact missing transition.
+1. Use the attached Root Engineering Installer as the single update package.
+2. Read and match the exact Package Version in both Manifests, then use the Installer's embedded change-path table.
+3. Select only paths introduced after the installed version and merge repeated target document + section paths.
+4. Read and patch only the resolved sections; group safe changes by target document.
+5. Do not regenerate a complete installed document, recreate the installation, or touch project knowledge during a normal Upgrade.
+6. Verify every changed section before updating either Manifest version.
+7. If the version or a required section boundary cannot be proven, stop without mutation. Never downgrade.
 
 ## Tree and Pruning
 
