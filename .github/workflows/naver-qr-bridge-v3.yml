@@ -1,0 +1,210 @@
+name: Naver QR Bridge v3
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/naver-qr-bridge-v3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Install bridge dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb x11vnc openbox novnc websockify
+          python -m pip install --quiet cryptography requests selenium
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
+          chmod +x /tmp/cloudflared
+
+      - name: Start isolated QR browser and tunnel
+        env:
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DISPLAY=:99
+          export HOME=/tmp/naver-bridge/home
+          mkdir -p "$HOME" /tmp/naver-bridge/profile /tmp/naver-bridge/out
+
+          VNC_PASSWORD="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | head -c 24)"
+          printf '%s' "$VNC_PASSWORD" >/tmp/naver-bridge/vnc-password
+          x11vnc -storepasswd "$VNC_PASSWORD" /tmp/naver-bridge/vnc.pass >/dev/null
+
+          nohup Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/naver-bridge/xvfb.log 2>&1 &
+          sleep 2
+          nohup openbox >/tmp/naver-bridge/openbox.log 2>&1 &
+          nohup "$CHROME_BINARY" --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/naver-bridge/profile --window-size=1440,900 'https://nid.naver.com/nidlogin.login?mode=qrcode' >/tmp/naver-bridge/chrome.log 2>&1 &
+          nohup x11vnc -display :99 -rfbport 5900 -rfbauth /tmp/naver-bridge/vnc.pass -forever -shared -noxdamage >/tmp/naver-bridge/x11vnc.log 2>&1 &
+          nohup websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/naver-bridge/websockify.log 2>&1 &
+          nohup /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:6080 >/tmp/naver-bridge/cloudflared.log 2>&1 &
+
+          LIVE_BASE=''
+          for _ in $(seq 1 90); do
+            LIVE_BASE="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' /tmp/naver-bridge/cloudflared.log | head -n1 || true)"
+            [ -n "$LIVE_BASE" ] && break
+            sleep 1
+          done
+          test -n "$LIVE_BASE"
+          curl -fsS http://127.0.0.1:6080/vnc.html >/dev/null
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/naver-bridge/controller-private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/naver-bridge/controller-private.pem -pubout -out /tmp/naver-bridge/controller-public.pem >/dev/null 2>&1
+
+          cat >/tmp/naver-bridge/response-public.pem <<'EOF'
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsMKeNEWwxCfPmuf4FUBp
+          j3B1EMtCr8UwBrNXpWDUm0lrKDmD3GwBmWMyBfZsh3uVG/hRLXQpTWmJgEGskvw3
+          eJjfkHvMqWEpmKqlxnxu0uuCrWyFbrfuUpIbymDcZBNaP58qhWCkKy5b8CsijAwh
+          Pb/S2vJ3zcxg+a7jPb8nm02DtExxl5HYi1dkEjfzRV2dpp6Jk8FiG1ZRJF7SWM/N
+          CnUNmu0vRd6EXO/QBQ92sUGEu4oCBk79AqGTndp8zENzPlhC9OznD/C33tvL1qzA
+          Rk4msyKZ82X/tABvOHR/SYLXQSw4RhxCFe4JB751fTbhK2ZeuN9LGgnWWrV4tWKA
+          BwIDAQAB
+          -----END PUBLIC KEY-----
+          EOF
+
+          export LIVE_BASE VNC_PASSWORD
+          python - <<'PY'
+          import base64,json,os,pathlib
+          from cryptography.hazmat.primitives import hashes,serialization
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root=pathlib.Path('/tmp/naver-bridge')
+          data=json.dumps({'url':os.environ['LIVE_BASE']+'/vnc.html?autoconnect=1&resize=scale&view_only=0','password':os.environ['VNC_PASSWORD']},separators=(',',':')).encode()
+          pub=serialization.load_pem_public_key((root/'response-public.pem').read_bytes())
+          key=AESGCM.generate_key(bit_length=256); nonce=os.urandom(12)
+          ct=AESGCM(key).encrypt(nonce,data,None)
+          wrapped=pub.encrypt(key,padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+          env={'wrapped_key':base64.b64encode(wrapped).decode(),'nonce':base64.b64encode(nonce).decode(),'ciphertext':base64.b64encode(ct).decode()}
+          (root/'out'/'access.enc').write_text(json.dumps(env,separators=(',',':')),encoding='utf-8')
+          PY
+
+      - name: Upload access bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-qr-access
+          path: /tmp/naver-bridge/out/access.enc
+          retention-days: 1
+
+      - name: Upload controller public key
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-controller-key
+          path: /tmp/naver-bridge/controller-public.pem
+          retention-days: 1
+
+      - name: Keep browser alive and wait for encrypted command
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,json,os,pathlib,time,requests
+          from cryptography.hazmat.primitives import hashes,serialization
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root=pathlib.Path('/tmp/naver-bridge')
+          url=f"https://api.github.com/repos/{os.environ['REPOSITORY']}/contents/.bridge/v3-command.enc"
+          headers={'Authorization':f"Bearer {os.environ['GH_TOKEN']}",'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          private=serialization.load_pem_private_key((root/'controller-private.pem').read_bytes(),password=None)
+          def dec(raw):
+            env=json.loads(raw.decode())
+            k=private.decrypt(base64.b64decode(env['wrapped_key']),padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+            return json.loads(AESGCM(k).decrypt(base64.b64decode(env['nonce']),base64.b64decode(env['ciphertext']),None).decode())
+          deadline=time.time()+1800
+          while time.time()<deadline:
+            r=requests.get(url,headers=headers,params={'ref':os.environ['HEAD_REF']},timeout=20)
+            if r.status_code==200:
+              raw=base64.b64decode(r.json()['content'])
+              if raw.strip()!=b'PENDING':
+                try:
+                  cmd=dec(raw)
+                  (root/'command.json').write_text(json.dumps(cmd),encoding='utf-8')
+                  print('Encrypted command received')
+                  break
+                except Exception:
+                  pass
+            time.sleep(3)
+          else:
+            raise TimeoutError('No encrypted command received before session expiry')
+          PY
+
+      - name: Execute Naver web-mail command in same browser
+        env:
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os,pathlib,time,traceback
+          from selenium import webdriver
+          from selenium.webdriver.chrome.service import Service
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.common.keys import Keys
+          from selenium.webdriver.support.ui import WebDriverWait
+          root=pathlib.Path('/tmp/naver-bridge'); cmd=json.loads((root/'command.json').read_text())
+          out=root/'result.json'; shot=root/'screen.png'
+          opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
+          driver=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
+          def visible(sel): return [e for e in driver.find_elements(By.CSS_SELECTOR,sel) if e.is_displayed()]
+          def first(selectors):
+            for s in selectors:
+              es=visible(s)
+              if es: return es[0]
+            return None
+          try:
+            driver.get('https://mail.naver.com/v2/new'); time.sleep(7)
+            if 'nidlogin' in driver.current_url.lower(): raise RuntimeError('Naver session not authenticated')
+            to=first(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to']"])
+            sub=first(["input[placeholder*='제목']","input[aria-label*='제목']","input[name*='subject']"])
+            body=first(["div[contenteditable='true']","[contenteditable='true'][role='textbox']","textarea[placeholder*='내용']"])
+            if not to or not sub or not body: raise RuntimeError('Compose fields not found')
+            to.click(); to.send_keys(cmd['to']); to.send_keys(Keys.ENTER)
+            sub.click(); sub.send_keys(cmd['subject'])
+            body.click(); body.send_keys(cmd['body'])
+            time.sleep(1)
+            buttons=[e for e in driver.find_elements(By.XPATH,"//*[self::button or self::a or @role='button']") if e.is_displayed()]
+            send=next((e for e in buttons if (e.text or e.get_attribute('aria-label') or '').strip() in ('보내기','메일 보내기')),None)
+            if not send: raise RuntimeError('Send button not found')
+            send.click(); time.sleep(5)
+            driver.save_screenshot(str(shot))
+            out.write_text(json.dumps({'ok':True,'url':driver.current_url},ensure_ascii=False),encoding='utf-8')
+          except Exception as e:
+            try: driver.save_screenshot(str(shot))
+            except Exception: pass
+            out.write_text(json.dumps({'ok':False,'error':f'{type(e).__name__}: {e}','url':driver.current_url,'traceback':traceback.format_exc()},ensure_ascii=False),encoding='utf-8')
+            raise
+          finally: driver.quit()
+          PY
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-bridge-result
+          path: |
+            /tmp/naver-bridge/result.json
+            /tmp/naver-bridge/screen.png
+          retention-days: 1
+          if-no-files-found: warn
