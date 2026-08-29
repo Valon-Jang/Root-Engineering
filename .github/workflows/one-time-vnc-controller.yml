@@ -14,12 +14,19 @@ permissions:
 jobs:
   controller:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - name: Check out controller branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Chrome and ChromeDriver
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
 
       - name: Install controller dependencies
         shell: bash
@@ -43,7 +50,7 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-      - name: Wait for encrypted request and control live browser
+      - name: Wait for and decrypt request
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
@@ -51,236 +58,212 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > /tmp/vnc-controller/controller.py <<'PY'
-          import base64
-          import json
-          import os
-          import pathlib
-          import time
-          import traceback
-
-          import requests
+          python - <<'PY'
+          import base64, json, os, pathlib, time, requests
           from cryptography.hazmat.primitives import hashes, serialization
           from cryptography.hazmat.primitives.asymmetric import padding
           from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-          from selenium import webdriver
-          from selenium.webdriver import ActionChains
-          from selenium.webdriver.common.by import By
-          from selenium.webdriver.common.keys import Keys
-          from selenium.webdriver.support.ui import WebDriverWait
 
-          OUT = pathlib.Path('/tmp/vnc-controller')
-          OUT.mkdir(parents=True, exist_ok=True)
-          RESULT = OUT / 'result.json'
-          SCREEN = OUT / 'screen.png'
-
-          repository = os.environ['REPOSITORY']
-          branch = os.environ['HEAD_REF']
-          token = os.environ['GH_TOKEN']
+          out = pathlib.Path('/tmp/vnc-controller')
           request_id = pathlib.Path('.bridge/controller-start.txt').read_text(encoding='utf-8').strip()
-          api_url = f'https://api.github.com/repos/{repository}/contents/.bridge/controller-request.enc'
+          repository = os.environ['REPOSITORY']
+          branch = os.environ.get('HEAD_REF') or 'web-login-bridge-20260829'
+          url = f'https://api.github.com/repos/{repository}/contents/.bridge/controller-request.enc'
           headers = {
-              'Authorization': f'Bearer {token}',
+              'Authorization': f"Bearer {os.environ['GH_TOKEN']}",
               'Accept': 'application/vnd.github+json',
               'X-GitHub-Api-Version': '2022-11-28',
           }
+          private_key = serialization.load_pem_private_key((out/'private.pem').read_bytes(), password=None)
 
-          private_key = serialization.load_pem_private_key((OUT / 'private.pem').read_bytes(), password=None)
-
-          def decrypt_envelope(raw: bytes) -> dict:
+          def decrypt(raw):
               env = json.loads(raw.decode('utf-8'))
-              wrapped_key = base64.b64decode(env['wrapped_key'])
-              nonce = base64.b64decode(env['nonce'])
-              ciphertext = base64.b64decode(env['ciphertext'])
               aes_key = private_key.decrypt(
-                  wrapped_key,
+                  base64.b64decode(env['wrapped_key']),
                   padding.OAEP(
                       mgf=padding.MGF1(algorithm=hashes.SHA256()),
                       algorithm=hashes.SHA256(),
                       label=None,
                   ),
               )
-              plain = AESGCM(aes_key).decrypt(nonce, ciphertext, None)
-              return json.loads(plain.decode('utf-8'))
+              return json.loads(
+                  AESGCM(aes_key).decrypt(
+                      base64.b64decode(env['nonce']),
+                      base64.b64decode(env['ciphertext']),
+                      None,
+                  ).decode('utf-8')
+              )
 
-          def wait_for_request() -> dict:
-              deadline = time.time() + 900
-              last_error = None
-              while time.time() < deadline:
+          deadline = time.time() + 180
+          last = 'request not seen'
+          while time.time() < deadline:
+              r = requests.get(url, headers=headers, params={'ref': branch}, timeout=20)
+              if r.status_code == 200:
                   try:
-                      r = requests.get(api_url, headers=headers, params={'ref': branch}, timeout=20)
-                      if r.status_code == 200:
-                          payload = r.json()
-                          raw = base64.b64decode(payload['content'])
-                          try:
-                              cmd = decrypt_envelope(raw)
-                              if cmd.get('request_id') == request_id:
-                                  return cmd
-                          except Exception as exc:
-                              last_error = f'decrypt pending: {type(exc).__name__}'
-                      elif r.status_code != 404:
-                          last_error = f'GitHub contents API: {r.status_code}'
+                      raw = base64.b64decode(r.json()['content'])
+                      cmd = decrypt(raw)
+                      if cmd.get('request_id') == request_id:
+                          (out/'command.json').write_text(json.dumps(cmd), encoding='utf-8')
+                          (out/'request-received.txt').write_text(request_id + '\n', encoding='utf-8')
+                          print(f'Received encrypted request {request_id}')
+                          break
+                      last = f"request id mismatch: {cmd.get('request_id')}"
                   except Exception as exc:
-                      last_error = f'poll error: {type(exc).__name__}: {exc}'
-                  time.sleep(3)
-              raise TimeoutError(last_error or 'No matching encrypted request arrived')
+                      last = f'decrypt pending: {type(exc).__name__}'
+              else:
+                  last = f'contents API status {r.status_code}'
+              time.sleep(3)
+          else:
+              raise TimeoutError(last)
+          PY
+
+      - name: Upload request-received marker
+        uses: actions/upload-artifact@v4
+        with:
+          name: request-received
+          path: /tmp/vnc-controller/request-received.txt
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Control live noVNC browser
+        env:
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib, time, traceback
+          from selenium import webdriver
+          from selenium.webdriver import ActionChains
+          from selenium.webdriver.chrome.service import Service
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.common.keys import Keys
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          out = pathlib.Path('/tmp/vnc-controller')
+          result = out/'result.json'
+          screen = out/'screen.png'
+          cmd = json.loads((out/'command.json').read_text(encoding='utf-8'))
 
           KEY_MAP = {
-              'ENTER': Keys.ENTER,
-              'TAB': Keys.TAB,
-              'ESC': Keys.ESCAPE,
-              'ESCAPE': Keys.ESCAPE,
-              'BACKSPACE': Keys.BACKSPACE,
-              'DELETE': Keys.DELETE,
-              'SPACE': Keys.SPACE,
-              'UP': Keys.ARROW_UP,
-              'DOWN': Keys.ARROW_DOWN,
-              'LEFT': Keys.ARROW_LEFT,
-              'RIGHT': Keys.ARROW_RIGHT,
-              'HOME': Keys.HOME,
-              'END': Keys.END,
-              'PAGEUP': Keys.PAGE_UP,
-              'PAGEDOWN': Keys.PAGE_DOWN,
-              'CTRL': Keys.CONTROL,
-              'CONTROL': Keys.CONTROL,
-              'SHIFT': Keys.SHIFT,
-              'ALT': Keys.ALT,
-              'META': Keys.META,
+              'ENTER': Keys.ENTER, 'TAB': Keys.TAB, 'ESC': Keys.ESCAPE,
+              'BACKSPACE': Keys.BACKSPACE, 'DELETE': Keys.DELETE, 'SPACE': Keys.SPACE,
+              'UP': Keys.ARROW_UP, 'DOWN': Keys.ARROW_DOWN,
+              'LEFT': Keys.ARROW_LEFT, 'RIGHT': Keys.ARROW_RIGHT,
+              'HOME': Keys.HOME, 'END': Keys.END,
+              'CTRL': Keys.CONTROL, 'CONTROL': Keys.CONTROL,
+              'SHIFT': Keys.SHIFT, 'ALT': Keys.ALT, 'META': Keys.META,
           }
+          def kval(v): return KEY_MAP.get(str(v).upper(), v)
 
-          def key_value(value: str):
-              return KEY_MAP.get(str(value).upper(), value)
+          options = webdriver.ChromeOptions()
+          binary = os.environ.get('CHROME_BINARY')
+          if binary:
+              options.binary_location = binary
+          options.add_argument('--headless=new')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--window-size=1600,1000')
+          options.add_argument('--hide-scrollbars')
+          service = Service(os.environ['CHROMEDRIVER']) if os.environ.get('CHROMEDRIVER') else Service()
+          driver = webdriver.Chrome(service=service, options=options)
 
-          def connect_novnc(driver, live_url: str, vnc_password: str):
-              driver.get(live_url)
-              wait = WebDriverWait(driver, 30)
+          try:
+              driver.get(cmd['live_url'])
+              end = time.time() + 30
+              while time.time() < end:
+                  fields = [e for e in driver.find_elements(By.CSS_SELECTOR, "input[type='password']") if e.is_displayed()]
+                  if fields:
+                      f = fields[0]
+                      f.clear()
+                      f.send_keys(cmd['vnc_password'])
+                      clicked = driver.execute_script("""
+                        const ids=['noVNC_password_button','noVNC_connect_button'];
+                        for (const id of ids) {
+                          const b=document.getElementById(id);
+                          if (b && b.offsetParent!==null) { b.click(); return true; }
+                        }
+                        const bs=[...document.querySelectorAll('button,input[type=button],input[type=submit]')];
+                        const b=bs.find(x => x.offsetParent!==null && /credential|connect|확인/i.test(x.innerText||x.value||''));
+                        if (b) { b.click(); return true; }
+                        return false;
+                      """)
+                      if not clicked:
+                          f.send_keys(Keys.ENTER)
+                      break
+                  time.sleep(.5)
 
               def canvas_ready(d):
                   try:
-                      c = d.find_element(By.ID, 'noVNC_canvas')
-                      size = c.size
-                      return c if c.is_displayed() and size['width'] > 100 and size['height'] > 100 else False
+                      c=d.find_element(By.ID,'noVNC_canvas')
+                      s=c.size
+                      return c if c.is_displayed() and s['width']>100 and s['height']>100 else False
                   except Exception:
                       return False
 
-              end = time.time() + 25
-              while time.time() < end:
-                  password_fields = driver.find_elements(By.CSS_SELECTOR, "input[type='password']")
-                  visible = [x for x in password_fields if x.is_displayed()]
-                  if visible:
-                      field = visible[0]
-                      field.clear()
-                      field.send_keys(vnc_password)
-                      clicked = driver.execute_script(
-                          """
-                          const ids = ['noVNC_password_button','noVNC_connect_button'];
-                          for (const id of ids) {
-                            const b = document.getElementById(id);
-                            if (b && b.offsetParent !== null) { b.click(); return true; }
-                          }
-                          const buttons = [...document.querySelectorAll('button,input[type=button],input[type=submit]')];
-                          const target = buttons.find(b => {
-                            const t = (b.innerText || b.value || '').toLowerCase();
-                            return b.offsetParent !== null && (t.includes('credential') || t.includes('connect') || t.includes('확인'));
-                          });
-                          if (target) { target.click(); return true; }
-                          return false;
-                          """
-                      )
-                      if not clicked:
-                          field.send_keys(Keys.ENTER)
-                      break
-                  time.sleep(0.5)
-
-              canvas = wait.until(canvas_ready)
+              canvas = WebDriverWait(driver, 30).until(canvas_ready)
               time.sleep(4)
-              return canvas
 
-          def send_hotkey(driver, canvas, keys):
-              chain = ActionChains(driver).move_to_element(canvas).click()
-              vals = [key_value(k) for k in keys]
-              for k in vals[:-1]:
-                  chain.key_down(k)
-              chain.send_keys(vals[-1])
-              for k in reversed(vals[:-1]):
-                  chain.key_up(k)
-              chain.perform()
+              def hotkey(keys):
+                  vals=[kval(k) for k in keys]
+                  chain=ActionChains(driver).move_to_element(canvas).click()
+                  for k in vals[:-1]: chain.key_down(k)
+                  chain.send_keys(vals[-1])
+                  for k in reversed(vals[:-1]): chain.key_up(k)
+                  chain.perform()
 
-          def run_actions(driver, canvas, actions):
-              for action in actions:
-                  kind = action['type']
-                  if kind == 'wait':
-                      time.sleep(float(action.get('seconds', 1)))
-                  elif kind == 'click':
-                      x = int(action['x'])
-                      y = int(action['y'])
-                      ActionChains(driver).move_to_element_with_offset(canvas, x, y).click().perform()
-                  elif kind == 'double_click':
-                      x = int(action['x'])
-                      y = int(action['y'])
-                      ActionChains(driver).move_to_element_with_offset(canvas, x, y).double_click().perform()
-                  elif kind == 'text':
-                      ActionChains(driver).move_to_element(canvas).click().send_keys(action['value']).perform()
-                  elif kind == 'key':
-                      ActionChains(driver).move_to_element(canvas).click().send_keys(key_value(action['value'])).perform()
-                  elif kind == 'hotkey':
-                      send_hotkey(driver, canvas, action['keys'])
-                  elif kind == 'paste':
-                      ok = driver.execute_script(
-                          """
-                          if (window.UI && UI.rfb && UI.rfb.clipboardPasteFrom) {
-                            UI.rfb.clipboardPasteFrom(arguments[0]);
-                            return true;
-                          }
-                          return false;
-                          """,
-                          action['value'],
-                      )
-                      if not ok:
-                          raise RuntimeError('noVNC clipboard API unavailable')
-                      time.sleep(0.5)
-                      send_hotkey(driver, canvas, ['CTRL', 'V'])
-                  elif kind == 'screenshot':
-                      driver.save_screenshot(str(SCREEN))
+              for a in cmd.get('actions', [{'type':'screenshot'}]):
+                  t=a['type']
+                  if t=='wait':
+                      time.sleep(float(a.get('seconds',1)))
+                  elif t=='click':
+                      ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).click().perform()
+                  elif t=='double_click':
+                      ActionChains(driver).move_to_element_with_offset(canvas,int(a['x']),int(a['y'])).double_click().perform()
+                  elif t=='text':
+                      ActionChains(driver).move_to_element(canvas).click().send_keys(a['value']).perform()
+                  elif t=='key':
+                      ActionChains(driver).move_to_element(canvas).click().send_keys(kval(a['value'])).perform()
+                  elif t=='hotkey':
+                      hotkey(a['keys'])
+                  elif t=='paste':
+                      ok=driver.execute_script("""
+                        if (window.UI && UI.rfb && UI.rfb.clipboardPasteFrom) {
+                          UI.rfb.clipboardPasteFrom(arguments[0]); return true;
+                        }
+                        return false;
+                      """, a['value'])
+                      if not ok: raise RuntimeError('noVNC clipboard API unavailable')
+                      time.sleep(.5)
+                      hotkey(['CTRL','V'])
+                  elif t=='screenshot':
+                      driver.save_screenshot(str(screen))
                   else:
-                      raise ValueError(f'Unknown action type: {kind}')
-                  time.sleep(float(action.get('after', 0.5)))
+                      raise ValueError(f'unknown action {t}')
+                  time.sleep(float(a.get('after',.5)))
 
-          cmd = None
-          driver = None
-          try:
-              cmd = wait_for_request()
-              options = webdriver.ChromeOptions()
-              options.add_argument('--headless=new')
-              options.add_argument('--no-sandbox')
-              options.add_argument('--disable-dev-shm-usage')
-              options.add_argument('--window-size=1600,1000')
-              options.add_argument('--hide-scrollbars')
-              driver = webdriver.Chrome(options=options)
-              canvas = connect_novnc(driver, cmd['live_url'], cmd['vnc_password'])
-              run_actions(driver, canvas, cmd.get('actions', [{'type': 'screenshot'}]))
-              if not SCREEN.exists():
-                  driver.save_screenshot(str(SCREEN))
-              RESULT.write_text(
-                  json.dumps({'ok': True, 'request_id': request_id, 'canvas_size': canvas.size, 'current_url': driver.current_url}, ensure_ascii=False, indent=2),
-                  encoding='utf-8',
-              )
+              if not screen.exists():
+                  driver.save_screenshot(str(screen))
+              result.write_text(json.dumps({
+                  'ok': True,
+                  'request_id': cmd['request_id'],
+                  'canvas_size': canvas.size,
+                  'current_url': driver.current_url,
+              }, indent=2), encoding='utf-8')
           except Exception as exc:
-              if driver is not None:
-                  try:
-                      driver.save_screenshot(str(SCREEN))
-                  except Exception:
-                      pass
-              RESULT.write_text(
-                  json.dumps({'ok': False, 'request_id': request_id, 'error': f'{type(exc).__name__}: {exc}', 'traceback': traceback.format_exc()}, ensure_ascii=False, indent=2),
-                  encoding='utf-8',
-              )
+              try: driver.save_screenshot(str(screen))
+              except Exception: pass
+              result.write_text(json.dumps({
+                  'ok': False,
+                  'request_id': cmd.get('request_id'),
+                  'error': f'{type(exc).__name__}: {exc}',
+                  'traceback': traceback.format_exc(),
+              }, indent=2), encoding='utf-8')
               raise
           finally:
-              if driver is not None:
-                  driver.quit()
+              driver.quit()
           PY
-          python /tmp/vnc-controller/controller.py
 
       - name: Upload controller response
         if: always()
