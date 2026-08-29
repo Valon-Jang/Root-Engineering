@@ -752,7 +752,7 @@ Branches should be created because retrieval patterns require them, not because 
 
 Before writing information into the Root, ask:
 
-> **Would the absence of this information significantly increase the chance that a future AI must rediscover it, makes a worse decision, or repeats a previous failure?**
+> **Would the absence of this information significantly increase the chance that a future AI must rediscover it, make a worse decision, or repeat a previous failure?**
 
 If not, it probably does not need to become persistent knowledge.
 
