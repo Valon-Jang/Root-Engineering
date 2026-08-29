@@ -1,0 +1,319 @@
+name: One-time Web Action Bridge v2
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/web-action-bridge-v2.yml
+      - .bridge/v2-start.txt
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out bridge branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Chrome and ChromeDriver
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Install bridge dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb x11vnc openbox novnc websockify
+          python -m pip install --quiet selenium cryptography requests
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
+          chmod +x /tmp/cloudflared
+
+      - name: Start isolated browser and create encrypted access bundle
+        id: start
+        env:
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/web-bridge/profile /tmp/web-bridge/out
+          export DISPLAY=:99
+          export HOME=/tmp/web-bridge/home
+          mkdir -p "$HOME"
+
+          VNC_PASSWORD="$(openssl rand -base64 30 | tr -dc 'A-Za-z0-9' | head -c 24)"
+          test "${#VNC_PASSWORD}" -ge 20
+          x11vnc -storepasswd "$VNC_PASSWORD" /tmp/web-bridge/vnc.pass >/dev/null
+
+          nohup Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/web-bridge/xvfb.log 2>&1 &
+          sleep 2
+          nohup openbox >/tmp/web-bridge/openbox.log 2>&1 &
+
+          BROWSER="${CHROME_BINARY:-}"
+          if [ -z "$BROWSER" ]; then
+            BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          fi
+          test -n "$BROWSER"
+
+          nohup "$BROWSER" --no-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-default-browser-check --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/web-bridge/profile --window-position=0,0 --window-size=1440,900 'https://nid.naver.com/nidlogin.login' >/tmp/web-bridge/chrome.log 2>&1 &
+
+          nohup x11vnc -display :99 -rfbport 5900 -rfbauth /tmp/web-bridge/vnc.pass -forever -shared -noxdamage >/tmp/web-bridge/x11vnc.log 2>&1 &
+          nohup websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/web-bridge/websockify.log 2>&1 &
+          nohup /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:6080 >/tmp/web-bridge/cloudflared.log 2>&1 &
+
+          LIVE_BASE=""
+          for _ in $(seq 1 90); do
+            LIVE_BASE="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' /tmp/web-bridge/cloudflared.log | head -n 1 || true)"
+            if [ -n "$LIVE_BASE" ]; then break; fi
+            sleep 1
+          done
+          test -n "$LIVE_BASE"
+          curl -fsS http://127.0.0.1:6080/vnc.html >/dev/null
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/web-bridge/controller-private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/web-bridge/controller-private.pem -pubout -out /tmp/web-bridge/controller-public.pem >/dev/null 2>&1
+
+          cat >/tmp/web-bridge/response-public.pem <<'EOF'
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1tFJYvU1wVuBsX9wl00a
+          b1odl1FsQ8frt750MsGV9+qK7W8djyOv1+d7HCG0mCHXDMVC55x4ZzCcmADMk3Bw
+          rt/+H/LDZ4o42WsUCqtlLfojTiopnpk0MK/+5Mqf0OPqojASiTbvcq1wg9pAXmFd
+          ePPn/g8DuK6x1lOr3RnR5p9WFt/r07vlR+GVlAmlJUEmVY8PMwcS4I5W1t9gkOpC
+          zGN83zhCAz77mARTbJdZQW4rlfAd5kg3GBhytpy2pmhHr6bY83XuxQOZh631IUg5
+          5bH4HhMZAEKd+ZBFaLktfruG5eLnqico7lXqj45cgk4v7x2GUeBGoF2avPJ9ztqD
+          HQIDAQAB
+          -----END PUBLIC KEY-----
+          EOF
+
+          LOGIN_URL="${LIVE_BASE}/vnc.html?autoconnect=1&resize=scale&view_only=0"
+          export LOGIN_URL VNC_PASSWORD
+          python - <<'PY'
+          import base64, json, os, pathlib
+          from cryptography.hazmat.primitives import serialization, hashes
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root = pathlib.Path('/tmp/web-bridge')
+          payload = json.dumps({'url': os.environ['LOGIN_URL'], 'password': os.environ['VNC_PASSWORD'], 'expires': 'when this workflow job ends'}, separators=(',', ':')).encode()
+          pub = serialization.load_pem_public_key((root/'response-public.pem').read_bytes())
+          key = AESGCM.generate_key(bit_length=256)
+          nonce = os.urandom(12)
+          ct = AESGCM(key).encrypt(nonce, payload, None)
+          wrapped = pub.encrypt(key, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+          env = {'wrapped_key': base64.b64encode(wrapped).decode(), 'nonce': base64.b64encode(nonce).decode(), 'ciphertext': base64.b64encode(ct).decode()}
+          (root/'out'/'access.enc').write_text(json.dumps(env, separators=(',', ':')), encoding='utf-8')
+          PY
+
+      - name: Upload encrypted access bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-access-bundle
+          path: /tmp/web-bridge/out/access.enc
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Upload controller public key
+        uses: actions/upload-artifact@v4
+        with:
+          name: controller-public-key
+          path: /tmp/web-bridge/controller-public.pem
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Wait for encrypted mail command
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, os, pathlib, time, requests
+          from cryptography.hazmat.primitives import hashes, serialization
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root = pathlib.Path('/tmp/web-bridge')
+          request_id = pathlib.Path('.bridge/v2-start.txt').read_text(encoding='utf-8').strip()
+          branch = os.environ.get('HEAD_REF') or 'web-action-bridge-v2-20260829'
+          url = f"https://api.github.com/repos/{os.environ['REPOSITORY']}/contents/.bridge/v2-command.enc"
+          headers = {'Authorization': f"Bearer {os.environ['GH_TOKEN']}", 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
+          private = serialization.load_pem_private_key((root/'controller-private.pem').read_bytes(), password=None)
+          def decrypt(raw):
+              env = json.loads(raw.decode('utf-8'))
+              key = private.decrypt(base64.b64decode(env['wrapped_key']), padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+              return json.loads(AESGCM(key).decrypt(base64.b64decode(env['nonce']), base64.b64decode(env['ciphertext']), None).decode('utf-8'))
+          deadline = time.time() + 1500
+          last = 'command not received'
+          while time.time() < deadline:
+              r = requests.get(url, headers=headers, params={'ref': branch}, timeout=20)
+              if r.status_code == 200:
+                  try:
+                      raw = base64.b64decode(r.json()['content'])
+                      cmd = decrypt(raw)
+                      if cmd.get('request_id') == request_id:
+                          (root/'command.json').write_text(json.dumps(cmd), encoding='utf-8')
+                          print(f'Received encrypted command {request_id}')
+                          break
+                      last = f"request id mismatch: {cmd.get('request_id')}"
+                  except Exception as exc:
+                      last = f'decrypt pending: {type(exc).__name__}'
+              else:
+                  last = f'contents API status {r.status_code}'
+              time.sleep(3)
+          else:
+              raise TimeoutError(last)
+          PY
+
+      - name: Send mail through logged-in Naver web session
+        env:
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib, re, time, traceback
+          from selenium import webdriver
+          from selenium.webdriver import ActionChains
+          from selenium.webdriver.chrome.service import Service
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.common.keys import Keys
+          from selenium.webdriver.support.ui import WebDriverWait
+          root = pathlib.Path('/tmp/web-bridge')
+          cmd = json.loads((root/'command.json').read_text(encoding='utf-8'))
+          result_path = root/'result.json'
+          screenshot = root/'screen.png'
+          options = webdriver.ChromeOptions()
+          options.debugger_address = '127.0.0.1:9222'
+          service = Service(os.environ['CHROMEDRIVER']) if os.environ.get('CHROMEDRIVER') else Service()
+          driver = webdriver.Chrome(service=service, options=options)
+          def visible(elements):
+              return [e for e in elements if e.is_displayed() and e.size.get('width',0)>2 and e.size.get('height',0)>2]
+          def find_first(selectors):
+              for selector in selectors:
+                  try:
+                      els = visible(driver.find_elements(By.CSS_SELECTOR, selector))
+                      if els: return els[0], selector
+                  except Exception: pass
+              return None, None
+          def fill_element(el, text):
+              el.click()
+              ActionChains(driver).key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
+              el.send_keys(text)
+          def click_text(patterns, dialog_only=False):
+              candidates=[]
+              if dialog_only:
+                  for d in visible(driver.find_elements(By.CSS_SELECTOR, "[role='dialog'], .layer, .modal")):
+                      candidates.extend(d.find_elements(By.XPATH, ".//*[self::button or self::a or @role='button']"))
+              else:
+                  candidates=driver.find_elements(By.XPATH, "//*[self::button or self::a or @role='button']")
+              for e in visible(candidates):
+                  text=(e.text or e.get_attribute('aria-label') or e.get_attribute('title') or '').strip()
+                  if any(re.search(p,text,re.I) for p in patterns):
+                      e.click(); return text
+              return None
+          try:
+              driver.get('https://mail.naver.com/v2/new')
+              WebDriverWait(driver,30).until(lambda d: d.execute_script('return document.readyState') in ('interactive','complete'))
+              time.sleep(6)
+              if 'nidlogin' in driver.current_url or 'login' in driver.current_url.lower():
+                  raise RuntimeError('Naver session is not authenticated')
+              recipient,rsel=find_first(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to']","textarea[placeholder*='받는']"])
+              if recipient is None:
+                  click_text([r'^메일쓰기$',r'^쓰기$']); time.sleep(4)
+                  recipient,rsel=find_first(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to']","textarea[placeholder*='받는']"])
+              if recipient is None:
+                  ActionChains(driver).send_keys('c').perform(); time.sleep(4)
+                  recipient,rsel=find_first(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to']","textarea[placeholder*='받는']"])
+              if recipient is None:
+                  inputs=visible(driver.find_elements(By.CSS_SELECTOR,"input[type='text'], input:not([type]), textarea"))
+                  if inputs: recipient,rsel=inputs[0],'visible-input-fallback'
+              if recipient is None: raise RuntimeError('Recipient field not found')
+              fill_element(recipient,cmd['to']); recipient.send_keys(Keys.ENTER); time.sleep(1)
+              subject,ssel=find_first(["input[placeholder*='제목']","input[aria-label*='제목']","input[name*='subject']"])
+              if subject is None:
+                  inputs=[e for e in visible(driver.find_elements(By.CSS_SELECTOR,"input[type='text'], input:not([type])")) if e.id!=recipient.id]
+                  if inputs: subject,ssel=inputs[0],'second-input-fallback'
+              if subject is None: raise RuntimeError('Subject field not found')
+              fill_element(subject,cmd['subject'])
+              body,bsel=find_first(["[contenteditable='true'][role='textbox']","div[contenteditable='true']","textarea[placeholder*='내용']","textarea[aria-label*='내용']"])
+              if body is None:
+                  editables=visible(driver.find_elements(By.CSS_SELECTOR,"[contenteditable='true'], textarea"))
+                  editables=sorted(editables,key=lambda e:e.size.get('width',0)*e.size.get('height',0),reverse=True)
+                  if editables: body,bsel=editables[0],'largest-editable-fallback'
+              if body is None:
+                  for frame in driver.find_elements(By.CSS_SELECTOR,'iframe'):
+                      try:
+                          driver.switch_to.frame(frame)
+                          candidates=visible(driver.find_elements(By.CSS_SELECTOR,"body[contenteditable='true'], [contenteditable='true'], textarea"))
+                          if candidates: body,bsel=candidates[0],'iframe-editable'; break
+                          driver.switch_to.default_content()
+                      except Exception: driver.switch_to.default_content()
+              if body is None: raise RuntimeError('Body editor not found')
+              fill_element(body,cmd['body']); driver.switch_to.default_content(); time.sleep(1)
+              ActionChains(driver).key_down(Keys.CONTROL).send_keys(Keys.ENTER).key_up(Keys.CONTROL).perform(); time.sleep(3)
+              if visible(driver.find_elements(By.CSS_SELECTOR,"[role='dialog'], .layer, .modal")):
+                  click_text([r'^확인$',r'^보내기$',r'보내'],dialog_only=True); time.sleep(4)
+              page_text=driver.find_element(By.TAG_NAME,'body').text
+              sent=bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료',page_text))
+              if not sent:
+                  clicked=click_text([r'^보내기$',r'^메일 보내기$'])
+                  if clicked:
+                      time.sleep(3)
+                      if visible(driver.find_elements(By.CSS_SELECTOR,"[role='dialog'], .layer, .modal")):
+                          click_text([r'^확인$',r'^보내기$',r'보내'],dialog_only=True); time.sleep(4)
+                      page_text=driver.find_element(By.TAG_NAME,'body').text
+                      sent=bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료',page_text))
+              driver.save_screenshot(str(screenshot))
+              result={'ok':True,'sent':sent,'request_id':cmd['request_id'],'url':driver.current_url,'recipient_selector':rsel,'subject_selector':ssel,'body_selector':bsel,'status_excerpt':page_text[-500:]}
+              result_path.write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+              if not sent: raise RuntimeError('Send action completed but success confirmation was not detected')
+          except Exception as exc:
+              try:
+                  driver.switch_to.default_content(); driver.save_screenshot(str(screenshot))
+              except Exception: pass
+              result_path.write_text(json.dumps({'ok':False,'request_id':cmd.get('request_id'),'error':f'{type(exc).__name__}: {exc}','url':driver.current_url,'traceback':traceback.format_exc()},ensure_ascii=False,indent=2),encoding='utf-8')
+              raise
+          finally:
+              driver.quit()
+          PY
+
+      - name: Encrypt result and destroy browser profile
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, json, os, pathlib, zipfile
+          from cryptography.hazmat.primitives import serialization, hashes
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          root=pathlib.Path('/tmp/web-bridge'); out=root/'out'; bundle=root/'response.zip'
+          with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED) as z:
+              for name in ('result.json','screen.png'):
+                  p=root/name
+                  if p.exists(): z.write(p,arcname=name)
+          pub=serialization.load_pem_public_key((root/'response-public.pem').read_bytes())
+          key=AESGCM.generate_key(bit_length=256); nonce=os.urandom(12); ct=AESGCM(key).encrypt(nonce,bundle.read_bytes(),None)
+          wrapped=pub.encrypt(key,padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+          env={'wrapped_key':base64.b64encode(wrapped).decode(),'nonce':base64.b64encode(nonce).decode(),'ciphertext':base64.b64encode(ct).decode()}
+          (out/'response.enc').write_text(json.dumps(env,separators=(',',':')),encoding='utf-8')
+          PY
+          rm -rf /tmp/web-bridge/profile /tmp/web-bridge/vnc.pass /tmp/web-bridge/controller-private.pem
+
+      - name: Upload encrypted result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-bridge-result
+          path: /tmp/web-bridge/out/response.enc
+          retention-days: 1
+          if-no-files-found: error
