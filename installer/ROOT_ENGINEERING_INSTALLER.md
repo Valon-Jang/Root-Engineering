@@ -1,6 +1,6 @@
 ---
 package_id: root-engineering-chat-installer
-package_version: 0.1.4
+package_version: 0.1.5
 schema_version: 0.1.0
 release_date: 2026-08-29
 target_environment: ChatGPT Project + Google Drive live app access
@@ -11,7 +11,10 @@ supported_modes:
   - VERIFY
   - REPAIR
   - UPGRADE
-single_file_package: true
+single_file_install: true
+upgrade_delivery: versioned-patch-registry
+updater_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md
+patch_registry_url: https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md
 question_driven_root_deepening: true
 model_recommendation_adapter: runtime-aware-smallest-sufficient
 model_recommendation_floor: GPT-5.6 Terra
@@ -24,14 +27,14 @@ runtime_communication: production-quiet
 user_facing_storage_language: plain
 ---
 
-# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.4
+# ROOT ENGINEERING — CHATGPT PROJECT INSTALLER v0.1.5
 
 > **This is the canonical English installer for Root Engineering.**  
 > Korean translation: [ROOT_ENGINEERING_INSTALLER_KO.md](./ROOT_ENGINEERING_INSTALLER_KO.md)
 >
 > **Model is replaceable. Root persists.**
 >
-> This single file is the Root Engineering installation package. Attach it directly to the first chat of a new ChatGPT Project and say **“Read the package and install it.”**
+> This single file is for a **new installation**. Attach it directly to the first chat of a new ChatGPT Project and say **“Read the package and install it.”** For an existing installation, use the [updater](./ROOT_ENGINEERING_UPDATER.md) instead.
 
 ---
 
@@ -47,7 +50,7 @@ Its purposes are to:
 4. Read only the Branches required for the current task and update the Root only when a meaningful state change occurs.
 5. Make knowledge not only storable, but sustainably growable, separable, mergeable, movable to History, and silently prunable.
 6. Accumulate text-based Skills and, when apps, tools, or web Skills are actually available in the current environment, connect them for execution.
-7. Handle installation, verification, repair, and upgrade through the same package.
+7. Handle installation, verification, and repair here, while routing existing installations to the separate versioned updater.
 8. For each substantive task, dynamically recommend the **smallest sufficient actual model + reasoning effort** that is selectable in the current runtime.
 
 After installation, ordinary users do not manually manage Root IDs, Folder IDs, Branch Maps, pruning rules, or internal model-routing tiers.
@@ -192,6 +195,8 @@ Use UPGRADE when:
 
 - the installed Package Version or Schema Version is older; or
 - the user explicitly asks to update an existing Root Engineering installation with this package.
+
+UPGRADE is a routing decision, not an instruction to reuse the fresh installer. Stop installation work and hand off to `ROOT_ENGINEERING_UPDATER.md`. Do not recreate the Drive structure or apply remembered changes from this file.
 
 ### Conflict Handling
 
@@ -1021,6 +1026,23 @@ Production Quiet changes communication only. It does not weaken Save Gate, autho
 
 ---
 
+## 22B. Versioned Upgrade Routing
+
+Installed systems update through the separate updater and canonical patch registry.
+
+- Read the exact installed Package Version from both Manifests before selecting a patch.
+- Resolve a contiguous forward-only chain in `installer/patches/README.md`.
+- Require each patch's `from_version` to equal the verified installed version.
+- Apply and verify one patch at a time. Change both Manifest versions only after that patch passes.
+- Never infer a missing transition, skip a patch, downgrade, or run fresh INSTALL as a substitute.
+- Stop with the exact missing transition when the installed version or next patch cannot be proven.
+
+Updater: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`
+
+Registry: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
+
+---
+
 ## 23. Automatic Branch Placement
 
 ```text
@@ -1671,25 +1693,24 @@ REPAIR principles:
 
 ## 35. UPGRADE
 
-Upgrade does not rebuild Root knowledge.
+Upgrade does not rebuild Root knowledge and is not embedded in this installer.
 
 ```text
-Read current Global / Project Manifest
-→ inspect Package / Schema differences
-→ apply only Protocol and Template changes
-→ preserve existing Foundation / Current Knowledge / Learned Knowledge / History
-→ add only required new fields or Nodes
-→ verify each changed scope according to its risk tier
-→ Acceptance Test
+Read exact installed Package Version
+→ open ROOT_ENGINEERING_UPDATER.md
+→ read the canonical patch registry
+→ resolve an exact contiguous forward-only patch chain
+→ apply and verify one patch at a time
+→ update Package Version only after each patch passes
 ```
 
-- Do not permanently add the Package Installer as a Project Source.
-- When appropriate, update an old Protocol in the same Document ID so Google Drive Revision History remains available for recovery.
-- If a schema change requires moving semantic content, verify the destination first and then clean the old location.
-- When upgrading from v0.1.1 or earlier, replace only the model-recommendation block in `Project Instructions` if a fixed recommendation or older Adapter exists.
-- When upgrading from v0.1.2 or earlier, update the Protocol and Project Instructions with the Root Update Buffer, checkpoint-batched flush, ROOT Map write guard, and risk-tiered verification rules. Do not create a persistent Buffer document.
-- When upgrading from v0.1.3 or earlier, add Production Quiet communication rules to the Protocol and Project Instructions. Keep internal terminology out of ordinary user-facing replies after status becomes ACTIVE.
-- Treat model availability, UI labels, and effort levels as Living Runtime Capability; do not persist them as project Canonical Knowledge.
+- Canonical updater: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`
+- Canonical patch registry: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`
+- Do not infer, combine, skip, or reorder patch steps.
+- If the exact starting version or any required next patch is missing, stop and identify the missing transition.
+- If the installed version is newer than this package, stop. Never downgrade.
+- Do not permanently add the Installer, Updater, registry, or patch files as Project Sources.
+- Preserve existing document IDs and project knowledge unless an exact patch explicitly says otherwise.
 
 ---
 
@@ -1758,7 +1779,7 @@ Next action: paste Project Instructions
 Only after the Fresh-Chat Acceptance Test passes:
 
 ```text
-Root Engineering v0.1.4 installation complete
+Root Engineering v0.1.5 installation complete
 
 - Google Drive connection: PASS
 - Read / Create / Update / Move: PASS
@@ -1866,6 +1887,17 @@ After installation status is `ACTIVE`, keep internal storage work invisible duri
 - If the user explicitly requests a save, acknowledge only with plain language such as `Saved.`
 - Do not hide failures. Say plainly that the project record could not be updated and give the next useful action.
 - Use technical terminology only for installation, verification, repair, upgrade, diagnostics, explicit methodology discussion, or a direct request to inspect the internal structure.
+
+## Versioned Upgrade Routing
+
+- Use `ROOT_ENGINEERING_UPDATER.md` and the canonical patch registry for every existing installation.
+- Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
+- Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
+- Verify the exact installed Package Version in both Manifests before selecting a patch.
+- Apply only a contiguous forward-only chain whose next `from_version` exactly matches the verified current version.
+- Apply and verify one patch at a time; update both Manifest versions only after success.
+- Never skip, combine, invent, or reorder patches. Never downgrade or use fresh INSTALL as an upgrade substitute.
+- Stop and report the exact missing transition if a valid next patch cannot be proven.
 
 ## Question-Driven Root Deepening
 
@@ -2424,6 +2456,17 @@ Fresh-read the relevant ROOT or Branch when:
 6. Do not hide a failed or uncertain save. Say plainly that the project record could not be updated and give the next useful action.
 7. Reveal technical terms, Document IDs, Revisions, and internal structure only for INSTALL, VERIFY, REPAIR, UPGRADE, diagnostics, explicit methodology discussion, or when the user asks for them.
 8. This communication rule does not weaken Save Gate, authority, verification, conflict, or recovery behavior.
+
+## Versioned Upgrade Routing
+
+1. Existing installations use `ROOT_ENGINEERING_UPDATER.md` and the canonical patch registry.
+2. Updater URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/ROOT_ENGINEERING_UPDATER.md`.
+3. Registry URL: `https://raw.githubusercontent.com/Valon-Jang/Root-Engineering/main/installer/patches/README.md`.
+4. Read and match the exact Package Version in both Manifests before selecting a patch.
+5. Apply only a contiguous forward-only chain whose next `from_version` equals the verified current version.
+6. Apply and verify one patch at a time. Update both Manifest versions only after success.
+7. Do not skip, combine, invent, or reorder patches. Do not downgrade or use fresh INSTALL as an upgrade substitute.
+8. If the installed version or a required transition cannot be proven, stop and report the exact missing transition.
 
 ## Tree and Pruning
 
