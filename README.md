@@ -1000,6 +1000,20 @@ The important question is:
 
 > **Does the Root materially improve future AI performance?**
 
+## Preliminary Benchmark
+
+A manual paired benchmark using a synthetic long-running project ("Project Atlas") compares Native ChatGPT Project Memory with the same GPT-5.6 Sol (High) workflow using Root Engineering.
+
+Both conditions performed similarly on simple continuity tasks. The first clear differences appeared when the benchmark required exact configuration scope, source provenance, field-level partial supersession, and decision-relevant leaf retrieval across a long conflicting update history.
+
+In three stress stages, Native produced material state-reconstruction errors while the Root condition preserved the expected current state; in three other stress stages, both conditions passed.
+
+Two measured complex retrievals also showed lower UI-reported thinking time in the Root condition (53–58% lower), while Root required substantially more update/canonicalization time. In the observed workload of two updates followed by one retrieval, Native remained faster end-to-end.
+
+These are preliminary small-n manual results, not statistical performance claims.
+
+→ [Project Atlas Benchmark v0.1](benchmarks/project-atlas-v0.1/)
+
 ---
 
 # Current Status

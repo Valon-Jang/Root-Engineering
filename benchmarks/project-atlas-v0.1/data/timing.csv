@@ -1,0 +1,7 @@
+type,turn,native_seconds,root_seconds,notes
+update,U1,37,105,paired update/registration
+update,U2,18,203,paired update/registration
+retrieval,R1,279,116,complex verification after U1+U2
+update,U3,56,148,paired update/registration
+update,U4,20,113,paired update/registration
+retrieval,R2,291,137,complex verification after U3+U4
