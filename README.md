@@ -284,6 +284,16 @@ A formal citation file and versioned releases will be added as the methodology s
 
 ---
 
+## License
+
+Except where otherwise noted, the methodology, documentation, installers, and benchmark materials in this repository are licensed under the [Creative Commons Attribution 4.0 International License](./LICENSE).
+
+Copyright © 2026 Valon-Jang.
+
+When sharing or adapting the material, provide appropriate attribution, link to this repository and the license, and indicate whether changes were made.
+
+---
+
 ## About the Name
 
 The phrase **Root Engineering** may appear in unrelated technical, biological, or engineering contexts.
