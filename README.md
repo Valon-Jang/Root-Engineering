@@ -2,1213 +2,296 @@
 
 > **Model is replaceable. Root persists.**
 
-**Root Engineering** is a methodology for designing persistent knowledge, context, memory, verification, and learning structures around AI systems.
+Root Engineering is a context-engineering methodology for preserving validated project knowledge, decisions, constraints, learning, and source relationships across AI sessions and models.
 
-Instead of treating every AI conversation, agent session, or model run as a fresh start, Root Engineering creates an external **Root** that preserves the knowledge and decisions worth carrying forward.
+It addresses three recurring failures in long-running AI work:
+
+- the same project context must be reconstructed repeatedly
+- previous decisions are forgotten or contradicted
+- outdated information is mixed with the current state
 
 The goal is simple:
 
-**Make the next AI start from a better place than the previous one.**
+> **Make the next AI start from a better place than the previous one.**
+
+[Install Root Engineering](#install-and-verify) · [See how it works](#how-it-works) · [Review the benchmark](#preliminary-benchmark) · [Read the detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md)
 
 ---
-## Quick Start
 
-Current reference implementation: **ChatGPT Project + Google Drive live app access**.
+## When Root Engineering Helps
 
-1. Download or open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
-2. Create or open a new ChatGPT Project and attach the installer to its first chat.
+Root Engineering is designed for work where:
+
+- projects continue across many AI conversations
+- important decisions must survive model or tool changes
+- several sources contain overlapping or conflicting information
+- people repeatedly explain what has already been decided
+- outdated facts can cause incorrect actions
+- source provenance and decision history matter
+
+It is usually unnecessary for one-off prompts, disposable tasks, or information that can be reconstructed cheaply.
+
+---
+
+## Install and Verify
+
+The current reference implementation uses **ChatGPT Project + Google Drive live app access**.
+
+1. Open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
+2. Attach it to the first chat of a new ChatGPT Project.
 3. Say: **“Read the package and install it.”**
-4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
+4. Follow the prompts for Google Drive preflight, Root creation, Project Binding, and fresh-chat verification.
 
-Korean users can use the [한국어 Installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
+Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
-The installer is designed to create and verify the Root structure rather than merely explain the setup process.
+The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
 
----
-## What is Root Engineering?
-
-Large language models can reason well inside a session, but important project knowledge is often fragmented across conversations, prompts, documents, memory systems, tools, and individual users.
-
-This creates recurring problems:
-
-* the AI asks the same questions again
-* previous decisions are forgotten
-* context has to be reconstructed repeatedly
-* outdated information is mixed with current information
-* useful lessons disappear after the task ends
-* different models behave as if they are joining the project for the first time
-* more context is added without knowing what is actually worth preserving
-
-Root Engineering addresses this by treating persistent project knowledge as an engineering problem of its own.
-
-It separates:
-
-**what the AI knows**
-from
-**which model is currently using it.**
-
-The model can change.
-
-The Root remains.
-
----
-
-## Canonical Definition
-
-> **Root Engineering is the engineering of persistent external knowledge structures that allow AI systems to preserve validated context, decisions, learning, and source relationships across sessions and models.**
-
-A Root is not simply long-term memory.
-
-It is a deliberately maintained knowledge structure containing only information that materially improves future reasoning or execution.
-
----
-
-## The Core Idea
-
-Most AI workflows focus on improving a single run.
-
-Better prompts.
-
-Better reasoning.
-
-More agents.
-
-More tools.
-
-More context.
-
-Root Engineering focuses on a different question:
-
-> **What should survive after the run is over?**
-
-A useful interaction may produce:
-
-* a confirmed fact
-* a project decision
-* an important constraint
-* a reusable method
-* a failed hypothesis
-* an unresolved question
-* a source that should be consulted again
-* a lesson that prevents future failure
-
-If those things disappear with the session, the next AI must rediscover them.
-
-Root Engineering selectively moves valuable results back into the Root.
-
-```text
-Root
-  ↓
-Context
-  ↓
-Reasoning / Action
-  ↓
-Verification
-  ↓
-Learning
-  ↓
-Root
-```
-
-This creates cumulative improvement without requiring the underlying model itself to permanently change.
-
----
-
-# Root Engineering vs Loop Engineering
-
-Root Engineering is closely related to **Loop Engineering**, but they solve different problems.
-
-## Loop Engineering
-
-Loop Engineering improves the **current task** through iteration.
-
-```text
-Attempt
-  ↓
-Evaluate
-  ↓
-Correct
-  ↓
-Retry
-```
-
-The objective is to improve the result of the current execution.
-
-Examples:
-
-* generate → review → revise
-* code → test → fix
-* research → verify → refine
-* plan → critique → improve
-
-Loop Engineering makes one run better.
-
----
-
-## Root Engineering
-
-Root Engineering determines what should be retained after those loops finish.
-
-```text
-Root
-  ↓
-Context
-  ↓
-Loop
-  ↓
-Verification
-  ↓
-Learning
-  ↓
-Root
-```
-
-The objective is to improve the **starting point of future executions**.
-
-So:
-
-> **Loop Engineering improves the current run.
-> Root Engineering improves the next run.**
-
-The two approaches are complementary.
-
-Repeated loops without Root Engineering can repeatedly rediscover the same knowledge.
-
-A Root without effective execution loops can preserve knowledge but fail to turn it into high-quality outcomes.
-
----
-
-# Why External Roots?
-
-AI models change quickly.
-
-Models are replaced.
-
-Context windows change.
-
-Memory implementations change.
-
-Agent frameworks change.
-
-Tool APIs change.
-
-A project's important knowledge should not depend entirely on any one of them.
-
-Root Engineering therefore favors an **external, model-independent Canonical Root**.
-
-```text
-                 ┌──────────────┐
-                 │ Canonical    │
-                 │ Root         │
-                 └──────┬───────┘
-                        │
-          ┌─────────────┼─────────────┐
-          ↓             ↓             ↓
-       Model A        Model B       Model C
-          │             │             │
-          ↓             ↓             ↓
-       Agents         Chat UI       Codex / IDE
-```
-
-The Root can be implemented using different storage systems:
-
-* plain text / Markdown
-* Google Docs
-* databases
-* Git repositories
-* knowledge stores
-* structured files
-* hybrid systems
-
-The storage technology is replaceable.
-
-The important part is the **knowledge contract**.
-
----
-
-# What Belongs in the Root?
-
-Root Engineering does **not** mean saving everything.
-
-The key question is:
-
-> **If this information disappears, is the next AI meaningfully more likely to rediscover the same thing, make a worse decision, or repeat a previous failure?**
-
-If yes, it may belong in the Root.
-
-Typical Root candidates include:
-
-### Foundation
-
-Long-term information that defines the project.
-
-* purpose
-* principles
-* boundaries
-* important human intent
-* stable definitions
-
-### Current Knowledge
-
-Information required to reason correctly about the present state.
-
-* confirmed facts
-* current constraints
-* active decisions
-* current status
-* unresolved issues
-* dependencies
-
-### Learned Knowledge
-
-Knowledge that has demonstrated reuse value.
-
-* validated methods
-* recurring patterns
-* successful approaches
-* failure lessons
-* reusable skills
-
-### History
-
-Past states that are no longer current but remain useful for understanding change.
-
-* superseded decisions
-* rollback reasons
-* major direction changes
-* historical context
-
----
-
-# What Should Usually NOT Be Stored?
-
-A Root should not become a transcript archive.
-
-By default, avoid storing:
-
-* entire conversations
-* raw chain-of-thought
-* every intermediate attempt
-* temporary working discussion
-* speculative AI conclusions
-* duplicated information
-* irrelevant personal details
-* activity logs with no future reasoning value
-* information that can be cheaply reconstructed
-* one-time tricks with no demonstrated reuse value
-
-More memory is not automatically better memory.
-
-The objective is not maximum retention.
-
-It is **maximum future reasoning value per unit of retained context**.
-
----
-
-# Root Deepening
-
-A Root should grow vertically before it grows horizontally.
-
-When important uncertainty remains, the AI should identify the uncertainty that most affects the next decision.
-
-Then it should resolve it using the best available source:
-
-1. existing Root knowledge
-2. connected sources
-3. tools
-4. authoritative external information
-5. real-world testing
-6. human ground truth when necessary
-
-Only questions that materially change the next decision should be pushed back to the human.
-
-This principle can be summarized as:
-
-> **Taproot before branching.
-> Ask only what changes the next decision.**
-
-Uncontrolled expansion into adjacent possibilities is **Lateral Drift**.
-
-Root Deepening attempts to reduce that drift.
-
----
-
-# The Tree Model
-
-Root Engineering uses a tree as a conceptual model.
-
-```text
-                     Fruit
-              Outputs / Decisions
-                       │
-                     Leaves
-                Active Context
-                       │
-                    Branches
-             Domains / Projects
-                       │
-                      Core
-          Direction / Principles
-                       │
-                     Roots
-       Knowledge / Learning / Facts
-```
-
-### Seed
-
-The AI system itself.
-
-### Water / Nutrients
-
-Model capability.
-
-Better models can accelerate growth, but the model is not the Root.
-
-### Roots
-
-Persistent validated knowledge.
-
-### Core / Trunk
-
-Stable direction, principles, and decision criteria.
-
-### Branches
-
-Projects, domains, and reusable knowledge areas.
-
-### Leaves
-
-The context loaded for the current task.
-
-### Fruit
-
-Actual outputs, decisions, artifacts, and actions.
-
-### Growth Rings
-
-Accumulated experience.
-
-### Pruning
-
-Removal or replacement of outdated, duplicated, or low-value knowledge.
-
-### Sunlight
-
-Autonomy.
-
-Too little autonomy prevents meaningful exploration.
-
-Too much autonomy can create unnecessary exploration, unsupported assumptions, or unsafe self-modification.
-
-Verification, permissions, boundaries, and human approval act as control mechanisms.
-
----
-
-# Question-Driven Root Deepening
-
-Root Engineering does not turn every task into an interview.
-
-A practical sequence is:
-
-```text
-1. Understand the current goal
-2. Identify known facts and constraints
-3. Identify unresolved assumptions
-4. Find the uncertainty with the highest decision impact
-5. Resolve it using available evidence
-6. Ask the human only when human ground truth is required
-7. Update the working model
-8. Repeat only while another uncertainty materially changes the decision
-```
-
-The process stops when the AI has enough reliable information to make the next useful judgment or action.
-
----
-
-# Canonical Root
-
-A serious Root Engineering implementation should designate one authoritative representation of current project knowledge.
-
-This is the **Canonical Root**.
-
-Other sources may exist:
+### What the installer establishes
 
 ```text
 Canonical Root
-      │
-      ├── Source documents
-      ├── PDFs
-      ├── Emails
-      ├── Databases
-      ├── Web sources
-      ├── Code
-      └── Historical records
+├── Foundation
+├── Current Knowledge
+├── Learned Knowledge
+└── History
 ```
 
-Sources provide evidence and detail.
+The fresh-chat test verifies that a new conversation can identify the Project Binding, retrieve the Root, navigate to Current Knowledge, and continue from the persisted project state.
 
-The Canonical Root provides the project's currently accepted state.
+This creates the path from methodology to operation:
 
-This distinction prevents every source from being loaded into every task.
+```text
+Install
+  ↓
+Create Canonical Root
+  ↓
+Bind Project
+  ↓
+Verify in a Fresh Chat
+  ↓
+Use and Update the Root
+```
+
+→ [Open the English installer](./installer/ROOT_ENGINEERING_INSTALLER.md)
 
 ---
 
-# Read Only What You Need
-
-Root Engineering does not require loading the entire knowledge tree into every context window.
-
-Instead:
+## How It Works
 
 ```text
-Root
- ├── Foundation
- ├── Current Knowledge
- │     ├── Area A
- │     ├── Area B
- │     └── Area C
- ├── Learned Knowledge
- └── History
+Canonical Root
+      ↓
+Selective Context
+      ↓
+Reasoning / Action
+      ↓
+Verification
+      ↓
+Minimum Root Patch
+      ↓
+Future Session
 ```
 
-The AI starts with the Root Map and follows only the branches required for the current request.
+A Root keeps one authoritative representation of the project's currently accepted state.
 
-This reduces:
-
-* token usage
-* irrelevant context
-* retrieval noise
-* conflicting information
-* stale knowledge exposure
-
-The principle is:
+The AI starts from a Root Map and reads only the branches relevant to the current task. After the work is completed and verified, it selectively preserves results that materially improve future reasoning.
 
 > **Navigate the Root. Do not dump the Root.**
 
----
+### Without Root vs. with Root
 
-# Read → Patch → Verify
-
-Persistent knowledge should not be edited casually.
-
-A minimal Root write cycle is:
-
-```text
-Read current state
-      ↓
-Patch minimum required change
-      ↓
-Clean local duplication / obsolete content
-      ↓
-Read back
-      ↓
-Verify
-```
-
-This avoids rewriting large knowledge structures unnecessarily.
-
-It also reduces the risk of destroying valid context during updates.
+| Without Root | With Root |
+|---|---|
+| Decisions remain scattered across chats and documents | Accepted decisions have a canonical location |
+| Each session reconstructs project context | Each session starts from validated current state |
+| Old and new information may be mixed | Superseded information is separated from current knowledge |
+| More context is loaded indiscriminately | Only task-relevant branches are retrieved |
+| Useful lessons disappear after execution | Verified reusable lessons can persist |
+| Changing models feels like restarting the project | Project knowledge remains external to the model |
 
 ---
 
-# Pruning
+## Root and Loop
 
-A Root grows over time.
+> **Loop Engineering improves the current run.**<br>
+> **Root Engineering improves the next run.**
 
-Without pruning it eventually becomes another source of context noise.
+Loops improve execution through iteration: attempt, evaluate, correct, and retry.
 
-However, aggressive cleanup is also dangerous.
-
-Root Engineering therefore favors:
-
-> **Prune on contact. Never scan just to prune.**
-
-When a branch is already being used or updated:
-
-* remove obvious duplication
-* replace superseded knowledge
-* repair broken source pointers
-* move obsolete but important information to History
-
-Do not repeatedly scan the entire Root solely to make it look cleaner.
+Roots determine what validated knowledge and decisions should survive after those loops finish. The two approaches are complementary.
 
 ---
-
-# Authority
-
-Not all information has equal authority.
-
-A practical authority order is:
-
-```text
-Current explicit human instruction
-        ↓
-Project rules / instructions
-        ↓
-Canonical Root
-        ↓
-Validated reusable skills
-        ↓
-Sources / references
-        ↓
-Model inference
-```
-
-Recency alone does not imply authority.
-
-A recent source can still be wrong.
-
-An older decision can still remain authoritative.
-
----
-
-# Facts, Decisions, and Inference
-
-Root Engineering distinguishes between several knowledge types.
-
-### Fact
-
-Something supported by reliable evidence.
-
-### Decision
-
-A choice accepted for the project.
-
-### Hypothesis
-
-A possible explanation that remains unconfirmed.
-
-### Inference
-
-A conclusion generated by the AI from available information.
-
-### Unresolved
-
-A question that still matters but cannot yet be answered reliably.
-
-These should not silently collapse into one another.
-
-In particular:
-
-> AI inference should not automatically become Canonical Root fact.
-
----
-
-# Sources
-
-Detailed evidence usually belongs outside the Root.
-
-The Root should contain enough information to reason correctly and pointers to deeper sources when necessary.
-
-```text
-Root Statement
-      │
-      └── Source Pointer
-              │
-              ├── Document
-              ├── Dataset
-              ├── Website
-              ├── Email
-              └── Experiment
-```
-
-This keeps the Root compact while preserving traceability.
-
----
-
-# Skills vs Root
-
-Root Engineering separates **knowledge** from **capability**.
-
-```text
-Project Root
-= What the AI should know
-
-Skill
-= How the AI can perform a task
-
-Tool / Runtime
-= What the AI can actually execute right now
-```
-
-For example:
-
-A project Root might know that a specific verification procedure is required.
-
-A reusable Skill might describe how to perform that verification.
-
-The Runtime determines whether the necessary tools are available.
-
-This separation makes both knowledge and capabilities more portable.
-
----
-
-# Text Before Code
-
-Not every AI behavior needs software.
-
-Before implementing a new feature in code, Root Engineering asks whether it can be handled effectively through:
-
-```text
-Text
- ↓
-Skill
- ↓
-Tool
- ↓
-Code
-```
-
-Code becomes valuable when deterministic behavior, automation, performance, safety, or system integration requires it.
-
-This prevents unnecessary infrastructure from replacing reasoning the model can already perform.
-
----
-
-# Model Independence
-
-Root Engineering is intentionally model-independent.
-
-A Root should ideally survive transitions such as:
-
-```text
-Model A
-  ↓
-Model B
-  ↓
-Model C
-```
-
-without requiring the project's accumulated knowledge to be rebuilt from scratch.
-
-This is the origin of the central principle:
-
-> **Model is replaceable. Root persists.**
-
----
-
-# A Minimal Root Structure
-
-A simple implementation can begin with only four branches.
-
-```text
-ROOT.md
-
-Foundation/
-    FOUNDATION.md
-
-Current-Knowledge/
-    CURRENT.md
-
-Learned-Knowledge/
-    LEARNED.md
-
-History/
-    HISTORY.md
-```
-
-`ROOT.md` acts as an index and digest rather than containing every detail.
-
-Example:
-
-```markdown
-# PROJECT ROOT
-
-## Foundation Digest
-- Project purpose
-- Core principles
-- Important boundaries
-
-## Current Digest
-- Current state
-- Active decisions
-- Important unresolved issues
-
-## Root Map
-
-### Foundation
-Purpose: Stable project identity and principles
-Location: ./Foundation/FOUNDATION.md
-
-### Current Knowledge
-Purpose: Current facts, state, decisions, constraints
-Location: ./Current-Knowledge/CURRENT.md
-
-### Learned Knowledge
-Purpose: Validated reusable lessons and methods
-Location: ./Learned-Knowledge/LEARNED.md
-
-### History
-Purpose: Superseded but valuable historical knowledge
-Location: ./History/HISTORY.md
-```
-
-Start small.
-
-Branches should be created because retrieval patterns require them, not because the taxonomy looks cleaner.
-
----
-
-# Root Save Gate
-
-Before writing information into the Root, ask:
-
-> **Would the absence of this information significantly increase the chance that a future AI must rediscover it, make a worse decision, or repeat a previous failure?**
-
-If not, it probably does not need to become persistent knowledge.
-
----
-
-# Root Engineering and AI Memory
-
-Root Engineering overlaps with AI memory systems but is not identical to them.
-
-A memory system answers:
-
-> **What information can the AI retrieve later?**
-
-Root Engineering additionally asks:
-
-* What deserves to persist?
-* What is authoritative?
-* What has been superseded?
-* What should be loaded for this task?
-* What should remain only as a source?
-* What should be removed?
-* What should be learned from execution?
-* What decisions must survive model replacement?
-* How should knowledge be verified before persistence?
-
-Memory is a component.
-
-Root Engineering is the architecture around it.
-
----
-
-# Root Engineering and RAG
-
-Retrieval-Augmented Generation primarily focuses on retrieving relevant information from external sources.
-
-Root Engineering addresses a different layer.
-
-RAG asks:
-
-> **Which existing information should I retrieve?**
-
-Root Engineering also asks:
-
-> **What should become persistent project knowledge after this interaction?**
-
-The two approaches can work together.
-
-```text
-Sources
-   ↓
-Retrieval / RAG
-   ↓
-Current Context
-   ↓
-Reasoning
-   ↓
-Verification
-   ↓
-Root Update
-```
-
----
-
-# Root Engineering and Agent Memory
-
-Agent memory systems often record observations, summaries, events, or vector embeddings.
-
-Root Engineering does not prescribe a particular memory implementation.
-
-Instead, it defines a higher-level knowledge lifecycle:
-
-```text
-Acquire
-  ↓
-Evaluate
-  ↓
-Use
-  ↓
-Verify
-  ↓
-Persist selectively
-  ↓
-Retrieve selectively
-  ↓
-Update / Prune
-```
-
-A vector database, file system, knowledge graph, document store, or human-maintained repository can all participate in this architecture.
-
----
-
-# Root Engineering and Knowledge Graphs
-
-A Root can eventually be represented as a graph.
-
-However, graph structure is not required to begin.
-
-A practical progression may be:
-
-```text
-Text Root
-   ↓
-Structured Root
-   ↓
-Linked Root
-   ↓
-Graph Root
-```
-
-Structure should emerge from actual retrieval and maintenance needs rather than being imposed prematurely.
-
----
-
-# Design Principles
-
-Root Engineering currently follows several core principles.
-
-### 1. Preserve what improves future reasoning
-
-Persistence exists to improve future work, not to archive everything.
-
-### 2. Keep one canonical current state
-
-Detailed truth should not be duplicated across multiple competing locations.
-
-### 3. Separate knowledge from models
-
-Projects should survive model replacement.
-
-### 4. Separate knowledge from skills
-
-What the AI knows and how it performs tasks are different systems.
-
-### 5. Read selectively
-
-Load only the branches required for the current task.
-
-### 6. Write selectively
-
-Do not mutate the Root after every interaction.
-
-### 7. Verify before persistence
-
-Unverified model inference should not silently become project truth.
-
-### 8. Prune locally
-
-Clean knowledge when interacting with it rather than performing constant global maintenance.
-
-### 9. Deepen before branching
-
-Resolve important uncertainty before expanding into peripheral possibilities.
-
-### 10. Let the model remain intelligent
-
-Do not reproduce the model's existing reasoning ability with unnecessary rigid state machines.
-
----
-
-# Example
-
-Imagine an AI-assisted product development project.
-
-During one session the team discovers:
-
-* Supplier A cannot meet the required tolerance.
-* Supplier B can meet it but increases cost by 12%.
-* The project decides to continue with Supplier B.
-* A specific inspection step prevented a recurring defect.
-* Final validation is still pending.
-
-Without Root Engineering, these facts may remain scattered across chat history.
-
-With Root Engineering:
-
-```text
-Current Knowledge
-- Supplier A rejected due to tolerance capability.
-- Supplier B selected.
-- Cost impact: +12%.
-- Final validation remains unresolved.
-
-Learned Knowledge
-- Inspection method X detected defect Y before release.
-
-History
-- Previous Supplier A selection superseded.
-```
-
-A future model does not need the entire old conversation.
-
-It receives the relevant current state and continues from there.
-
----
-
-# Failure Mode: Context Reconstruction
-
-One of the primary problems Root Engineering aims to reduce is **context reconstruction**.
-
-Context reconstruction happens when users repeatedly have to explain:
-
-* what the project is
-* what has already been tried
-* what was decided
-* what failed
-* why a decision was made
-* what constraints exist
-
-This consumes both human effort and model context.
-
-A successful Root should reduce this reconstruction cost over time.
-
----
-
-# Evaluation
-
-Root Engineering should ultimately be judged by measurable improvement, not by terminology.
-
-Potential evaluation metrics include:
-
-* context reconstruction tokens
-* repeated human questions
-* repeated model questions
-* previous decision violations
-* task completion turns
-* rework rate
-* successful reuse of previous learning
-* incorrect use of outdated information
-* project onboarding time for a new model
-* task success rate before vs after Root adoption
-
-A simple benchmark can compare:
-
-```text
-Baseline
-AI without Project Root
-
-vs.
-
-Root
-Same task with Canonical Root available
-```
-
-The important question is:
-
-> **Does the Root materially improve future AI performance?**
 
 ## Preliminary Benchmark
 
-A manual paired benchmark using a synthetic long-running project ("Project Atlas") compares Native ChatGPT Project Memory with the same GPT-5.6 Sol (High) workflow using Root Engineering.
+[Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) connects the methodology to an inspectable experiment.
 
-Both conditions performed similarly on simple continuity tasks. The first clear differences appeared when the benchmark required exact configuration scope, source provenance, field-level partial supersession, and decision-relevant leaf retrieval across a long conflicting update history.
+It is a manual paired comparison between:
 
-In three stress stages, Native produced material state-reconstruction errors while the Root condition preserved the expected current state; in three other stress stages, both conditions passed.
+- **Native condition:** GPT-5.6 Sol (High)
+- **Root Engineering condition:** GPT-5.6 Sol (High)
 
-Two measured complex retrievals also showed lower UI-reported thinking time in the Root condition (53–58% lower), while Root required substantially more update/canonicalization time. In the observed workload of two updates followed by one retrieval, Native remained faster end-to-end.
+The benchmark designer and prompt submitter was **GPT-5.6 Sol (XHigh)**. Native and Root are the actual compared conditions and use matched model and reasoning settings.
 
-These are preliminary small-n manual results, not statistical performance claims.
+Both conditions performed similarly on simple continuity tasks. The first divergence appeared at **Stage 2**, when exact configuration scope and source provenance became important. Stage 5 recorded a selective-retrieval failure that changed the Native decision path, while Root preserved the expected state. **Stage 4 and Stage 6 remained ties.**
 
-→ [Project Atlas Benchmark v0.1](benchmarks/project-atlas-v0.1/)
+Two measured complex retrievals showed lower UI-reported thinking time in the Root condition, but Root required substantially more update and canonicalization time. The observed workload did **not** demonstrate an end-to-end Root speed advantage.
 
----
+These are **preliminary manual small-n observations, not statistical proof**.
 
-# Current Status
+### Inspect the experiment
 
-Root Engineering is currently an early-stage methodology and reference architecture.
+- [Benchmark overview](./benchmarks/project-atlas-v0.1/README.md)
+- [Methodology and controls](./benchmarks/project-atlas-v0.1/methodology.md)
+- [Stage 0–6 experiment map](./benchmarks/project-atlas-v0.1/experiment-map.md)
+- [Observed results](./benchmarks/project-atlas-v0.1/results.md)
+- [Timing interpretation](./benchmarks/project-atlas-v0.1/timing.md)
+- [Raw timing data](./benchmarks/project-atlas-v0.1/data/timing.csv)
+- [Submitted prompts](./benchmarks/project-atlas-v0.1/prompts/README.md)
 
-The current work focuses on:
-
-* defining the minimum viable Root structure
-* testing model-independent persistence
-* reducing context reconstruction
-* improving selective retrieval
-* testing question-driven Root Deepening
-* validating Root write and pruning rules
-* designing before/after benchmarks
-* testing text-only installation across AI systems
-* exploring future graph representations
-
-The methodology is expected to evolve through practical use and measurable evaluation.
-
----
-
-# Roadmap
-
-## v0.1 — Minimal Root
-
-* Canonical Root
-* Foundation
-* Current Knowledge
-* Learned Knowledge
-* History
-* Root Map
-* selective read
-* selective write
-* read-back verification
-
-## v0.2 — Evaluation
-
-* benchmark design
-* context reconstruction measurement
-* decision consistency measurement
-* repeated-question measurement
-* task success comparison
-
-## v0.3 — Portable Installation
-
-* reusable text installer
-* model adapters
-* storage adapters
-* project bootstrap
-
-## Future
-
-* graph-based Root structures
-* automated source linkage
-* conflict detection
-* semantic pruning
-* multi-agent Root coordination
-* Root observability
-* standardized Root benchmark suite
-
----
-
-# Relationship to Other AI Engineering Layers
-
-Root Engineering can be viewed as one layer in a broader AI system.
+The full path is therefore:
 
 ```text
-┌─────────────────────────────┐
-│ Application / Human Workflow│
-├─────────────────────────────┤
-│ Agents / Orchestration      │
-├─────────────────────────────┤
-│ Loop Engineering            │
-├─────────────────────────────┤
-│ Root Engineering            │
-├─────────────────────────────┤
-│ Models / Tools / Runtime    │
-└─────────────────────────────┘
-```
-
-These layers are not strict implementation requirements.
-
-They are a useful way to distinguish:
-
-* execution
-* iteration
-* persistence
-* model capability
-
----
-
-# Philosophy
-
-AI systems are becoming more capable very quickly.
-
-But increasingly capable models do not eliminate the need for accumulated project knowledge.
-
-A new model may reason better than the old one.
-
-It still cannot automatically know every project decision, experiment, constraint, failure, and lesson that came before it.
-
-Root Engineering treats that accumulated context as an asset independent of the model.
-
-The model is the intelligence currently using the system.
-
-The Root is what allows that intelligence to inherit a history.
-
-> **Better models make the tree grow faster.
-> Better roots determine what survives.**
-
----
-
-# Principles in One Page
-
-```text
-Model is replaceable.
-Root persists.
-
-Loop improves this run.
-Root improves the next run.
-
-Do not save everything.
-Save what changes future reasoning.
-
-Use one canonical current state.
-
-Sources contain evidence.
-Root contains usable project knowledge.
-
-Read only the branch you need.
-
-Read current.
-Patch minimum.
-Read back.
-
-Prune on contact.
-
-Taproot before branching.
-
-Ask only what changes the next decision.
-
-Do not turn model intelligence into unnecessary machinery.
-
-Verify before persistence.
-
-The Root exists to make the next AI start higher.
+Methodology
+  ↓
+Installer
+  ↓
+Fresh-Chat Verification
+  ↓
+Paired Benchmark
+  ↓
+Results and Failure Analysis
+  ↓
+Methodology Revision
 ```
 
 ---
 
-# Contributing
+## Minimal Root
 
-Root Engineering is intentionally being developed through real-world experimentation.
+A Root can begin with four knowledge branches and one map:
+
+```text
+ROOT
+├── Foundation
+├── Current Knowledge
+├── Learned Knowledge
+└── History
+```
+
+- **Foundation** preserves stable purpose, principles, boundaries, and human intent.
+- **Current Knowledge** contains current facts, status, decisions, constraints, and unresolved issues.
+- **Learned Knowledge** contains validated reusable methods and failure lessons.
+- **History** preserves superseded states that still matter for understanding change.
+- **ROOT** acts as the map and digest used to find the required branch.
+
+Start small. Create new branches because real retrieval patterns require them, not because a larger taxonomy looks complete.
+
+---
+
+## Core Principles
+
+1. **Preserve selectively:** Save only what materially improves future reasoning.
+
+2. **Keep one canonical current state:** Do not duplicate current truth across competing locations.
+
+3. **Separate knowledge from models:** Project knowledge should survive model and tool replacement.
+
+4. **Read selectively:** Load only the branches required for the current task.
+
+5. **Verify before persistence:** Model inference must not silently become project fact.
+
+6. **Patch minimally and prune locally:** Update the smallest necessary area and clean knowledge when interacting with it.
+
+The save gate is:
+
+> **Would losing this information materially increase the chance that a future AI must rediscover it, make a worse decision, or repeat a previous failure?**
+
+---
+
+## What Root Engineering Is Not
+
+Root Engineering is not a transcript archive and does not mean saving everything.
+
+It does not prescribe a specific model, database, vector store, graph, or agent framework. Those technologies may participate in an implementation, but the methodology focuses on the knowledge lifecycle around them:
+
+```text
+Acquire → Evaluate → Use → Verify → Persist Selectively → Retrieve Selectively → Update / Prune
+```
+
+It complements AI memory and RAG:
+
+- a memory system asks what information can be retrieved later
+- RAG asks which existing information should be retrieved now
+- Root Engineering also asks what deserves to become authoritative project knowledge after the interaction
+
+---
+
+## Documentation
+
+The [detailed methodology reference](./docs/ROOT_ENGINEERING_REFERENCE.md) contains the full definitions, conceptual model, operating rules, comparisons, examples, roadmap, philosophy, and terminology that previously lived in this README.
+
+Start with the path that matches your goal:
+
+| Goal | Document |
+|---|---|
+| Install and verify a working Root | [English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
+| Install using Korean user guidance | [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
+| Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
+| Review the paired experiment | [Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) |
+| Reproduce the benchmark prompts | [Prompt package](./benchmarks/project-atlas-v0.1/prompts/README.md) |
+
+---
+
+## Current Status
+
+Root Engineering is an early-stage methodology and reference architecture.
+
+Current work focuses on:
+
+- testing model-independent persistence
+- reducing context reconstruction
+- improving selective retrieval
+- validating write, verification, and pruning rules
+- expanding reproducible before/after benchmarks
+- testing portable installation across AI systems
+
+The methodology is expected to evolve through practical use, documented failure cases, and measurable evaluation.
+
+---
+
+## Contributing
 
 Useful contributions include:
 
-* implementation patterns
-* failure cases
-* benchmark designs
-* storage adapters
-* retrieval strategies
-* pruning strategies
-* model portability tests
-* agent memory comparisons
-* practical case studies
+- implementation patterns
+- failure cases
+- benchmark designs and reproductions
+- storage adapters
+- retrieval and pruning strategies
+- model portability tests
+- practical case studies
 
 Strong evidence is more valuable than additional terminology.
 
 ---
 
-# Citation
+## Citation
 
-If you reference Root Engineering as defined in this repository, please cite this repository and the specific release or commit used.
+If you reference Root Engineering as defined in this repository, cite this repository and the specific release or commit used.
 
 A formal citation file and versioned releases will be added as the methodology stabilizes.
 
 ---
 
-# About the Name
+## About the Name
 
 The phrase **Root Engineering** may appear in unrelated technical, biological, or engineering contexts.
 
-In this repository, **Root Engineering** specifically refers to the methodology defined here for persistent external knowledge architecture around AI systems.
-
-The repository does not claim ownership of every historical use of the phrase.
-
-Its purpose is to provide a clear, testable, and evolving definition of **Root Engineering for AI**.
+In this repository, it specifically refers to the methodology defined here for persistent external knowledge architecture around AI systems.
 
 ---
 
-# Final Principle
-
 > # Model is replaceable. Root persists.
 
-An AI project should not have to lose its accumulated understanding every time the model, session, agent, or tool changes.
-
-That is the problem Root Engineering is designed to solve.
+An AI project should not lose its accumulated understanding every time the model, session, agent, or tool changes.
