@@ -1,4 +1,4 @@
-[ROOT_ENGINEERING_INSTALLER.md](https://github.com/user-attachments/files/31581025/ROOT_ENGINEERING_INSTALLER.md)
+[ROOT_ENGINEERING_INSTALLER.md]
 ---
 package_id: root-engineering-chat-installer
 package_version: 0.1.1
