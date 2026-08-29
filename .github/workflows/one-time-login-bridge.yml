@@ -1,0 +1,118 @@
+name: One-time Login Bridge
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/one-time-login-bridge.yml
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Install remote desktop components
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb x11vnc openbox novnc websockify
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
+          chmod +x /tmp/cloudflared
+
+      - name: Start isolated Chromium and encrypted live bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export DISPLAY=:99
+          export HOME=/tmp/bridge-home
+          mkdir -p "$HOME" /tmp/chrome-profile
+
+          VNC_PASSWORD="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 22)"
+          test "${#VNC_PASSWORD}" -ge 18
+          printf '%s\n' "$VNC_PASSWORD" | x11vnc -storepasswd - /tmp/vnc.pass >/dev/null
+
+          Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/xvfb.log 2>&1 &
+          sleep 2
+          openbox-session >/tmp/openbox.log 2>&1 &
+
+          BROWSER_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$BROWSER_BIN" ]; then
+            echo "No Chromium-family browser found" >&2
+            exit 1
+          fi
+
+          "$BROWSER_BIN" \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu \
+            --no-first-run \
+            --no-default-browser-check \
+            --user-data-dir=/tmp/chrome-profile \
+            --window-position=0,0 \
+            --window-size=1440,900 \
+            'https://nid.naver.com/nidlogin.login' \
+            >/tmp/chrome.log 2>&1 &
+
+          x11vnc \
+            -display :99 \
+            -rfbport 5900 \
+            -rfbauth /tmp/vnc.pass \
+            -forever \
+            -shared \
+            -noxdamage \
+            >/tmp/x11vnc.log 2>&1 &
+
+          websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/websockify.log 2>&1 &
+          /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:6080 >/tmp/cloudflared.log 2>&1 &
+
+          LIVE_BASE=""
+          for _ in $(seq 1 90); do
+            LIVE_BASE="$(grep -Eo 'https://[-a-z0-9]+\.trycloudflare\.com' /tmp/cloudflared.log | head -n 1 || true)"
+            if [ -n "$LIVE_BASE" ]; then break; fi
+            sleep 1
+          done
+          if [ -z "$LIVE_BASE" ]; then
+            echo 'Cloud tunnel did not start' >&2
+            cat /tmp/cloudflared.log >&2 || true
+            exit 1
+          fi
+
+          cat >/tmp/public.pem <<'EOF'
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlWSc8Se96Gf54H4M+23p
+          0bMpaegJVC2qY90u+4zyjJmEjOUp9XBKJplnM0by1b3QmoGnYa0k7ZJlFJAke7Nq
+          MzF1Sgscj1r8BQjIM9jNxX493n/hgYQEgJvAwTFICMYs1H4DwDn9HYvpT992tpeO
+          1jetUAHRSX0sU3TTGdnmncAqUxTi9SsW3NsvHNatx/ZSh5e8ffGNQ6sHW397Td1B
+          +/DAAwpGasK6bdzbLLzvb9QQh1+uMp+Y6d8lWj/5OaNnlLRy/aTIMDHiCAyoK9vZ
+          Ws1/nUEWWE6Me/u806UbaCUM/IoSPkWqviJiXhOTm/py7fKuHLI90rPRRRu3/7gs
+          5QIDAQAB
+          -----END PUBLIC KEY-----
+          EOF
+
+          LOGIN_URL="${LIVE_BASE}/vnc.html?autoconnect=1&resize=scale&view_only=0"
+          printf '{"url":"%s","password":"%s"}' "$LOGIN_URL" "$VNC_PASSWORD" >/tmp/bridge.json
+          openssl pkeyutl -encrypt \
+            -pubin \
+            -inkey /tmp/public.pem \
+            -in /tmp/bridge.json \
+            -out /tmp/bridge.bin \
+            -pkeyopt rsa_padding_mode:oaep \
+            -pkeyopt rsa_oaep_md:sha256
+
+          CIPHERTEXT="$(base64 -w 0 /tmp/bridge.bin)"
+          echo "BRIDGE_CIPHERTEXT=${CIPHERTEXT}"
+          echo 'The browser profile is temporary and will be destroyed when this job ends.'
+
+          for _ in $(seq 1 1800); do
+            if ! kill -0 $(pgrep -f 'cloudflared tunnel' | head -n1) 2>/dev/null; then
+              echo 'Tunnel stopped unexpectedly' >&2
+              exit 1
+            fi
+            sleep 1
+          done
