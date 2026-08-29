@@ -48,16 +48,11 @@ jobs:
           nohup Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/naver-bridge/xvfb.log 2>&1 &
           sleep 2
           nohup "$CHROME_BINARY" \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --disable-gpu \
-            --no-first-run \
-            --no-default-browser-check \
-            --remote-debugging-address=127.0.0.1 \
-            --remote-debugging-port=9222 \
+            --no-sandbox --disable-dev-shm-usage --disable-gpu \
+            --no-first-run --no-default-browser-check \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
             --user-data-dir=/tmp/naver-bridge/profile \
-            --window-position=0,0 \
-            --window-size=1440,900 \
+            --window-position=0,0 --window-size=1440,900 \
             'https://nid.naver.com/nidlogin.login' \
             >/tmp/naver-bridge/chrome.log 2>&1 &
 
@@ -74,69 +69,42 @@ jobs:
           from selenium.webdriver.common.by import By
           from selenium.webdriver.support.ui import WebDriverWait
 
-          opt = webdriver.ChromeOptions()
-          opt.debugger_address = '127.0.0.1:9222'
-          driver = webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']), options=opt)
-          state = {'clicked_qr': False}
+          opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
+          driver=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
+          state={'clicked_qr':False}
           try:
-              WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') in ('interactive','complete'))
+              WebDriverWait(driver,30).until(lambda d:d.execute_script('return document.readyState') in ('interactive','complete'))
               time.sleep(2)
-
-              for el in driver.find_elements(By.XPATH, "//*[self::a or self::button or @role='button' or @role='tab']"):
+              for el in driver.find_elements(By.XPATH,"//*[self::a or self::button or @role='button' or @role='tab']"):
                   try:
-                      if not el.is_displayed():
-                          continue
-                      text = (el.text or el.get_attribute('aria-label') or el.get_attribute('title') or '').strip()
-                      if re.search(r'QR\s*(코드|로그인|sign-in)?', text, re.I):
-                          el.click()
-                          state['clicked_qr'] = True
-                          state['clicked_text'] = text
-                          break
-                  except Exception:
-                      pass
-
+                      if not el.is_displayed(): continue
+                      text=(el.text or el.get_attribute('aria-label') or el.get_attribute('title') or '').strip()
+                      if re.search(r'QR\s*(코드|로그인|sign-in)?',text,re.I):
+                          el.click(); state['clicked_qr']=True; state['clicked_text']=text; break
+                  except Exception: pass
               if not state['clicked_qr']:
                   driver.get('https://nid.naver.com/nidlogin.login?mode=qrcode')
-
               time.sleep(3)
-              state['current_url'] = driver.current_url
-              state['body_excerpt'] = driver.find_element(By.TAG_NAME, 'body').text[:1200]
-
-              qr = None
-              for sel in ["img[id*='qr' i]", "img[class*='qr' i]", "[id*='qr' i] img", "[class*='qr' i] img"]:
+              state['current_url']=driver.current_url
+              state['body_excerpt']=driver.find_element(By.TAG_NAME,'body').text[:1200]
+              qr=None
+              for sel in ["img[id*='qr' i]","img[class*='qr' i]","[id*='qr' i] img","[class*='qr' i] img"]:
                   try:
-                      candidates = [e for e in driver.find_elements(By.CSS_SELECTOR, sel) if e.is_displayed() and e.size.get('width',0) >= 100 and e.size.get('height',0) >= 100]
-                      if candidates:
-                          qr = candidates[0]
-                          state['qr_selector'] = sel
-                          state['qr_size'] = qr.size
-                          break
-                  except Exception:
-                      pass
-
-              if qr is None:
-                  raise RuntimeError('QR image not found in rendered login page')
-
-              # Capture the smallest useful login panel that includes the QR and the number-selection challenge.
-              panel = None
-              for xpath in [
-                  "./ancestor::form[contains(@class,'qr')][1]",
-                  "./ancestor::form[1]",
-                  "./ancestor::div[contains(@class,'qr')][1]",
-              ]:
+                      c=[e for e in driver.find_elements(By.CSS_SELECTOR,sel) if e.is_displayed() and e.size.get('width',0)>=100 and e.size.get('height',0)>=100]
+                      if c:
+                          qr=c[0]; state['qr_selector']=sel; state['qr_size']=qr.size; break
+                  except Exception: pass
+              if qr is None: raise RuntimeError('QR image not found')
+              panel=None
+              for xpath in ["./ancestor::form[contains(@class,'qr')][1]","./ancestor::form[1]","./ancestor::div[contains(@class,'qr')][1]"]:
                   try:
-                      p = qr.find_element(By.XPATH, xpath)
-                      if p.is_displayed() and p.size.get('width',0) >= 300 and p.size.get('height',0) >= 180:
-                          panel = p
-                          break
-                  except Exception:
-                      pass
-
-              target = panel or qr
-              target.screenshot('/tmp/naver-bridge/out/login.png')
-              driver.save_screenshot('/tmp/naver-bridge/out/debug-page.png')
+                      p=qr.find_element(By.XPATH,xpath)
+                      if p.is_displayed() and p.size.get('width',0)>=300 and p.size.get('height',0)>=180:
+                          panel=p; break
+                  except Exception: pass
+              (panel or qr).screenshot('/tmp/naver-bridge/out/login.png')
               with open('/tmp/naver-bridge/out/login-state.json','w',encoding='utf-8') as f:
-                  json.dump(state, f, ensure_ascii=False, indent=2)
+                  json.dump(state,f,ensure_ascii=False,indent=2)
           finally:
               driver.quit()
           PY
@@ -165,167 +133,122 @@ jobs:
           from selenium.webdriver.common.keys import Keys
           from selenium.webdriver.support.ui import WebDriverWait
 
-          OUT = pathlib.Path('/tmp/naver-bridge/out')
-          RECIPIENT = 'tequiero7342@gmail.com'
-          SUBJECT = 'ChatGPT Naver Mail Bridge Test'
-          BODY = 'ChatGPT가 QR 로그인 브리지를 통해 보낸 테스트 메일입니다.'
+          OUT=pathlib.Path('/tmp/naver-bridge/out')
+          RECIPIENT='tequiero7342@gmail.com'
+          SUBJECT='ChatGPT Naver Mail Bridge Test'
+          BODY='ChatGPT가 QR 로그인 브리지를 통해 보낸 테스트 메일입니다.'
 
-          opt = webdriver.ChromeOptions()
-          opt.debugger_address = '127.0.0.1:9222'
-          driver = webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']), options=opt)
-          result = {'ok': False, 'recipient': RECIPIENT}
+          opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
+          driver=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
+          result={'ok':False,'recipient':RECIPIENT}
 
           def visible_css(selectors):
               for sel in selectors:
                   try:
-                      items = [e for e in driver.find_elements(By.CSS_SELECTOR, sel) if e.is_displayed() and e.size.get('width',0) > 2 and e.size.get('height',0) > 2]
-                      if items:
-                          return items[0], sel
-                  except Exception:
-                      pass
-              return None, None
+                      items=[e for e in driver.find_elements(By.CSS_SELECTOR,sel) if e.is_displayed() and e.size.get('width',0)>2 and e.size.get('height',0)>2]
+                      if items: return items[0],sel
+                  except Exception: pass
+              return None,None
 
           try:
-              # Keep this exact Chrome/profile alive and wait until the QR approval changes its authenticated state.
-              deadline = time.time() + 420
-              authenticated = False
-              while time.time() < deadline:
+              deadline=time.time()+420
+              authenticated=False
+              while time.time()<deadline:
                   try:
-                      url = driver.current_url
-                      cookies = {c.get('name') for c in driver.get_cookies()}
-                      if 'NID_AUT' in cookies or 'NID_SES' in cookies or 'nidlogin.login' not in url.lower():
-                          authenticated = True
-                          break
-                  except Exception:
-                      pass
+                      url=driver.current_url.lower()
+                      cookies={c.get('name') for c in driver.get_cookies()}
+                      if 'NID_AUT' in cookies or 'NID_SES' in cookies or 'nidlogin.login' not in url:
+                          authenticated=True; break
+                  except Exception: pass
                   time.sleep(1)
-
-              if not authenticated:
-                  raise TimeoutError('QR login was not approved before timeout')
+              if not authenticated: raise TimeoutError('QR login was not approved before timeout')
 
               driver.get('https://mail.naver.com/v2/new')
-              WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') in ('interactive','complete'))
+              WebDriverWait(driver,30).until(lambda d:d.execute_script('return document.readyState') in ('interactive','complete'))
               time.sleep(5)
-
               if 'nidlogin' in driver.current_url.lower() or 'login' in driver.current_url.lower():
                   raise RuntimeError('Naver session did not remain authenticated')
 
-              to, tsel = visible_css([
-                  "input[placeholder*='받는']", "input[aria-label*='받는']",
-                  "input[name*='to']", "textarea[placeholder*='받는']"
-              ])
-              subject, ssel = visible_css([
-                  "input[placeholder*='제목']", "input[aria-label*='제목']",
-                  "input[name*='subject']"
-              ])
-              body, bsel = visible_css([
-                  "[contenteditable='true'][role='textbox']", "div[contenteditable='true']",
-                  "textarea[placeholder*='내용']", "textarea[aria-label*='내용']"
-              ])
+              # Recipient and subject are in the top document. Fill them before entering any editor iframe.
+              driver.switch_to.default_content()
+              to,tsel=visible_css(["input[placeholder*='받는']","input[aria-label*='받는']","input[name*='to']","textarea[placeholder*='받는']"])
+              subject,ssel=visible_css(["input[placeholder*='제목']","input[aria-label*='제목']","input[name*='subject']"])
 
               if not to:
-                  inputs = [e for e in driver.find_elements(By.CSS_SELECTOR, "input[type='text'],input:not([type]),textarea") if e.is_displayed()]
-                  if inputs:
-                      to, tsel = inputs[0], 'fallback-first-input'
-
+                  inputs=[e for e in driver.find_elements(By.CSS_SELECTOR,"input[type='text'],input:not([type]),textarea") if e.is_displayed()]
+                  if inputs: to,tsel=inputs[0],'fallback-first-input'
               if not subject:
-                  inputs = [e for e in driver.find_elements(By.CSS_SELECTOR, "input[type='text'],input:not([type])") if e.is_displayed() and (not to or e.id != to.id)]
-                  if inputs:
-                      subject, ssel = inputs[0], 'fallback-second-input'
+                  inputs=[e for e in driver.find_elements(By.CSS_SELECTOR,"input[type='text'],input:not([type])") if e.is_displayed() and (not to or e.id!=to.id)]
+                  if inputs: subject,ssel=inputs[0],'fallback-second-input'
+              if not to or not subject:
+                  raise RuntimeError(f'Header fields not found: to={bool(to)} subject={bool(subject)}')
 
-              if not body:
-                  edits = [e for e in driver.find_elements(By.CSS_SELECTOR, "[contenteditable='true'],textarea") if e.is_displayed()]
-                  edits = sorted(edits, key=lambda e: e.size.get('width',0) * e.size.get('height',0), reverse=True)
-                  if edits:
-                      body, bsel = edits[0], 'fallback-largest-editable'
+              to.click(); to.send_keys(RECIPIENT); to.send_keys(Keys.ENTER)
+              subject.click(); subject.send_keys(SUBJECT)
 
-              if not body:
-                  for frame in driver.find_elements(By.CSS_SELECTOR, 'iframe'):
-                      try:
-                          driver.switch_to.frame(frame)
-                          edits = [e for e in driver.find_elements(By.CSS_SELECTOR, "body[contenteditable='true'],[contenteditable='true'],textarea") if e.is_displayed()]
-                          if edits:
-                              body, bsel = edits[0], 'iframe-editable'
-                              break
-                          driver.switch_to.default_content()
-                      except Exception:
-                          driver.switch_to.default_content()
-
-              if not to or not subject or not body:
-                  raise RuntimeError(f'Compose fields not found: to={bool(to)} subject={bool(subject)} body={bool(body)}')
-
-              to.click()
-              to.send_keys(RECIPIENT)
-              to.send_keys(Keys.ENTER)
-              subject.click()
-              subject.send_keys(SUBJECT)
-              body.click()
-              body.send_keys(BODY)
+              # Body may live in the top document or in an editor iframe. Enter the frame only after header fields are done.
               driver.switch_to.default_content()
-              time.sleep(1)
+              body,bsel=visible_css(["[contenteditable='true'][role='textbox']","div[contenteditable='true']","textarea[placeholder*='내용']","textarea[aria-label*='내용']"])
+              body_frame=None
+              if not body:
+                  edits=[e for e in driver.find_elements(By.CSS_SELECTOR,"[contenteditable='true'],textarea") if e.is_displayed()]
+                  edits=sorted(edits,key=lambda e:e.size.get('width',0)*e.size.get('height',0),reverse=True)
+                  if edits: body,bsel=edits[0],'fallback-largest-editable'
+              if not body:
+                  frames=driver.find_elements(By.CSS_SELECTOR,'iframe')
+                  for frame in frames:
+                      try:
+                          driver.switch_to.default_content(); driver.switch_to.frame(frame)
+                          edits=[e for e in driver.find_elements(By.CSS_SELECTOR,"body[contenteditable='true'],[contenteditable='true'],textarea") if e.is_displayed()]
+                          if edits:
+                              body,bsel=edits[0],'iframe-editable'; body_frame=frame; break
+                      except Exception: pass
+                  if not body: driver.switch_to.default_content()
+              if not body: raise RuntimeError('Body editor not found')
 
-              send = None
-              for el in driver.find_elements(By.XPATH, "//*[self::button or self::a or @role='button']"):
+              body.click(); body.send_keys(BODY)
+              driver.switch_to.default_content(); time.sleep(1)
+
+              send=None
+              for el in driver.find_elements(By.XPATH,"//*[self::button or self::a or @role='button']"):
                   try:
-                      if not el.is_displayed():
-                          continue
-                      text = (el.text or el.get_attribute('aria-label') or el.get_attribute('title') or '').strip()
-                      if text in ('보내기', '메일 보내기', 'Send'):
-                          send = el
-                          break
-                  except Exception:
-                      pass
-
+                      if not el.is_displayed(): continue
+                      text=(el.text or el.get_attribute('aria-label') or el.get_attribute('title') or '').strip()
+                      if text in ('보내기','메일 보내기','Send'):
+                          send=el; break
+                  except Exception: pass
               if send is None:
-                  raise RuntimeError('Send button not found')
-
-              send.click()
+                  # Fixed compose layout fallback: the primary action is at the upper-right of the compose header.
+                  send=driver.execute_script("return document.elementFromPoint(1378,197)")
+              if send is None: raise RuntimeError('Send button not found')
+              driver.execute_script('arguments[0].click()',send)
               time.sleep(4)
 
-              # Handle an optional final confirmation dialog.
-              for dialog in driver.find_elements(By.CSS_SELECTOR, "[role='dialog'],.layer,.modal"):
+              for dialog in driver.find_elements(By.CSS_SELECTOR,"[role='dialog'],.layer,.modal"):
                   try:
-                      if not dialog.is_displayed():
-                          continue
-                      for el in dialog.find_elements(By.XPATH, ".//*[self::button or self::a or @role='button']"):
-                          text = (el.text or el.get_attribute('aria-label') or '').strip()
-                          if text in ('확인', '보내기', 'Send'):
-                              el.click()
-                              time.sleep(3)
-                              break
-                  except Exception:
-                      pass
+                      if not dialog.is_displayed(): continue
+                      for el in dialog.find_elements(By.XPATH,".//*[self::button or self::a or @role='button']"):
+                          text=(el.text or el.get_attribute('aria-label') or '').strip()
+                          if text in ('확인','보내기','Send'):
+                              driver.execute_script('arguments[0].click()',el); time.sleep(3); break
+                  except Exception: pass
 
-              page_text = driver.find_element(By.TAG_NAME, 'body').text
-              sent = bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료|sent', page_text, re.I)) or 'sent' in driver.current_url.lower()
-              driver.save_screenshot(str(OUT / 'result.png'))
-              result = {
-                  'ok': sent,
-                  'sent': sent,
-                  'url': driver.current_url,
-                  'to_selector': tsel,
-                  'subject_selector': ssel,
-                  'body_selector': bsel,
-                  'status_excerpt': page_text[-700:]
-              }
-              if not sent:
-                  raise RuntimeError('Send clicked but success confirmation was not detected')
+              page_text=driver.find_element(By.TAG_NAME,'body').text
+              current=driver.current_url
+              compose_still_open=bool(driver.find_elements(By.CSS_SELECTOR,"input[placeholder*='제목'],input[aria-label*='제목'],input[name*='subject']"))
+              sent=(bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료|sent',page_text,re.I)) or 'sent' in current.lower() or not compose_still_open)
+              driver.save_screenshot(str(OUT/'result.png'))
+              result={'ok':sent,'sent':sent,'url':current,'to_selector':tsel,'subject_selector':ssel,'body_selector':bsel,'status_excerpt':page_text[-700:]}
+              if not sent: raise RuntimeError('Send clicked but success confirmation was not detected')
 
           except Exception as exc:
               try:
-                  driver.switch_to.default_content()
-                  driver.save_screenshot(str(OUT / 'result.png'))
-              except Exception:
-                  pass
-              result.update({
-                  'ok': False,
-                  'error': f'{type(exc).__name__}: {exc}',
-                  'url': driver.current_url,
-                  'traceback': traceback.format_exc()
-              })
+                  driver.switch_to.default_content(); driver.save_screenshot(str(OUT/'result.png'))
+              except Exception: pass
+              result.update({'ok':False,'error':f'{type(exc).__name__}: {exc}','url':driver.current_url,'traceback':traceback.format_exc()})
               raise
           finally:
-              (OUT / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+              (OUT/'result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
               driver.quit()
           PY
 
