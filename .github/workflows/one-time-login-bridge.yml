@@ -35,11 +35,11 @@ jobs:
 
           VNC_PASSWORD="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 22)"
           test "${#VNC_PASSWORD}" -ge 18
-          printf '%s\n' "$VNC_PASSWORD" | x11vnc -storepasswd - /tmp/vnc.pass >/dev/null
+          x11vnc -storepasswd "$VNC_PASSWORD" /tmp/vnc.pass >/dev/null
 
-          Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/xvfb.log 2>&1 &
+          nohup Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/xvfb.log 2>&1 &
           sleep 2
-          openbox-session >/tmp/openbox.log 2>&1 &
+          nohup openbox >/tmp/openbox.log 2>&1 &
 
           BROWSER_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           if [ -z "$BROWSER_BIN" ]; then
@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
 
-          "$BROWSER_BIN" \
+          nohup "$BROWSER_BIN" \
             --no-sandbox \
             --disable-dev-shm-usage \
             --disable-gpu \
@@ -59,7 +59,7 @@ jobs:
             'https://nid.naver.com/nidlogin.login' \
             >/tmp/chrome.log 2>&1 &
 
-          x11vnc \
+          nohup x11vnc \
             -display :99 \
             -rfbport 5900 \
             -rfbauth /tmp/vnc.pass \
@@ -68,8 +68,8 @@ jobs:
             -noxdamage \
             >/tmp/x11vnc.log 2>&1 &
 
-          websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/websockify.log 2>&1 &
-          /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:6080 >/tmp/cloudflared.log 2>&1 &
+          nohup websockify --web=/usr/share/novnc 6080 localhost:5900 >/tmp/websockify.log 2>&1 &
+          nohup /tmp/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:6080 >/tmp/cloudflared.log 2>&1 &
 
           LIVE_BASE=""
           for _ in $(seq 1 90); do
@@ -105,14 +105,25 @@ jobs:
             -pkeyopt rsa_padding_mode:oaep \
             -pkeyopt rsa_oaep_md:sha256
 
-          CIPHERTEXT="$(base64 -w 0 /tmp/bridge.bin)"
-          echo "BRIDGE_CIPHERTEXT=${CIPHERTEXT}"
-          echo 'The browser profile is temporary and will be destroyed when this job ends.'
+          curl -fsS http://127.0.0.1:6080/vnc.html >/dev/null
+          test -s /tmp/bridge.bin
+          echo 'Encrypted bridge bundle created. No login credentials are included.'
 
+      - name: Upload encrypted access bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-login-bridge
+          path: /tmp/bridge.bin
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Keep bridge alive
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Temporary browser is active; its profile will be destroyed when this job ends.'
           for _ in $(seq 1 1800); do
-            if ! kill -0 $(pgrep -f 'cloudflared tunnel' | head -n1) 2>/dev/null; then
-              echo 'Tunnel stopped unexpectedly' >&2
-              exit 1
-            fi
+            pgrep -f 'cloudflared tunnel' >/dev/null || exit 1
+            pgrep -f 'websockify.*6080' >/dev/null || exit 1
             sleep 1
           done
