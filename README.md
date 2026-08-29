@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/root-engineering-social-preview.png" alt="Root Engineering tree and circuit-root emblem" width="100%">
+</p>
+
 # Root Engineering for AI
 
 > **Model is replaceable. Root persists.**
