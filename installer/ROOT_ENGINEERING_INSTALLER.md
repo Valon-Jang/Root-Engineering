@@ -1,4 +1,3 @@
-[ROOT_ENGINEERING_INSTALLER.md]
 ---
 package_id: root-engineering-chat-installer
 package_version: 0.1.1
