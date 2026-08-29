@@ -50,19 +50,20 @@ Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERIN
 
 The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
 
-Installer v0.1.8 is a single-file package for installation, verification, repair, and upgrade. Shared operating behavior lives in the Global Protocol, while ChatGPT Project Instructions contain only the project-specific connection block. During an upgrade it patches only those two managed paths without rebuilding the installation or touching project knowledge, then reports what actually changed. Routine Google Drive updates remain checkpoint-batched and use risk-matched verification.
+Installer v0.1.9 is a single-file package for installation, verification, repair, and upgrade. Shared operating behavior lives in the Global Protocol, while ChatGPT Project Instructions contain only the project-specific connection block. A complete-coverage Knowledge Lookup inside ROOT resolves named areas before any full-Branch existence scan. Upgrade queues are listed by installed level; v0.1.9 performs one verified, read-only content scan to backfill the Lookup, patches only the queued managed paths, and reports what actually changed. Routine Google Drive updates remain checkpoint-batched and use risk-matched verification.
 
 ### What the installer establishes
 
 ```text
 Canonical Root
+├── Knowledge Lookup [routing index]
 ├── Foundation
 ├── Current Knowledge
 ├── Learned Knowledge
 └── History
 ```
 
-The fresh-chat test verifies that a new conversation can identify the Project Binding, retrieve the Root, navigate to Current Knowledge, and continue from the persisted project state.
+The fresh-chat test verifies that a new conversation can identify the Project Binding, retrieve the Root, use the complete-coverage Lookup, navigate to Current Knowledge, and continue from the persisted project state.
 
 This creates the path from methodology to operation:
 

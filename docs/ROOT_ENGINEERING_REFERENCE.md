@@ -20,7 +20,7 @@ Current reference implementation: **ChatGPT Project + Google Drive live app acce
 3. Say: **“Read the package and install it.”**
 4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
 
-The same installer handles an existing installation in UPGRADE mode. Shared operating policy stays in the Global Protocol, while Project Instructions retain only the project-specific connection block. The installer patches those managed paths without recreating the installation or modifying project knowledge.
+The same installer handles an existing installation in UPGRADE mode. Shared operating policy stays in the Global Protocol, while Project Instructions retain only the project-specific connection block. Each installed level maps to an explicit patch queue. Version 0.1.9 adds Lookup behavior to the Global Protocol and backfills only ROOT's routing Lookup while preserving detailed project knowledge and existing document IDs.
 
 Korean users can use the separate [Korean installer](../installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
@@ -474,6 +474,19 @@ Root
 
 The AI starts with the Root Map and follows only the branches required for the current request.
 
+For named work or knowledge areas, ROOT also carries a small **Knowledge Lookup**. It stores only a stable key, explicit aliases, owner, target document, exact heading, and route state. Because ROOT is already read at boot, the AI can determine whether an indexed area exists without fetching the full Current Knowledge document merely to search for its name.
+
+```text
+Read ROOT once
+      ↓
+Check Knowledge Lookup
+      ├── Hit → read only the declared target
+      ├── Complete-coverage miss → treat as absent
+      └── Partial-coverage miss → one targeted fallback read, then repair the index
+```
+
+The Lookup is routing metadata, not a second source of truth. Detailed facts, authority, scope, revisions, evidence, and unresolved issues remain in the target document. Similar names are never merged through fuzzy matching. Ordinary content edits do not rewrite the Lookup; it changes only when a key, alias, owner, location, or route state changes. New or changing routes are reserved as `PENDING` before the target mutation and finalized afterward, preventing a failed index write from leaving a false complete-coverage state.
+
 This reduces:
 
 * token usage
@@ -512,7 +525,7 @@ Verify the touched scope according to risk
 
 Routine content changes verify the changed scope. Critical decisions, cancellations, authority changes, and next-action state verify the complete affected logical section. Structural changes verify the Child, Parent Map, navigation path, and destination before cleanup.
 
-The ROOT Map is updated only when topology, routing metadata, or the Root Digest changes. Ordinary content changes inside an existing Branch do not require a second ROOT Map write.
+The ROOT Map and Knowledge Lookup are updated only when topology or routing metadata changes, or when the Root Digest changes. Ordinary content changes inside an existing Branch do not require a second ROOT write.
 
 Independent reads or verification may be parallelized when the runtime supports it, but writes to the same document and dependent Parent/Child changes remain sequential.
 
@@ -746,6 +759,11 @@ Example:
 - Current state
 - Active decisions
 - Important unresolved issues
+
+## Knowledge Lookup
+- Coverage: COMPLETE
+- Area A → Current Knowledge / Area A document
+- Area B → Current Knowledge / Area B document
 
 ## Root Map
 
