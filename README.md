@@ -11,7 +11,20 @@ The goal is simple:
 **Make the next AI start from a better place than the previous one.**
 
 ---
+## Quick Start
 
+Current reference implementation: **ChatGPT Project + Google Drive live app access**.
+
+1. Download or open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
+2. Create or open a new ChatGPT Project and attach the installer to its first chat.
+3. Say: **“Read the package and install it.”**
+4. Follow the installer prompts for Google Drive connection, Project Binding, and fresh-chat verification.
+
+Korean users can use the [한국어 Installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
+
+The installer is designed to create and verify the Root structure rather than merely explain the setup process.
+
+---
 ## What is Root Engineering?
 
 Large language models can reason well inside a session, but important project knowledge is often fragmented across conversations, prompts, documents, memory systems, tools, and individual users.
