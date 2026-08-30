@@ -1,0 +1,43 @@
+name: Persistent Web Session Handoff
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize, reopened]
+    paths:
+      - .bridge/carrier/handoff-request.json
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  request:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    outputs:
+      generation: ${{ steps.read.outputs.generation }}
+      predecessor: ${{ steps.read.outputs.predecessor }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - id: read
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          x=json.load(open('.bridge/carrier/handoff-request.json',encoding='utf-8'))
+          print('generation='+x['generation'])
+          print('predecessor='+x['predecessor_run_id'])
+          PY
+
+  carrier:
+    needs: request
+    uses: Valon-Jang/Root-Engineering/.github/workflows/naver-carrier-worker.yml@naver-persistent-carrier-20260830
+    with:
+      carrier_ref: naver-persistent-carrier-20260830
+      mode: handoff
+      generation: ${{ needs.request.outputs.generation }}
+      predecessor_run_id: ${{ needs.request.outputs.predecessor }}
+    secrets: inherit
