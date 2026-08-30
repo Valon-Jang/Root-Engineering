@@ -1,0 +1,21 @@
+{
+  "request_id": "smoke-20260830-02",
+  "queries": [
+    "site:developers.openai.com codex cli exec sandbox approval",
+    "site:developers.openai.com codex cli windows sandbox",
+    "site:docs.anthropic.com claude code headless json output",
+    "site:docs.anthropic.com claude code windows sandbox",
+    "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+    "site:docs.github.com copilot cli autopilot sandbox windows",
+    "site:cursor.com/docs cli permissions sandbox mcp",
+    "site:docs.cline.bot cli headless json mcp",
+    "codex cli windows sandbox issue 2026 github",
+    "claude code windows sandbox issue 2026 github",
+    "gemini cli sandbox policy issue 2026 github",
+    "copilot cli sandbox windows issue 2026 github"
+  ],
+  "max_results_per_query": 6,
+  "max_pages": 45,
+  "max_bytes_per_page": 1500000,
+  "max_snippets_per_page": 6
+}
