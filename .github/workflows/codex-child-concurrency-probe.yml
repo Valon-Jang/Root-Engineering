@@ -1,0 +1,20 @@
+name: Codex Child Concurrency Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - research/child-agent-concurrency/probe.py
+      - .github/workflows/codex-child-concurrency-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe Codex 0.147.0 child concurrency 1..12
+        run: python research/child-agent-concurrency/probe.py
