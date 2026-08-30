@@ -1,1 +1,1 @@
-{"generation":"bootstrap-33282573969","run_id":"33282573969","command_id":"rotate-f447c29bcb","action":"rotate_now","status":"accepted","updated_at":"2026-08-30T00:10:09.900723+00:00","ok":true}
+{"generation":"bootstrap-33282573969","run_id":"33282573969","command_id":"mailtest-9dc1c06b8db5","action":"send_mail","status":"sending","updated_at":"2026-08-30T05:34:56.143050+00:00"}
