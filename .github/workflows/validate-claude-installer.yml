@@ -1,6 +1,7 @@
 name: Validate Claude installer
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
