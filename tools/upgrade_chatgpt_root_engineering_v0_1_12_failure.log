@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/runner/work/Root-Engineering/Root-Engineering/tools/upgrade_chatgpt_root_engineering_v0_1_12.py", line 476, in <module>
+    s = insert_before(s, "## 20. Question-Driven Root Deepening", OPMEM_KO, "KO runtime operational gate")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Root-Engineering/Root-Engineering/tools/upgrade_chatgpt_root_engineering_v0_1_12.py", line 18, in insert_before
+    return rep1(s, marker, payload.rstrip() + "\n\n" + marker, label)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Root-Engineering/Root-Engineering/tools/upgrade_chatgpt_root_engineering_v0_1_12.py", line 11, in rep1
+    raise RuntimeError(f"{label}: expected 1 match, got {n}")
+RuntimeError: KO runtime operational gate: expected 1 match, got 0
