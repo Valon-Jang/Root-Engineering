@@ -22,6 +22,47 @@ The goal is simple:
 
 ---
 
+## Origin
+
+Root Engineering did not start as a methodology. I was using ChatGPT and Claude heavily — often pushing high-reasoning models until both plans hit their limits. ChatGPT Chat still gave me a separate surface to experiment with, so I started asking a different question: **how much smarter could ordinary chat feel if I improved the external context instead of just spending more model?**
+
+That led me to Markdown as manually maintained project memory. The first version was primitive: upload the MD files, talk with the model, replace the files when things changed. Even that was surprisingly powerful, especially for people who mostly used AI for search or document drafts and did not have access to coding-agent workflows.
+
+The next annoyance was predictable: **manually moving and replacing the MD files became the bottleneck.** Root Engineering grew from automating that storage/retrieval loop and formalizing the rules for what should be read, verified, updated, and preserved.
+
+---
+
+## A Practical Workflow: Chat → Root → Codex
+
+Root Engineering is especially effective when Chat and coding agents are used for different jobs.
+
+1. **Think in Chat first.** Use ordinary ChatGPT or Claude to turn a vague idea into a concrete one. The low-friction interface matters — you can do this from a phone, even while lying down.
+2. **Use Question-Driven Deepening.** Ask the next question only when its answer can change the next decision. Deepen the taproot before branching into every possible feature.
+3. **Persist the useful state.** Keep confirmed facts, decisions, constraints, and important unresolved questions in the Root so the next session does not restart from zero.
+4. **Export a buildable brief.** Once the idea is stable enough, ask Chat to turn it into a design brief, PRD, implementation order, or work order.
+5. **Give that brief to Codex.** Let the coding agent build from an already-deepened specification instead of asking it to discover the product while coding.
+6. **Feed verified results back.** Implementation decisions, failures, and reusable lessons that pass verification become part of the Root for the next cycle.
+
+```text
+Chat / Phone
+    ↓
+Question-Driven Deepening
+    ↓
+Root
+    ↓
+Design Brief / Work Order
+    ↓
+Codex
+    ↓
+Verification
+    ↓
+Root
+```
+
+> **Chat is good at shaping the idea. Codex is good at building the idea. Root is what lets both continue from the same accumulated understanding.**
+
+---
+
 ## When Root Engineering Helps
 
 Root Engineering is designed for work where:
