@@ -1,0 +1,29 @@
+{
+  "request_id": "ab-20260830-01",
+  "queries": [
+    "site:developers.openai.com codex cli exec non-interactive structured output sandbox approvals",
+    "site:developers.openai.com codex cli windows sandbox",
+    "site:github.com/openai/codex windows sandbox issue 2026",
+    "site:docs.anthropic.com claude code headless json output",
+    "site:docs.anthropic.com claude code windows support sandboxing",
+    "site:github.com/anthropics/claude-code windows sandbox issue 2026",
+    "site:github.com/google-gemini/gemini-cli headless json output policy sandbox mcp",
+    "site:github.com/google-gemini/gemini-cli windows sandbox issue 2026",
+    "site:docs.github.com copilot cli autopilot sandbox windows mcp",
+    "site:github.com/github/copilot-cli windows sandbox issue 2026",
+    "site:cursor.com/docs cli headless permissions sandbox mcp json",
+    "site:github.com/getcursor/cursor windows cli sandbox issue 2026",
+    "site:docs.cline.bot cli headless json mcp permissions",
+    "site:github.com/cline/cline cli headless windows issue 2026",
+    "OpenAI Codex CLI structured JSON output official",
+    "Claude Code headless output-format json official",
+    "Gemini CLI headless json official",
+    "GitHub Copilot CLI programmatic headless json official",
+    "Cursor CLI headless json official",
+    "Cline CLI headless json official"
+  ],
+  "max_results_per_query": 6,
+  "max_pages": 70,
+  "max_bytes_per_page": 1600000,
+  "max_snippets_per_page": 8
+}
