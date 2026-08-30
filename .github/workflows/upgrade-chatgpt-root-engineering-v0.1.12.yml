@@ -17,14 +17,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Patch installers and README
-        run: python tools/upgrade_chatgpt_root_engineering_v0_1_12.py
-      - name: Validate and publish
+      - name: Patch, validate, and publish
         shell: bash
         run: |
-          rm -f .github/workflows/upgrade-chatgpt-root-engineering-v0.1.12.yml
+          set +e
+          python tools/upgrade_chatgpt_root_engineering_v0_1_12.py > /tmp/root_upgrade.log 2>&1
+          CODE=$?
+          cat /tmp/root_upgrade.log
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$CODE" -ne 0 ]; then
+            cp /tmp/root_upgrade.log tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
+            git add tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
+            git commit -m "Record ChatGPT v0.1.12 migration failure"
+            git push
+            exit "$CODE"
+          fi
+          rm -f tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
+          rm -f .github/workflows/upgrade-chatgpt-root-engineering-v0.1.12.yml
           git add -A
           git diff --cached --check
           git commit -m "Upgrade ChatGPT Root Engineering to v0.1.12"
