@@ -57,6 +57,18 @@ Then open the target repository and ask `$root-engineering` to initialize and va
 
 The Codex package contains the Skill, protocol, project templates, and a no-module PowerShell initializer/validator. It stages a complete `.root/` before publishing it, rejects invalid or symlinked targets, preserves existing project instructions, validates exact routes, and includes isolated self-tests for Linux and Windows.
 
+### Claude Project + Google Drive
+
+1. Connect the Google Drive connector in Claude and confirm it returns a real file listing.
+2. Open a chat inside a Claude Project, attach the [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md), and say: **“Read the package and install it.”**
+3. Paste the generated connection block into the Project's instructions.
+4. Verify in a new chat in the same Project.
+
+- [Claude installer and acceptance guide](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md)
+- [Claude package folder](./installer/claude/root-engineering/)
+
+The Claude package keeps the Codex project-local Markdown model but stores nodes as plain `.md` files in a Drive project folder. Because that connector cannot patch file content, return a revision, or read part of a file, a durable update is a verified rewrite: re-read, merge minimally, increment the in-file `ROOT_REVISION`, create the replacement, read it back, and only then trash the superseded file. Nodes are therefore resolved by project folder ID plus fixed file name rather than by per-file ID.
+
 ### ChatGPT Project + Google Drive
 
 1. Open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
@@ -76,7 +88,7 @@ Canonical Root
 ├── Foundation
 ├── Current Knowledge
 ├── Learned Knowledge
-├── Operational Memory [Codex adapter]
+├── Operational Memory [Codex and Claude adapters]
 └── History
 ```
 
@@ -96,7 +108,7 @@ Verify in a Fresh Chat
 Use and Update the Root
 ```
 
-→ [Install for Codex](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) · [Install for ChatGPT Project](./installer/ROOT_ENGINEERING_INSTALLER.md)
+→ [Install for Codex](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) · [Install for Claude Project](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md) · [Install for ChatGPT Project](./installer/ROOT_ENGINEERING_INSTALLER.md)
 
 ---
 
@@ -261,6 +273,7 @@ Start with the path that matches your goal:
 |---|---|
 | Install and verify with Codex | [Codex installer](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) |
 | Codex 설치 및 검증 | [Codex 한글 설치기](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md) |
+| Install with Claude Project + Google Drive | [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md) |
 | Install with ChatGPT Project + Google Drive | [ChatGPT English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
 | ChatGPT Project에서 한글로 설치 | [ChatGPT 한글 설치기](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
 | Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
