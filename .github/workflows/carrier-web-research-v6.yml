@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/carrier-web-v6/raw .carrier-web-v6/results
-          python .carrier-web-v6/collector.py \
+          python .carrier-web-v6/runner.py \
             --request "${{ steps.req.outputs.file }}" \
             --out ".carrier-web-v6/results/${{ steps.req.outputs.rid }}.json" \
             --raw-dir /tmp/carrier-web-v6/raw
