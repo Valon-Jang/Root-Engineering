@@ -1,0 +1,86 @@
+name: Naver Persistent Carrier Worker
+
+on:
+  workflow_call:
+    inputs:
+      carrier_ref:
+        required: true
+        type: string
+      mode:
+        required: true
+        type: string
+      generation:
+        required: true
+        type: string
+      predecessor_run_id:
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  carrier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - name: Check out carrier implementation
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.carrier_ref }}
+
+      - name: Set up Chrome and ChromeDriver
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Install carrier runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb python3-venv
+          python3 -m venv /tmp/naver-carrier-venv
+          /tmp/naver-carrier-venv/bin/pip install --quiet selenium requests cryptography
+
+      - name: Prepare browser or receive encrypted handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CARRIER_REF: ${{ inputs.carrier_ref }}
+          CARRIER_MODE: ${{ inputs.mode }}
+          CARRIER_GENERATION: ${{ inputs.generation }}
+          CARRIER_PREDECESSOR: ${{ inputs.predecessor_run_id }}
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: /tmp/naver-carrier-venv/bin/python .bridge/carrier/naver_worker.py prepare
+
+      - name: Upload login QR when human approval is needed
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-carrier-login-${{ inputs.generation }}
+          path: /tmp/naver-carrier/out/login.png
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Run persistent mail carrier
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CARRIER_REF: ${{ inputs.carrier_ref }}
+          CARRIER_MODE: ${{ inputs.mode }}
+          CARRIER_GENERATION: ${{ inputs.generation }}
+          CARRIER_PREDECESSOR: ${{ inputs.predecessor_run_id }}
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+          ROTATE_AFTER_SECONDS: '16200'
+          HARD_STOP_AFTER_SECONDS: '20100'
+          COMMAND_POLL_SECONDS: '5'
+          KEEPALIVE_SECONDS: '900'
+        shell: bash
+        run: /tmp/naver-carrier-venv/bin/python .bridge/carrier/naver_worker.py run
