@@ -30,8 +30,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
           COMMAND_BRANCH: naver-local-persistent-20260830
-          NMB_PRIVATE_KEY: ${{ env.LOCALAPPDATA }}\NaverMailBridge\private.pem
-          NMB_DEBUGGER: 127.0.0.1:9222
         run: |
           $ErrorActionPreference = 'Stop'
           $python = (Get-Content "$env:LOCALAPPDATA\NaverMailBridge\python-path.txt" -Raw).Trim()
