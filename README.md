@@ -80,6 +80,8 @@ Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERIN
 
 The ChatGPT installer checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test. Its single-file package supports installation, verification, repair, and upgrade with a shared Global Protocol and a complete-coverage Knowledge Lookup.
 
+**ChatGPT installer v0.1.12** adds a Drive-native Operational Memory fast path shared conceptually with the Codex and Claude adapters: repeated non-trivial operations use an exact `subsystem/action/failure-mode` key, known failed paths are not replayed unchanged, and a replacement is promoted only after the original outcome and required evidence pass. ChatGPT keeps native Google Docs partial updates and Revision/write-control semantics; it does **not** inherit Claude's rewrite-and-trash storage workaround.
+
 ### What the adapters establish
 
 ```text
@@ -88,7 +90,7 @@ Canonical Root
 ├── Foundation
 ├── Current Knowledge
 ├── Learned Knowledge
-├── Operational Memory [Codex and Claude adapters]
+├── Operational Memory [all adapters]
 └── History
 ```
 

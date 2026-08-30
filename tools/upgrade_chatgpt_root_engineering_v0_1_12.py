@@ -473,7 +473,7 @@ EN.write_text(s, encoding="utf-8")
 # Korean
 s = patch_common(KO.read_text(encoding="utf-8"), True)
 s = rep1(s, "8. 실질 작업마다 현재 Runtime에서 선택 가능한 **가장 작은 충분한 모델 + 추론 깊이**를 동적으로 추천한다.\n", "8. 실질 작업마다 현재 Runtime에서 선택 가능한 **가장 작은 충분한 모델 + 추론 깊이**를 동적으로 추천한다.\n9. 비단순 반복 작업·복구·업그레이드·재시도 전에는 정확한 Operational Experience를 조회하여 이미 실패한 경로를 반복하지 않고 검증된 Fast Path를 재사용한다.\n", "KO purpose")
-s = insert_before(s, "## 20. Question-Driven Root Deepening", OPMEM_KO, "KO runtime operational gate")
+s = insert_before(s, "## 20. 질문 기반 Root Deepening", OPMEM_KO, "KO runtime operational gate")
 s = replace_section(s, "## 35. UPGRADE", "## 36. 중복 설치 방지", SEC35_KO, "KO section 35")
 if "Root Engineering v0.1.10 설치 완료" in s:
     s = rep1(s, "Root Engineering v0.1.10 설치 완료", "Root Engineering v0.1.12 설치 완료", "KO final report version")
