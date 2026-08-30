@@ -1,0 +1,342 @@
+{
+  "schema": "carrier-web-v6/0.1",
+  "request_id": "smoke-20260830-01",
+  "generated_at": 1788057397.2853878,
+  "metrics": {
+    "queries": 10,
+    "search_hits": 50,
+    "unique_urls": 35,
+    "pages_ok": 35,
+    "pages_failed": 0,
+    "raw_chars": 2275,
+    "evidence_chars": 1645,
+    "evidence_items": 1,
+    "elapsed_ms": 1733.5,
+    "workers": 5
+  },
+  "search_errors": [],
+  "sources": [
+    {
+      "h": "s0",
+      "url": "https://www.bing.com/ck/a?!&&p=8fe6c6daac55a905fc292163708a790d0e2b14d4201234443298ca47adefba15JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=0e79b844-2927-6cff-05c2-af81281d6de3&u=a1aHR0cHM6Ly9jbGF1ZGUuY29tLw&ntb=1",
+      "title": "Claude",
+      "query": "Claude Code Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 155.4
+    },
+    {
+      "h": "s1",
+      "url": "https://www.bing.com/ck/a?!&&p=11f8da9f0c14c3281e63da47a235e0f8a15136b9b77fd7b035f178269f6aa624JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=0e79b844-2927-6cff-05c2-af81281d6de3&u=a1aHR0cHM6Ly9jbGF1ZGUuYWkv&ntb=1",
+      "title": "Sign in - Claude",
+      "query": "Claude Code Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 97.6
+    },
+    {
+      "h": "s2",
+      "url": "https://www.bing.com/ck/a?!&&p=a11e52faf1f36f0cf7ae145a738523958bc5217f566dd3153b905f559d10eb2fJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=0e79b844-2927-6cff-05c2-af81281d6de3&u=a1aHR0cHM6Ly9jbGF1ZGUuY29tL2Rvd25sb2Fk&ntb=1",
+      "title": "Download Claude | Claude by Anthropic",
+      "query": "Claude Code Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 109.0
+    },
+    {
+      "h": "s3",
+      "url": "https://www.bing.com/ck/a?!&&p=7ac9c7974ad698d8b2d8b551a7b2c29545eac87fbf828b47dd896ac365006fcbJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=0e79b844-2927-6cff-05c2-af81281d6de3&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5jbGF1ZGUuY29tL2xvZ2lu&ntb=1",
+      "title": "Sign In | Claude Platform",
+      "query": "Claude Code Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 92.4
+    },
+    {
+      "h": "s4",
+      "url": "https://www.bing.com/ck/a?!&&p=9b6ea6d8fc1950b71d4c7ea25373f1e1311f7b8b76bdcf38ff5ec4d079530555JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=0e79b844-2927-6cff-05c2-af81281d6de3&u=a1aHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvQ2xhdWRlXyhBSSk&ntb=1",
+      "title": "Claude (AI) - Wikipedia",
+      "query": "Claude Code Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 143.3
+    },
+    {
+      "h": "s5",
+      "url": "https://www.bing.com/ck/a?!&&p=446485c42edc7333f070a68dcc9c6d5bb396f6162dd3ad9b877bc42add5fe914JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1d735b3a-3729-6c47-3a8c-4cff36ce6d64&u=a1aHR0cHM6Ly9jbGF1ZGUuY29tLw&ntb=1",
+      "title": "Claude",
+      "query": "Claude Code headless mode JSON output official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 175.2
+    },
+    {
+      "h": "s6",
+      "url": "https://www.bing.com/ck/a?!&&p=598997058041e180584bd06df5a8ee2af7a13c3f10dd65b2a5cd8caf838b892dJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1d735b3a-3729-6c47-3a8c-4cff36ce6d64&u=a1aHR0cHM6Ly9jbGF1ZGUuYWkv&ntb=1",
+      "title": "Sign in - Claude",
+      "query": "Claude Code headless mode JSON output official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 63.9
+    },
+    {
+      "h": "s7",
+      "url": "https://www.bing.com/ck/a?!&&p=4594194bcc1170f55bebb673536ac08686a32ffd88cf1e2266649247e4a8e3e6JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1d735b3a-3729-6c47-3a8c-4cff36ce6d64&u=a1aHR0cHM6Ly9jbGF1ZGUuY29tL2Rvd25sb2Fk&ntb=1",
+      "title": "Download Claude | Claude by Anthropic",
+      "query": "Claude Code headless mode JSON output official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 70.0
+    },
+    {
+      "h": "s8",
+      "url": "https://www.bing.com/ck/a?!&&p=59efee0a2d7c8749c0b20cb860f22dce69a6d697c284002d5b48637671202f03JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1d735b3a-3729-6c47-3a8c-4cff36ce6d64&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5jbGF1ZGUuY29tL2xvZ2lu&ntb=1",
+      "title": "Sign In | Claude Platform",
+      "query": "Claude Code headless mode JSON output official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 81.5
+    },
+    {
+      "h": "s9",
+      "url": "https://www.bing.com/ck/a?!&&p=5f5507947ac301806a78b54e641bb0f5ae304c8c1a665edb767ef67a5859c10eJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1d735b3a-3729-6c47-3a8c-4cff36ce6d64&u=a1aHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnL3dpa2kvQ2xhdWRlXyhBSSk&ntb=1",
+      "title": "Claude (AI) - Wikipedia",
+      "query": "Claude Code headless mode JSON output official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 133.4
+    },
+    {
+      "h": "s10",
+      "url": "https://www.bing.com/ck/a?!&&p=3ee5bb806641c045ec6bbae4c2ecff6b1ca948863db1054bf9979ae0e3e1f6bfJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=24bb3dbc-ee22-607e-39be-2a79efc661d4&u=a1aHR0cHM6Ly9nZW1pbmkuZ29vZ2xlLmNvbS8&ntb=1",
+      "title": "Google Gemini",
+      "query": "Gemini CLI headless JSON policy engine sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 149.5
+    },
+    {
+      "h": "s11",
+      "url": "https://www.bing.com/ck/a?!&&p=bab5f053577250cf3061b5a147411f329f75c7248f75dedc197fe422edef55ebJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=24bb3dbc-ee22-607e-39be-2a79efc661d4&u=a1aHR0cHM6Ly9nZW1pbmkuZ29vZ2xlL3VzL2Fib3V0Lz9obD1lbg&ntb=1",
+      "title": "Gemini – Your AI assistant from Google",
+      "query": "Gemini CLI headless JSON policy engine sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 68.9
+    },
+    {
+      "h": "s12",
+      "url": "https://www.bing.com/ck/a?!&&p=38fc58c870476c422221df537a0743f1e1af8e503e4b7eb6daede29826949aaeJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=24bb3dbc-ee22-607e-39be-2a79efc661d4&u=a1aHR0cHM6Ly9kZWVwbWluZC5nb29nbGUvbW9kZWxzL2dlbWluaS8&ntb=1",
+      "title": "Gemini — Google DeepMind",
+      "query": "Gemini CLI headless JSON policy engine sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 170.8
+    },
+    {
+      "h": "s13",
+      "url": "https://www.bing.com/ck/a?!&&p=ebd7d98630ea652f58ba1251d5c7301087abc5af429d9bf10e0fef3241895cbbJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=24bb3dbc-ee22-607e-39be-2a79efc661d4&u=a1aHR0cHM6Ly9nZW1pbmkuZ29vZ2xlLmNvbS9hcHAvZG93bmxvYWQ&ntb=1",
+      "title": "Google Gemini",
+      "query": "Gemini CLI headless JSON policy engine sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 58.8
+    },
+    {
+      "h": "s14",
+      "url": "https://www.bing.com/ck/a?!&&p=780ab36c3290240c821d7cd6c2786d1450a478e48daa5d24bc9dd118219faad7JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=24bb3dbc-ee22-607e-39be-2a79efc661d4&u=a1aHR0cHM6Ly9nZW1pbmkuZ29vZ2xlL3VzL2Fzc2lzdGFudC8_aGw9ZW4&ntb=1",
+      "title": "Introducing Gemini , your new personal AI assistant",
+      "query": "Gemini CLI headless JSON policy engine sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 66.7
+    },
+    {
+      "h": "s15",
+      "url": "https://www.bing.com/ck/a?!&&p=3f5d5d9b2be87a7b112d8043b01aebdb7191f9b747283448219fd83e5faa6e13JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=001e7016-6b69-67f0-22f3-67d36a2b660e&u=a1aHR0cHM6Ly9vcGVuYWkuY29tLw&ntb=1",
+      "title": "OpenAI | Research & Deployment",
+      "query": "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 108.7
+    },
+    {
+      "h": "s16",
+      "url": "https://www.bing.com/ck/a?!&&p=add7a29b4176f53acb0f6e13a4db5ac8ccd9e8392ef68dc658ec0cc83612fa43JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=001e7016-6b69-67f0-22f3-67d36a2b660e&u=a1aHR0cHM6Ly9jaGF0Z3B0LmNvbS8&ntb=1",
+      "title": "ChatGPT: Chat, Work, Create & Code with AI",
+      "query": "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 73.2
+    },
+    {
+      "h": "s17",
+      "url": "https://www.bing.com/ck/a?!&&p=d77288ee6203cc5feeb3384eb1d9a9c1dc24138be6ea7220a3d6a0b2fe89df6dJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=001e7016-6b69-67f0-22f3-67d36a2b660e&u=a1aHR0cHM6Ly9vcGVuYWkuY29tL2luZGV4L2dwdC00Lw&ntb=1",
+      "title": "GPT-4 | OpenAI",
+      "query": "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 80.0
+    },
+    {
+      "h": "s18",
+      "url": "https://www.bing.com/ck/a?!&&p=02d681914e4d268e9f1b289bfbf8a3275915db32527bbf0e36ad3455a1052912JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=001e7016-6b69-67f0-22f3-67d36a2b660e&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5vcGVuYWkuY29tLw&ntb=1",
+      "title": "OpenAI Platform",
+      "query": "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 79.4
+    },
+    {
+      "h": "s19",
+      "url": "https://www.bing.com/ck/a?!&&p=5911f58df39130bae275b1ec74ecd901d4a0316bd5ad337ec9a2dfc3d094e650JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=001e7016-6b69-67f0-22f3-67d36a2b660e&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5vcGVuYWkuY29tL29uYm9hcmRpbmc_YXBwPWNoYXQmY2FsbGJhY2tIb3N0PWNoYXRncHQuY29t&ntb=1",
+      "title": "ChatGPT - OpenAI",
+      "query": "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 81.1
+    },
+    {
+      "h": "s20",
+      "url": "https://www.bing.com/ck/a?!&&p=7e3db7023643dc049f8a53cc52e978ef9bd6c84395e5b541c7115b655b2f7644JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=2be71237-fe3a-620e-2791-05f2ff0563ac&u=a1aHR0cHM6Ly9vcGVuYWkuY29tLw&ntb=1",
+      "title": "OpenAI | Research & Deployment",
+      "query": "OpenAI Codex CLI Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 99.4
+    },
+    {
+      "h": "s21",
+      "url": "https://www.bing.com/ck/a?!&&p=009f6c36cb66d64a9e6210c8cf4d17d8a265cbbebcda2475cee8200778c1ceceJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=2be71237-fe3a-620e-2791-05f2ff0563ac&u=a1aHR0cHM6Ly9jaGF0Z3B0LmNvbS8&ntb=1",
+      "title": "ChatGPT: Chat, Work, Create & Code with AI",
+      "query": "OpenAI Codex CLI Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 80.0
+    },
+    {
+      "h": "s22",
+      "url": "https://www.bing.com/ck/a?!&&p=9f0a20d825f9dc009ae53e234800ce3918f7956ce83924d28ea700600f3c4be5JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=2be71237-fe3a-620e-2791-05f2ff0563ac&u=a1aHR0cHM6Ly9vcGVuYWkuY29tL2luZGV4L2dwdC00Lw&ntb=1",
+      "title": "GPT-4 | OpenAI",
+      "query": "OpenAI Codex CLI Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 93.7
+    },
+    {
+      "h": "s23",
+      "url": "https://www.bing.com/ck/a?!&&p=879afece6682086ea77159fdfe75ca8300854c63c15e5e13ac7e86788312e79cJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=2be71237-fe3a-620e-2791-05f2ff0563ac&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5vcGVuYWkuY29tLw&ntb=1",
+      "title": "OpenAI Platform",
+      "query": "OpenAI Codex CLI Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 80.9
+    },
+    {
+      "h": "s24",
+      "url": "https://www.bing.com/ck/a?!&&p=cfd201db838085166d2cb08bb545a5909b5c3ca21853631301f993b8aea56f88JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=2be71237-fe3a-620e-2791-05f2ff0563ac&u=a1aHR0cHM6Ly9wbGF0Zm9ybS5vcGVuYWkuY29tL29uYm9hcmRpbmc_YXBwPWNoYXQmY2FsbGJhY2tIb3N0PWNoYXRncHQuY29t&ntb=1",
+      "title": "ChatGPT - OpenAI",
+      "query": "OpenAI Codex CLI Windows sandbox official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 80.2
+    },
+    {
+      "h": "s25",
+      "url": "https://www.bing.com/ck/a?!&&p=439b8766e3fd0077cb37d31b095522149de85cb99b8f9c081874efb61e58bb03JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1fe41371-f54e-67de-3a25-04b4f42c66eb&u=a1aHR0cHM6Ly9naXRodWIuY29tLw&ntb=1",
+      "title": "GitHub · Change is constant. GitHub keeps you ahead.",
+      "query": "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 71.5
+    },
+    {
+      "h": "s26",
+      "url": "https://www.bing.com/ck/a?!&&p=aeb24d625059de8d0447f6dc7206ee7446a9fd0ecc75422410a091dce0083d44JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1fe41371-f54e-67de-3a25-04b4f42c66eb&u=a1aHR0cHM6Ly9naXRodWIuY29tL2xvZ2lu&ntb=1",
+      "title": "Sign in to GitHub · GitHub",
+      "query": "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 135.2
+    },
+    {
+      "h": "s27",
+      "url": "https://www.bing.com/ck/a?!&&p=3de4b700742c4e7fb32474c56701edaa5593cf2e7ae7141a4b5d220364590c8aJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1fe41371-f54e-67de-3a25-04b4f42c66eb&u=a1aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2NvbXBhbnkvZ2l0aHVi&ntb=1",
+      "title": "GitHub - LinkedIn",
+      "query": "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 101.2
+    },
+    {
+      "h": "s28",
+      "url": "https://www.bing.com/ck/a?!&&p=e30d1119aef42c3c0c956db3284ffc312b02be0f8392ed47dbcda3f3eef43426JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1fe41371-f54e-67de-3a25-04b4f42c66eb&u=a1aHR0cHM6Ly9kZXNrdG9wLmdpdGh1Yi5jb20vZG93bmxvYWQv&ntb=1",
+      "title": "Download GitHub Desktop",
+      "query": "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 80.1
+    },
+    {
+      "h": "s29",
+      "url": "https://www.bing.com/ck/a?!&&p=08f5b353597a2d16f6ee9561394b1e8585e132c8d363c70d67de746882335283JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=1fe41371-f54e-67de-3a25-04b4f42c66eb&u=a1aHR0cHM6Ly93d3cuY291cnNlcmEub3JnL2FydGljbGVzL3doYXQtaXMtZ2l0aHViP21zb2NraWQ9MWZlNDEzNzFmNTRlNjdkZTNhMjUwNGI0ZjQyYzY2ZWI&ntb=1",
+      "title": "What Is GitHub ? Use Cases and FAQ - Coursera",
+      "query": "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 72.7
+    },
+    {
+      "h": "s30",
+      "url": "https://www.bing.com/ck/a?!&&p=d1e4a4514e00481fb2f5be14b7e93e7099cd46763fc00259a0e5b18a71c9776eJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=18a6c0fd-9f4e-6d03-28a3-d7389ea16cd9&u=a1aHR0cHM6Ly9jdXN0b20tY3Vyc29yLmNvbS8&ntb=1",
+      "title": "Custom Cursor - 12,000+ Custom Cursors & Mouse Pointers",
+      "query": "Cursor CLI permissions sandbox MCP official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 74.5
+    },
+    {
+      "h": "s31",
+      "url": "https://www.bing.com/ck/a?!&&p=925631e40ff115d314aab6d669e999cc914bbee47bb8848add361c4512b0868eJmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=18a6c0fd-9f4e-6d03-28a3-d7389ea16cd9&u=a1aHR0cHM6Ly9jdXJzb3IuY29tLw&ntb=1",
+      "title": "AI Coding Agent for Building Ambitious Software | Cursor",
+      "query": "Cursor CLI permissions sandbox MCP official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 87.8
+    },
+    {
+      "h": "s32",
+      "url": "https://www.bing.com/ck/a?!&&p=a3664ee6fa12bbd664e38c63c05377bcead4ecf3f7e95d0f3199d256644316d2JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=18a6c0fd-9f4e-6d03-28a3-d7389ea16cd9&u=a1aHR0cHM6Ly93d3cucnctZGVzaWduZXIuY29tL2N1cnNvci1saWJyYXJ5&ntb=1",
+      "title": "Open Cursor Library - 225089 cursors - RealWorld Graphics",
+      "query": "Cursor CLI permissions sandbox MCP official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 75.4
+    },
+    {
+      "h": "s33",
+      "url": "https://www.bing.com/ck/a?!&&p=f3ef2af405d4fbe7e13865e991470a8674b56d40ea3312fb109e55eea074c604JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=18a6c0fd-9f4e-6d03-28a3-d7389ea16cd9&u=a1aHR0cHM6Ly9jdXJzb3IuY29tL2Rvd25sb2Fk&ntb=1",
+      "title": "Cursor · Download",
+      "query": "Cursor CLI permissions sandbox MCP official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 147.5
+    },
+    {
+      "h": "s34",
+      "url": "https://www.bing.com/ck/a?!&&p=daf3a4c90777a864a5c833f036737373716267c7bf5a45593054bc06c05e4b00JmltdHM9MTc4Nzk2MTYwMA&ptn=3&ver=2&hsh=4&fclid=18a6c0fd-9f4e-6d03-28a3-d7389ea16cd9&u=a1aHR0cHM6Ly9vc3Vza2lubmVyLmNvbS9pbnRlcmZhY2UvY3Vyc29yLw&ntb=1",
+      "title": "Cursor - osuskinner",
+      "query": "Cursor CLI permissions sandbox MCP official documentation",
+      "status": 200,
+      "raw_chars": 65,
+      "fetch_ms": 66.6
+    }
+  ],
+  "evidence": [
+    {
+      "s": "s0",
+      "text": "if the page does not redirect automatically ..."
+    }
+  ],
+  "note": "Raw page bodies stayed runner-side. Only compact evidence and provenance handles are committed."
+}
