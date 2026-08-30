@@ -31,6 +31,35 @@ The same version defines:
 
 The config schema accepts `max_concurrent_threads_per_session` as an unsigned integer with minimum 1 and does not declare a schema-level maximum. Therefore 5 is not a source-level hard ceiling.
 
+## Automated 1..12 source/config probe
+
+A GitHub Actions probe was executed against the exact public `rust-v0.147.0` source rather than only reasoning from copied snippets.
+
+Workflow run: `33292022259`  
+Commit: `84c41467cd3de3c45f141db659e2f032ee2c47de`  
+Conclusion: **success**
+
+The probe downloaded the exact 0.147.0 config source, schema, and agent registry; verified the default constants, verified the absence of a schema-level maximum, verified the registry uses the configured `max_threads` value, and evaluated requested concurrency values 1 through 12.
+
+| Requested setting | V1 child slots | V2 total slots | V2 child slots | Schema accepted |
+|---:|---:|---:|---:|:---:|
+| 1 | 1 | 1 | 0 | yes |
+| 2 | 2 | 2 | 1 | yes |
+| 3 | 3 | 3 | 2 | yes |
+| 4 | 4 | 4 | 3 | yes |
+| 5 | 5 | 5 | 4 | yes |
+| 6 | 6 | 6 | 5 | yes |
+| 7 | 7 | 7 | 6 | yes |
+| 8 | 8 | 8 | 7 | yes |
+| 9 | 9 | 9 | 8 | yes |
+| 10 | 10 | 10 | 9 | yes |
+| 11 | 11 | 11 | 10 | yes |
+| 12 | 12 | 12 | 11 | yes |
+
+Probe result: **CONFIG/SOURCE GATE PASS 1..12**.
+
+Important boundary: this proves configuration acceptance and source-level slot accounting only. It does **not** yet prove that 12 simultaneous authenticated provider Child turns can complete successfully in Human Codex.
+
 ## Runtime evidence / boundary
 
 Recent public 0.147.0 reports show working `spawn_agent` usage with explicit concurrency settings above five, including `max_concurrent_threads_per_session = 6`, and a V2 reproduction configured at 30. Other reports show much higher values such as 128 can create severe resource and lifecycle pressure; a large accepted configuration value should not be confused with a safe operating value.
@@ -51,24 +80,32 @@ A Child should not replace all Interceptors. The most promising first experiment
 
 This preserves the Shadow Carrier efficiency target while allowing a small amount of real model judgment below the Carrier.
 
-## Initial concurrency recommendation
+## Next concurrency experiment
 
-Do not start by maximizing the configurable limit. Benchmark 1, 2, 3, 5, and 6 simultaneous children first, with quality, wall-clock, provider-token cost, resource use, and thread reclamation measured separately. V2 should be tested with explicit awareness that the configured concurrency includes the root agent.
+The next runtime benchmark should now test actual authenticated provider Children at:
+
+`1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11 -> 12`
+
+Measure separately:
+
+- spawn success / AgentLimitReached or other error,
+- number of simultaneously active provider threads,
+- completion success,
+- wall-clock time,
+- provider/model token usage,
+- quality,
+- resource use,
+- thread-slot reclamation after completion.
+
+V2 tests must remember that the configured total includes the root agent; to obtain 12 V2 Children, total concurrency must be configured as 13.
 
 ## Sources
 
 - OpenAI Codex source tag `rust-v0.147.0`, `codex-rs/core/src/config/mod.rs`
 - OpenAI Codex source tag `rust-v0.147.0`, `codex-rs/core/config.schema.json`
-- OpenAI Codex current `codex-rs/core/src/agent/registry.rs`
-- Public Codex issue reproductions for 0.147.0 multi-agent configurations and thread-lifecycle behavior
+- OpenAI Codex source tag/current `codex-rs/core/src/agent/registry.rs`
+- GitHub Actions run `33292022259` in `Valon-Jang/Root-Engineering`
 
-## Next experiment
+## Current conclusion
 
-Enable the native multi-agent lane in an isolated Human Codex candidate configuration, then verify:
-
-1. one bounded Child can be spawned and returns to the parent;
-2. model / reasoning effort can be constrained;
-3. inherited context can be minimized (`fork_turns` behavior);
-4. 1/2/3/5/6 concurrent Child runs complete correctly;
-5. completed threads release capacity;
-6. the Child lane beats Carrier-direct handling on a narrow ambiguity task after counting all model-visible/provider tokens.
+**Twelve is permitted by the 0.147.0 configuration/source gate. The real safe/effective provider concurrency limit is still unmeasured.**
