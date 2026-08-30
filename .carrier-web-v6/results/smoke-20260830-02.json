@@ -1,0 +1,1000 @@
+{
+  "schema": "carrier-web-v6/0.1",
+  "request_id": "smoke-20260830-02",
+  "generated_at": 1788057487.4753704,
+  "metrics": {
+    "queries": 12,
+    "search_hits": 72,
+    "unique_urls": 38,
+    "pages_ok": 37,
+    "pages_failed": 1,
+    "raw_chars": 338752,
+    "evidence_chars": 19589,
+    "evidence_items": 159,
+    "elapsed_ms": 6288.1,
+    "workers": 5
+  },
+  "search_errors": [],
+  "sources": [
+    {
+      "h": "s0",
+      "url": "https://claude.com/",
+      "title": "Claude",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "status": 200,
+      "raw_chars": 2599,
+      "fetch_ms": 471.1
+    },
+    {
+      "h": "s1",
+      "url": "https://claude.ai/",
+      "title": "Sign in - Claude",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "error": "HTTPError:403 Client Error: Forbidden for url: https://claude.ai/login",
+      "fetch_ms": 228.3
+    },
+    {
+      "h": "s2",
+      "url": "https://claude.com/download",
+      "title": "Download Claude | Claude by Anthropic",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "status": 200,
+      "raw_chars": 6034,
+      "fetch_ms": 267.4
+    },
+    {
+      "h": "s3",
+      "url": "https://platform.claude.com/login",
+      "title": "Sign In | Claude Platform",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "status": 200,
+      "raw_chars": 453,
+      "fetch_ms": 529.2
+    },
+    {
+      "h": "s4",
+      "url": "https://en.wikipedia.org/wiki/Claude_(AI)",
+      "title": "Claude (AI) - Wikipedia",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "status": 200,
+      "raw_chars": 53367,
+      "fetch_ms": 504.9
+    },
+    {
+      "h": "s5",
+      "url": "https://support.claude.com/en/articles/10065433-install-claude-desktop",
+      "title": "Install Claude Desktop | Anthropic Help Center",
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "status": 200,
+      "raw_chars": 6309,
+      "fetch_ms": 458.9
+    },
+    {
+      "h": "s6",
+      "url": "https://openai.com/codex/",
+      "title": "Codex in ChatGPT | AI Coding Agents for Software Engineering",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 3146,
+      "fetch_ms": 297.2
+    },
+    {
+      "h": "s7",
+      "url": "https://openai.com/index/openai-codex/",
+      "title": "OpenAI Codex",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 4132,
+      "fetch_ms": 348.1
+    },
+    {
+      "h": "s8",
+      "url": "https://www.codex.com/codex/",
+      "title": "CODEX – Codex",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 91,
+      "fetch_ms": 1748.9
+    },
+    {
+      "h": "s9",
+      "url": "https://github.com/openai/codex",
+      "title": "GitHub - openai/ codex : Lightweight coding agent that runs in your ...",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 4716,
+      "fetch_ms": 699.4
+    },
+    {
+      "h": "s10",
+      "url": "https://chatgpt.com/features/codex-get-started/",
+      "title": "Get started with Codex | OpenAI",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 239,
+      "fetch_ms": 356.8
+    },
+    {
+      "h": "s11",
+      "url": "https://www.codedex.io/",
+      "title": "Codédex | Start Your Coding Adventure ⋆˙",
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "status": 200,
+      "raw_chars": 41,
+      "fetch_ms": 310.4
+    },
+    {
+      "h": "s12",
+      "url": "https://www.roblox.com/bundles/201/Headless-Horseman",
+      "title": "Headless Horseman - Roblox",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 75,
+      "fetch_ms": 285.9
+    },
+    {
+      "h": "s13",
+      "url": "https://headlessui.com/",
+      "title": "Headless UI - Unstyled, fully accessible UI components",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 871,
+      "fetch_ms": 230.1
+    },
+    {
+      "h": "s14",
+      "url": "https://en.wikipedia.org/wiki/Headless",
+      "title": "Headless - Wikipedia",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 2628,
+      "fetch_ms": 138.8
+    },
+    {
+      "h": "s15",
+      "url": "https://en.wikipedia.org/wiki/Headless_software",
+      "title": "Headless software - Wikipedia",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 4910,
+      "fetch_ms": 272.1
+    },
+    {
+      "h": "s16",
+      "url": "https://www.guitarlobby.com/best-headless-guitars/",
+      "title": "17 Best Headless Guitars in 2026 (All Budgets) - Guitar Lobby",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 47037,
+      "fetch_ms": 662.1
+    },
+    {
+      "h": "s17",
+      "url": "https://screenrant.com/db/movie/headless/",
+      "title": "Headless Summary, Trailer, Cast, Where to Watch and More",
+      "query": "site:github.com/google-gemini/gemini-cli headless json policy sandbox",
+      "status": 200,
+      "raw_chars": 1420,
+      "fetch_ms": 493.4
+    },
+    {
+      "h": "s18",
+      "url": "https://copilot.microsoft.com/?msockid=2815ce5bcb8e69370549d99eca6e6891",
+      "title": "Microsoft Copilot : Your AI companion",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 52,
+      "fetch_ms": 81.7
+    },
+    {
+      "h": "s19",
+      "url": "https://github.com/copilot",
+      "title": "GitHub Copilot · GitHub",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 67,
+      "fetch_ms": 206.0
+    },
+    {
+      "h": "s20",
+      "url": "https://copilot.cloud.microsoft/",
+      "title": "Copilot | AI chat for work",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 15662,
+      "fetch_ms": 304.2
+    },
+    {
+      "h": "s21",
+      "url": "https://m365.cloud.microsoft/?omkt=en-001&source=post_page---------------------------",
+      "title": "Microsoft 365 Copilot - Sign in",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 10881,
+      "fetch_ms": 218.9
+    },
+    {
+      "h": "s22",
+      "url": "https://microsoft365.utexas.edu/microsoft-copilot",
+      "title": "Microsoft Copilot | Microsoft 365",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 3920,
+      "fetch_ms": 174.0
+    },
+    {
+      "h": "s23",
+      "url": "https://www.microsoft.com/en-us/microsoft-365-copilot?msockid=2815ce5bcb8e69370549d99eca6e6891",
+      "title": "Microsoft 365 Copilot | AI Productivity Tools for Work",
+      "query": "site:docs.github.com copilot cli autopilot sandbox windows",
+      "status": 200,
+      "raw_chars": 5866,
+      "fetch_ms": 537.2
+    },
+    {
+      "h": "s24",
+      "url": "https://en.wikipedia.org/wiki/Command-line_interface",
+      "title": "Command-line interface - Wikipedia",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 66694,
+      "fetch_ms": 329.4
+    },
+    {
+      "h": "s25",
+      "url": "https://www.w3schools.com/whatis/whatis_cli.asp",
+      "title": "What is CLI - W3Schools.com",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 10536,
+      "fetch_ms": 322.7
+    },
+    {
+      "h": "s26",
+      "url": "https://github.com/resources/articles/what-is-a-cli",
+      "title": "What is a CLI (command-line interface)? - GitHub",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 20402,
+      "fetch_ms": 478.8
+    },
+    {
+      "h": "s27",
+      "url": "https://cliengage.org/static/",
+      "title": "CLI Engage Public – CLI Engage Public",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 2962,
+      "fetch_ms": 591.6
+    },
+    {
+      "h": "s28",
+      "url": "https://github.com/cli/cli",
+      "title": "GitHub - cli / cli : GitHub ’s official command line tool · GitHub",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 5775,
+      "fetch_ms": 917.9
+    },
+    {
+      "h": "s29",
+      "url": "https://aws.amazon.com/what-is/cli/",
+      "title": "What is a CLI ? - Command Line Interface Explained - AWS",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 10775,
+      "fetch_ms": 251.5
+    },
+    {
+      "h": "s30",
+      "url": "https://gemini.google.com/",
+      "title": "Google Gemini",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 34,
+      "fetch_ms": 300.7
+    },
+    {
+      "h": "s31",
+      "url": "https://gemini.google/us/about/?hl=en",
+      "title": "Gemini – Your AI assistant from Google",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 8747,
+      "fetch_ms": 346.8
+    },
+    {
+      "h": "s32",
+      "url": "https://deepmind.google/models/gemini/",
+      "title": "Gemini — Google DeepMind",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 15004,
+      "fetch_ms": 373.8
+    },
+    {
+      "h": "s33",
+      "url": "https://gemini.google.com/app/download",
+      "title": "Google Gemini",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 80,
+      "fetch_ms": 324.1
+    },
+    {
+      "h": "s34",
+      "url": "https://gemini.google/us/assistant/?hl=en",
+      "title": "Introducing Gemini , your new personal AI assistant",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 12513,
+      "fetch_ms": 485.6
+    },
+    {
+      "h": "s35",
+      "url": "https://deepmind.google/models/gemini/pro/",
+      "title": "Gemini 3.1 Pro - Google DeepMind",
+      "query": "gemini cli sandbox policy issue 2026 github",
+      "status": 200,
+      "raw_chars": 4796,
+      "fetch_ms": 384.7
+    },
+    {
+      "h": "s36",
+      "url": "https://copilot.microsoft.com/?msockid=0ccf86b3d83f6f0838d39176d9436e44",
+      "title": "Microsoft Copilot : Your AI companion",
+      "query": "copilot cli sandbox windows issue 2026 github",
+      "status": 200,
+      "raw_chars": 52,
+      "fetch_ms": 270.0
+    },
+    {
+      "h": "s37",
+      "url": "https://www.microsoft.com/en-us/microsoft-365-copilot?msockid=0ccf86b3d83f6f0838d39176d9436e44",
+      "title": "Microsoft 365 Copilot | AI Productivity Tools for Work",
+      "query": "copilot cli sandbox windows issue 2026 github",
+      "status": 200,
+      "raw_chars": 5866,
+      "fetch_ms": 461.4
+    }
+  ],
+  "evidence": [
+    {
+      "s": "s0",
+      "text": "Claude can process large amounts of information, brainstorm ideas, generate text and code, help you understand subjects, coach you through difficult situations, simplify your busywork so you can focus on what matters most, and so much more."
+    },
+    {
+      "s": "s0",
+      "text": "Claude is an artificial intelligence, trained by Anthropic using Constitutional AI to be safe, accurate, and secure — the trusted assistant for you to do your best work."
+    },
+    {
+      "s": "s0",
+      "text": "If you can dream it, Claude can help you do it."
+    },
+    {
+      "s": "s0",
+      "text": "You can use Claude for your own personal use or create a Team account to collaborate with your teammates."
+    },
+    {
+      "s": "s0",
+      "text": "Claude has five pricing plans available — Free, Pro, Max, Team, and Enterprise."
+    },
+    {
+      "s": "s0",
+      "text": "Prices and plans are subject to change at Anthropic's discretion."
+    },
+    {
+      "s": "s2",
+      "text": "Use Remote Control on mobile to send tasks from your phone to the Claude Code CLI."
+    },
+    {
+      "s": "s2",
+      "text": "If your computer is asleep, Claude won't be able to work."
+    },
+    {
+      "s": "s2",
+      "text": "Claude Code and Claude Cowork are available on Pro, Max, Team, and Enterprise."
+    },
+    {
+      "s": "s2",
+      "text": "The desktop app needs to be running for Claude to complete tasks."
+    },
+    {
+      "s": "s2",
+      "text": "Claude Code, Claude Cowork, and Chat are all available at launch."
+    },
+    {
+      "s": "s2",
+      "text": "Chat, Claude Cowork, and Claude Code, all in one place."
+    },
+    {
+      "s": "s3",
+      "text": "Companies building with the Claude API"
+    },
+    {
+      "s": "s3",
+      "text": "Create agents and applications with frontier Claude models and managed agent infrastructure."
+    },
+    {
+      "s": "s3",
+      "text": "By continuing, you agree to Anthropic’s"
+    },
+    {
+      "s": "s4",
+      "text": "Released alongside 3.5 Sonnet was the new Artifacts capability in which Claude was able to create code in a separate window in the interface and preview in real time the rendered output, such as SVG graphics or websites."
+    },
+    {
+      "s": "s4",
+      "text": "In November 2025, Anthropic announced that it had discovered in September that the same threat actor had used Claude Code to automate 80–90% of its espionage cyberattacks against 30 organizations."
+    },
+    {
+      "s": "s4",
+      "text": "On June 20, 2024, Anthropic released Claude 3.5 Sonnet, which, according to the company's own benchmarks, performed better than the larger Claude 3 Opus."
+    },
+    {
+      "s": "s4",
+      "text": "Also in August 2025, Anthropic revealed that a threat actor called \"GTG-2002\" used Claude Code to attack at least 17 organizations."
+    },
+    {
+      "s": "s4",
+      "text": "\"Anthropic overtakes OpenAI: Claude Opus 4 codes seven hours nonstop, sets record SWE-Bench score and reshapes enterprise AI\""
+    },
+    {
+      "s": "s4",
+      "text": "In June 2025, Anthropic tested how Claude 3.7 Sonnet could run a vending machine in the company's office."
+    },
+    {
+      "s": "s5",
+      "text": "Cowork brings Claude Code's agentic capabilities to a visual interface, allowing you to hand off complex, multi-step tasks without using a terminal."
+    },
+    {
+      "s": "s5",
+      "text": "On Linux, you can install Claude Desktop from Anthropic’s apt repository rather than as a downloaded .deb file so that updates arrive through your system's normal package updates rather than in-app."
+    },
+    {
+      "s": "s5",
+      "text": "The Claude desktop apps bring Claude's capabilities directly to your computer, allowing for seamless integration with your workflow."
+    },
+    {
+      "s": "s5",
+      "text": "Cowork runs code in an isolated virtual machine on your computer."
+    },
+    {
+      "s": "s5",
+      "text": "Install Claude Desktop | Anthropic Help Center"
+    },
+    {
+      "s": "s5",
+      "text": "echo \"deb [signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main\" | sudo tee /etc/apt/sources.list.d/claude-desktop.list"
+    },
+    {
+      "s": "s6",
+      "text": "“At Wonderful, Codex CLI has completely replaced every other agentic harness for our core technology and architecture work requiring deep reasoning and understanding.”"
+    },
+    {
+      "s": "s6",
+      "text": "From routine pull requests to your hardest problems, Codex reliably completes tasks end to end, like building features, complex refactors, migrations, and more, powered by OpenAI’s frontier coding models."
+    },
+    {
+      "s": "s6",
+      "text": "Codex raises baseline quality with more thorough designs, comprehensive testing, and high-signal code review—so issues are caught early and your team ships with confidence."
+    },
+    {
+      "s": "s6",
+      "text": "Codex in ChatGPT | AI Coding Agents for Software Engineering | OpenAI"
+    },
+    {
+      "s": "s6",
+      "text": "Codex in ChatGPT is a command center for agentic coding."
+    },
+    {
+      "s": "s6",
+      "text": "“At Harvey, Codex transformed how we build by cutting early iteration time by 30–50%, freeing engineers to focus on system design and high-leverage decisions.”"
+    },
+    {
+      "s": "s7",
+      "text": "OpenAI Codex has much of the natural language understanding of GPT‑3, but it produces working code—meaning you can issue commands in English to any piece of software with an API."
+    },
+    {
+      "s": "s7",
+      "text": "We are now inviting businesses and developers to build on top of OpenAI Codex through our API."
+    },
+    {
+      "s": "s7",
+      "text": "Proficient in more than a dozen programming languages, Codex can now interpret simple commands in natural language and execute them on the user’s behalf—making it possible to build a natural language interface to existing applications."
+    },
+    {
+      "s": "s7",
+      "text": "OpenAI Codex empowers computers to better understand people’s intent, which can empower everyone to do more with computers."
+    },
+    {
+      "s": "s7",
+      "text": "OpenAI will continue building on the safety groundwork we laid with GPT‑3—reviewing applications and incrementally scaling them up while working closely with developers to understand the effect of our technologies in the world."
+    },
+    {
+      "s": "s7",
+      "text": "OpenAI Codex is a descendant of GPT‑3; its training data contains both natural language and billions of lines of source code from publicly available sources, including code in public GitHub repositories."
+    },
+    {
+      "s": "s9",
+      "text": "CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false sh"
+    },
+    {
+      "s": "s9",
+      "text": "CODEX_INSTALLER_USE_RELEASES_OPENAI_COM"
+    },
+    {
+      "s": "s9",
+      "text": "Codex CLI can also be installed via the following package managers:"
+    },
+    {
+      "s": "s9",
+      "text": "Run the following on Mac or Linux to install Codex CLI:"
+    },
+    {
+      "s": "s9",
+      "text": "Run the following on Windows to install Codex CLI:"
+    },
+    {
+      "s": "s9",
+      "text": "curl -fsSL https://chatgpt.com/codex/install.sh"
+    },
+    {
+      "s": "s10",
+      "text": "Select a folder or git repository on your computer where Codex will work"
+    },
+    {
+      "s": "s10",
+      "text": "Open Codex and sign in with your ChatGPT account"
+    },
+    {
+      "s": "s13",
+      "text": "Headless UI - Unstyled, fully accessible UI components"
+    },
+    {
+      "s": "s13",
+      "text": "Completely unstyled, fully accessible UI components, designed to integrate beautifully with Tailwind CSS."
+    },
+    {
+      "s": "s13",
+      "text": "If you're unhappy with your purchase, we'll refund you in full."
+    },
+    {
+      "s": "s14",
+      "text": "In computing and software, headless can either refer to software or servers without a graphical interface, or software platforms that decouple"
+    },
+    {
+      "s": "s14",
+      "text": "https://en.wikipedia.org/w/index.php?title=Headless&oldid=1357983869"
+    },
+    {
+      "s": "s14",
+      "text": "Headless phrase, a term in linguistics for a phrase with no"
+    },
+    {
+      "s": "s14",
+      "text": "\"Headless\", a song by Joe Satriani from his album"
+    },
+    {
+      "s": "s14",
+      "text": "\"Headless\", a song by Hella from the album"
+    },
+    {
+      "s": "s14",
+      "text": "a mythical headless humanoid creature"
+    },
+    {
+      "s": "s15",
+      "text": "In a headless website configuration, the"
+    },
+    {
+      "s": "s15",
+      "text": "launched Headless 360, which opened its CRM platform via API and the"
+    },
+    {
+      "s": "s15",
+      "text": "Headless content management systems (headless CMS) separate the storage and administration of content from its presentation, exposing content to front-end applications via an"
+    },
+    {
+      "s": "s15",
+      "text": "\"Salesforce launches Headless 360 to turn its entire platform into infrastructure for AI agents\""
+    },
+    {
+      "s": "s15",
+      "text": "\"3 popular apps I always run in headless mode so they don't clutter my desktop\""
+    },
+    {
+      "s": "s15",
+      "text": "\"Contentstack raises $80M to grow its headless CMS platform for the enterprise\""
+    },
+    {
+      "s": "s16",
+      "text": "It’s a really well made 8 string guitar, with lots of extra features compared to other 8 string guitars out there and if you like the headless look, then I’m sure you’ll be happy with this purchase."
+    },
+    {
+      "s": "s16",
+      "text": "The Ibanez EHB1505MS 5-String Multi-Scale Ergonomic Headless Bass Pacific Blue Burst Flat has the same features as the Ibanez EHB1506MS 6-String Multi-Scale Ergonomic Headless Bass Black Ice Flat mentioned earlier, except with 5 instead of 6 strings."
+    },
+    {
+      "s": "s16",
+      "text": "It simply comes down to whether or not you like the looks of a headless guitar or not and I don’t want you to take this lightly!"
+    },
+    {
+      "s": "s16",
+      "text": "I would have preferred a second tone knob to be able to blend atleast a subset of the pickup combinations but this configuration is fairly standard for headless guitars so its not necessarily a shortcoming compared to other comparable models."
+    },
+    {
+      "s": "s16",
+      "text": "This instrument has a combination of pickups consisting of 1 Neck Pick-up：LIGHTNING LH-N Aluminum-nickel-cobalt pickup (Switchable single coil pickup) and 1 Bridge Pick-up：LIGHTNING LH-B Aluminum-nickel-cobalt pickup (Switchable single coil pickup)."
+    },
+    {
+      "s": "s16",
+      "text": "Combination of Neck Pick-up：LIGHTNING LH-N Aluminum-nickel-cobalt pickup (Switchable single coil pickup) and Bridge Pick-up：LIGHTNING LH-B Aluminum-nickel-cobalt pickup (Switchable single coil pickup）"
+    },
+    {
+      "s": "s17",
+      "text": "Headless Summary, Trailer, Cast, Where to Watch and More"
+    },
+    {
+      "s": "s17",
+      "text": "Be the first to leave a community review!"
+    },
+    {
+      "s": "s17",
+      "text": "No links, inappropriate language, or spam."
+    },
+    {
+      "s": "s18",
+      "text": "Microsoft Copilot: Your AI companion"
+    },
+    {
+      "s": "s20",
+      "text": "Copilot Chat brings powerful AI assistance into your daily workflow, helping you turn ideas into action and tasks into outcomes."
+    },
+    {
+      "s": "s20",
+      "text": "Microsoft 365 Copilot Chat brings together work context through natural conversation, helping you understand priorities, ongoing discussions, and what needs attention next."
+    },
+    {
+      "s": "s20",
+      "text": "By using Copilot AI behind the scenes, Microsoft 365 Copilot Chat helps clarify intent, explore options, and surface next steps through dialogue."
+    },
+    {
+      "s": "s20",
+      "text": "Microsoft 365 Copilot Chat provides a consistent way to reengage with your work context whenever you need it."
+    },
+    {
+      "s": "s20",
+      "text": "* Copilot features require eligible Microsoft 365 subscriptions."
+    },
+    {
+      "s": "s20",
+      "text": "By using this site, you consent to the collection and use of your data, such as how you interact with this website, by Microsoft for product improvements."
+    },
+    {
+      "s": "s21",
+      "text": "Copilot is built with security, privacy, and compliance in mind."
+    },
+    {
+      "s": "s21",
+      "text": "Microsoft 365 Copilot Chat brings together work context through natural conversation, helping you understand priorities, catch up on progress, clarify intent, explore options, and identify next steps without breaking your flow."
+    },
+    {
+      "s": "s21",
+      "text": "Microsoft 365 includes familiar apps like Word, Excel, PowerPoint, Outlook, Teams, and OneDrive, plus Copilot experiences that help you create, find, summarize, and get things done across your work."
+    },
+    {
+      "s": "s21",
+      "text": "Microsoft 365 brings your favorite apps together with Copilot"
+    },
+    {
+      "s": "s21",
+      "text": "Copilot works with Microsoft 365 security protections"
+    },
+    {
+      "s": "s22",
+      "text": "https://adoption.microsoft.com/en-us/copilot-scenario-library/"
+    },
+    {
+      "s": "s22",
+      "text": "When you’re signed in with your UT Austin Microsoft 365 account, Copilot is secure and approved for use with published and controlled University data."
+    },
+    {
+      "s": "s22",
+      "text": "Microsoft Copilot is an AI-powered chatbot designed to enhance your productivity and improve your workplace experience."
+    },
+    {
+      "s": "s22",
+      "text": "For more detailed instructions for logging into Microsoft 365 apps, including Copilot, view"
+    },
+    {
+      "s": "s22",
+      "text": "Copilot for Microsoft 365 (Additional Licensing Required)"
+    },
+    {
+      "s": "s22",
+      "text": "To request a Copilot for M365 license, fill out the"
+    },
+    {
+      "s": "s23",
+      "text": "Securely hand off complex tasks and keep multiple projects moving at once with Microsoft 365 Copilot Cowork."
+    },
+    {
+      "s": "s23",
+      "text": "Copilot is built on a comprehensive approach to enterprise-grade security and responsible AI—so you can move faster without compromising the safeguards your business depends on."
+    },
+    {
+      "s": "s23",
+      "text": "Work IQ is a workplace intelligence layer that helps Copilot and agents know you, your job and your company—connecting data, context and tools to deliver intelligence built just for you and the flow of your work."
+    },
+    {
+      "s": "s23",
+      "text": "Stay confident in your AI security and oversight, with comprehensive IT tools to help manage Copilot and agents at scale."
+    },
+    {
+      "s": "s23",
+      "text": "Add agents to Copilot that automate common tasks or work on your behalf."
+    },
+    {
+      "s": "s23",
+      "text": "Copilot inherits your Microsoft 365 permissions, sensitivity labels, and retention policies—so people only see what they’re meant to."
+    },
+    {
+      "s": "s24",
+      "text": "Two different CLIs may agree on either syntax or semantics, but it is only when they agree on both that they can be considered sufficiently similar to allow users to use both CLIs without needing to learn anything, as well as to enable re-use of scripts."
+    },
+    {
+      "s": "s24",
+      "text": "This program, strictly speaking, is a shell GUI and, by extension, a shell (strictly speaking, the Windows shell is shell32.dll not explorer.exe, which is a shell GUI for shell32.dll), but it is not a CLI (command-line interpreter) nor a shell CLI (shell command-line interface)."
+    },
+    {
+      "s": "s24",
+      "text": "Other programs support both a CLI and a GUI."
+    },
+    {
+      "s": "s24",
+      "text": "An example of such a website is the CLI interface to"
+    },
+    {
+      "s": "s24",
+      "text": "computer program, are available via the CLI, whereas the MATLAB GUI exposes only a subset of features."
+    },
+    {
+      "s": "s24",
+      "text": "It is part of the author's yet larger MPDOSTIP.ZIP collection maintained up to 2001 and distributed on many sites at the time."
+    },
+    {
+      "s": "s25",
+      "text": "Today, with graphical user interfaces (GUI), most users never use command-line interfaces (CLI)."
+    },
+    {
+      "s": "s25",
+      "text": "However, CLI is still used by software developers and system administrators to configure computers, install software, and access features that are not available in the graphical interface."
+    },
+    {
+      "s": "s25",
+      "text": "CLI is a command line program that accepts text input to execute operating system functions."
+    },
+    {
+      "s": "s25",
+      "text": "Use CLI commands with great attention!!!"
+    },
+    {
+      "s": "s25",
+      "text": "What is Command Line Interface (CLI)?"
+    },
+    {
+      "s": "s25",
+      "text": "In the 1970s an 1980s, command line input was commonly used by Unix systems and PC systems like MS-DOS and Apple DOS."
+    },
+    {
+      "s": "s26",
+      "text": "Common CLIs include Bash (Linux/macOS), CMD and PowerShell (Windows, Zsh, Git Bash, and cloud-specific tools like Azure CLI, AWS CLI, and Google Cloud SDK)."
+    },
+    {
+      "s": "s26",
+      "text": "Unlike GUI-based tools that often log user actions, CLI commands may not be logged by default, which can make tracing malicious or accidental changes more difficult."
+    },
+    {
+      "s": "s26",
+      "text": "On systems with limited memory or processing power, such as embedded devices or headless servers, CLIs are preferred because they require minimal resources."
+    },
+    {
+      "s": "s26",
+      "text": "When managing servers or cloud environments remotely, a CLI is often the only available interface."
+    },
+    {
+      "s": "s26",
+      "text": "Tasks like batch file processing, system backups, or software deployment can be automated using shell scripts in a CLI, which is more efficient than manually repeating actions in a GUI."
+    },
+    {
+      "s": "s26",
+      "text": "From flashing firmware to providing real-time access to logs, memory usage, and sensor data, CLI tools are highly beneficial in cases where technical teams must deploy software in remote or inaccessible locations."
+    },
+    {
+      "s": "s27",
+      "text": "This platform, CLI Engage, now houses free resources for educators and families of children ages 0-6."
+    },
+    {
+      "s": "s27",
+      "text": "CLI & PBS Collaboration: Circle STEM Lab"
+    },
+    {
+      "s": "s27",
+      "text": "In 2014, CLI partnered with state agencies to build a platform that could deliver these tools to a greater number of programs."
+    },
+    {
+      "s": "s27",
+      "text": "CLI Engage Public – CLI Engage Public"
+    },
+    {
+      "s": "s27",
+      "text": "CLI Engage provides a comprehensive, integrated resource suite that connects professional development (online courses) to classroom implementation (activity collections) and highly targeted data collection and planning (child progress monitoring and teacher observation and goal-setting)."
+    },
+    {
+      "s": "s27",
+      "text": "The Children’s Learning Institute (CLI) is a leader in the development of research-based tools to improve early education quality."
+    },
+    {
+      "s": "s28",
+      "text": "$ cosign verify-blob-attestation --bundle cli-cli-attestation-3120304.sigstore.json \\ --new-bundle-format \\ --certificate-oidc-issuer="
+    },
+    {
+      "s": "s28",
+      "text": "sha256:fdb77f31b8a6dd23c3fd858758d692a45f7fc76383e37d475bdcae038df92afc was attested by: REPO PREDICATE_TYPE WORKFLOW cli/cli https://slsa.dev/provenance/v1 .github/workflows/deployment.yml@refs/heads/trunk"
+    },
+    {
+      "s": "s28",
+      "text": "GitHub CLI is supported for users on GitHub.com, GitHub Enterprise Cloud, and GitHub Enterprise Server 2.20+ with support for macOS, Windows, and Linux."
+    },
+    {
+      "s": "s28",
+      "text": "If you are a hubber and are interested in shipping new commands for the CLI, check out our"
+    },
+    {
+      "s": "s28",
+      "text": "$ gh at verify -R cli/cli gh_2.62.0_macOS_arm64.zip Loaded digest sha256:fdb77f31b8a6dd23c3fd858758d692a45f7fc76383e37d475bdcae038df92afc"
+    },
+    {
+      "s": "s28",
+      "text": "is a new project that helps us explore what an official GitHub CLI tool can look like with a fundamentally different design."
+    },
+    {
+      "s": "s29",
+      "text": "With minimal configuration, you can use the AWS CLI to commands that implement functionality equivalent to that provided by the browser-based AWS Management Console."
+    },
+    {
+      "s": "s29",
+      "text": "If they add references to these libraries using a CLI, they can do so with one inserted command instead of leaving instructions to search for the library using the GUI."
+    },
+    {
+      "s": "s29",
+      "text": "Linux has a simple way of accessing the CLI: use the shortcut CTRL+ALT+T."
+    },
+    {
+      "s": "s29",
+      "text": "(AWS CLI) is an open source tool from Amazon Web Services (AWS)."
+    },
+    {
+      "s": "s29",
+      "text": "If you’re unfamiliar with a command, you should research what it does before you input it into the CLI."
+    },
+    {
+      "s": "s29",
+      "text": "a browser-based shell, you can quickly run scripts with the AWS CLI, experiment with service APIs, and use other tools to increase your productivity."
+    },
+    {
+      "s": "s31",
+      "text": "Get 10,000 or 25,000 Google Flow Credits to use across our AI creative studio to create cinematic scenes and stories with access to Gemini Omni Flash and custom tool creation."
+    },
+    {
+      "s": "s31",
+      "text": "Get 1,000 Google Flow Credits to use across our AI creative studio to create cinematic scenes and stories with access to Gemini Omni Flash and custom tool creation."
+    },
+    {
+      "s": "s31",
+      "text": "Google AI plans and Gemini for Gmail, Docs, and more are only available for ages 18+."
+    },
+    {
+      "s": "s31",
+      "text": "Get 200 Google Flow Credits to use across our AI creative studio to create cinematic scenes and stories with access to Gemini Omni Flash and custom tool creation."
+    },
+    {
+      "s": "s31",
+      "text": "Gemini 3 Pro model, Nano Banana Pro, and Deep Search in AI Mode are available in select countries — see"
+    },
+    {
+      "s": "s31",
+      "text": "Highest access to Gemini 3 Pro, Deep Search, agentic capabilities, and more."
+    },
+    {
+      "s": "s32",
+      "text": "“The Gemini 3.7 Flash agent was 35% cheaper than 3.6 Flash, with a +8% observed prompt-cache hit rate and fewer tool errors.”"
+    },
+    {
+      "s": "s32",
+      "text": "* For 3.6 and 3.7 Flash, introductory price expires on December 31, 2026."
+    },
+    {
+      "s": "s32",
+      "text": "“Gemini ​3.7 Flash achieves on-par performance with mid-sized models such as GPT-5.6-Terra on our benchmarks, but at around half the cost, making it a strong contender in that category.”"
+    },
+    {
+      "s": "s32",
+      "text": "Based on our early testing, the model lifts all-pass by 2.6 pts compared to Gemini 3.6 Flash on Legal Agent Bench, with broad gains in quality across practice areas.”"
+    },
+    {
+      "s": "s32",
+      "text": "We combined Gemini 3.7 Flash's multimodal understanding with a 3-agent graph loop to speed up the training loop."
+    },
+    {
+      "s": "s32",
+      "text": "“Google Gemini 3.5 Flash-Lite is a huge jump from Gemini 3.1 Flash-Lite, punching way above its weight class."
+    },
+    {
+      "s": "s33",
+      "text": "‎Gemini app on iOS & Android - your AI assistant from Google"
+    },
+    {
+      "s": "s34",
+      "text": "We're incredibly excited that Gemini can not only provide the hands-free help that you love from Google Assistant, but can go far beyond in conversationality and richness of the tasks it can help with."
+    },
+    {
+      "s": "s34",
+      "text": "Your Google Workspace admin will receive notice before the transition happens, and the experience may vary based on what Gemini functionality your admin has provided access to."
+    },
+    {
+      "s": "s34",
+      "text": "While Gemini can answer many more questions than Google Assistant, Gemini might not always get it right."
+    },
+    {
+      "s": "s34",
+      "text": "Gemini is our AI-powered assistant, that offers the hands-free help that you love from Google Assistant, but can go far beyond in conversationality and complexity of the tasks it can help with."
+    },
+    {
+      "s": "s34",
+      "text": "For example, in most countries when you transition to Gemini, we will automatically check your recent call and message history from Google Assistant to better identify who you want to call or message on Gemini."
+    },
+    {
+      "s": "s34",
+      "text": "In an effort to make the upgrade as seamless as possible, we will use some preferences and history from Google Assistant when we upgrade your device to Gemini."
+    },
+    {
+      "s": "s35",
+      "text": "deepmind.google/models/evals-methodology/gemini-3-1-pro"
+    },
+    {
+      "s": "s35",
+      "text": "From terrain generation to traffic flow, Gemini 3.1 Pro uses advanced reasoning to code and assemble the many layers of a simulated city."
+    },
+    {
+      "s": "s35",
+      "text": "Gemini 3.1 Pro understands design intent, converting static SVGs into animated, code-based graphics for faster, cleaner web development."
+    },
+    {
+      "s": "s35",
+      "text": "Gemini 3.1 Pro uses advanced reasoning to configure live telemetry streams to build dynamic applications like this aerospace dashboard."
+    },
+    {
+      "s": "s35",
+      "text": "Gemini 3.1 Pro codes an immersive starling murmuration, complete with hand-tracking manipulation and dynamic generative audio."
+    },
+    {
+      "s": "s35",
+      "text": "Gemini 3.1 brings exceptional instruction following – with meaningful improved tool use and agentic coding."
+    },
+    {
+      "s": "s37",
+      "text": "Add Copilot to your Microsoft 365 plan, get both together if you’re new, or try Copilot Chat today."
+    },
+    {
+      "s": "s37",
+      "text": "Get answers, draft content, and surface insights in seconds with secure AI chat from Microsoft 365 Copilot."
+    },
+    {
+      "s": "s37",
+      "text": "Turn data into insights in the apps you already know with Microsoft 365 Copilot."
+    }
+  ],
+  "note": "Raw page bodies stayed runner-side. Only compact evidence and provenance handles are committed."
+}
