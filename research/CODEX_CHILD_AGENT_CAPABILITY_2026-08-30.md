@@ -60,6 +60,28 @@ Probe result: **CONFIG/SOURCE GATE PASS 1..12**.
 
 Important boundary: this proves configuration acceptance and source-level slot accounting only. It does **not** yet prove that 12 simultaneous authenticated provider Child turns can complete successfully in Human Codex.
 
+## Live provider probe attempt
+
+A second GitHub Actions workflow attempted to proceed beyond source/config inspection and run an actual authenticated Codex provider test configured for **12 simultaneous V2 Children** (`max_concurrent_threads_per_session = 13`, including the root agent).
+
+Workflow run: `33292209451`  
+Commit: `5dee1565ac9232f38d5b304bd5a9b2250575c427`
+
+The runner checked for an available Codex/OpenAI authentication route without printing any secret values. Results:
+
+- `OPENAI_API_KEY`: absent
+- `CODEX_AUTH_JSON`: absent
+- `CHATGPT_AUTH_JSON`: absent
+- current ChatGPT container: no `codex` binary and no `~/.codex` authenticated session
+
+Therefore the provider step was correctly skipped with:
+
+`PROVIDER_CHILD_LIVE_PROBE=BLOCKED_NO_CODEX_AUTH`
+
+This is an **environment/auth boundary**, not a concurrency failure. No provider Child was actually spawned, so it must not be counted as a failed 12-Child runtime test.
+
+The live-probe workflow remains at `.github/workflows/codex-child-provider-live-probe.yml`; if an authenticated Codex execution route is later attached to that runner, it is already configured to attempt 12 Child agents with minimal child tasks.
+
 ## Runtime evidence / boundary
 
 Recent public 0.147.0 reports show working `spawn_agent` usage with explicit concurrency settings above five, including `max_concurrent_threads_per_session = 6`, and a V2 reproduction configured at 30. Other reports show much higher values such as 128 can create severe resource and lifecycle pressure; a large accepted configuration value should not be confused with a safe operating value.
@@ -105,7 +127,8 @@ V2 tests must remember that the configured total includes the root agent; to obt
 - OpenAI Codex source tag `rust-v0.147.0`, `codex-rs/core/config.schema.json`
 - OpenAI Codex source tag/current `codex-rs/core/src/agent/registry.rs`
 - GitHub Actions run `33292022259` in `Valon-Jang/Root-Engineering`
+- GitHub Actions run `33292209451` in `Valon-Jang/Root-Engineering`
 
 ## Current conclusion
 
-**Twelve is permitted by the 0.147.0 configuration/source gate. The real safe/effective provider concurrency limit is still unmeasured.**
+**Twelve is permitted by the 0.147.0 configuration/source gate. Actual provider concurrency remains unmeasured because neither the current ChatGPT container nor the GitHub runner has an authenticated Codex provider session.**
