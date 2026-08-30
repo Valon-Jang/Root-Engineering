@@ -1,0 +1,106 @@
+name: Codex Child Provider Live Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/codex-child-provider-live-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+      CHATGPT_AUTH_JSON: ${{ secrets.CHATGPT_AUTH_JSON }}
+    steps:
+      - name: Check available Codex auth path without exposing secrets
+        id: auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          api=false
+          codex_json=false
+          chatgpt_json=false
+          [[ -n "${OPENAI_API_KEY:-}" ]] && api=true
+          [[ -n "${CODEX_AUTH_JSON:-}" ]] && codex_json=true
+          [[ -n "${CHATGPT_AUTH_JSON:-}" ]] && chatgpt_json=true
+          echo "OPENAI_API_KEY_PRESENT=$api"
+          echo "CODEX_AUTH_JSON_PRESENT=$codex_json"
+          echo "CHATGPT_AUTH_JSON_PRESENT=$chatgpt_json"
+          if [[ "$api" == true || "$codex_json" == true || "$chatgpt_json" == true ]]; then
+            echo "auth_available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "auth_available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: steps.auth.outputs.auth_available == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Codex 0.147.0
+        if: steps.auth.outputs.auth_available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @openai/codex@0.147.0
+          codex --version
+
+      - name: Restore ChatGPT/Codex auth JSON when configured
+        if: steps.auth.outputs.auth_available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.codex"
+          if [[ -n "${CODEX_AUTH_JSON:-}" ]]; then
+            printf '%s' "$CODEX_AUTH_JSON" > "$HOME/.codex/auth.json"
+            chmod 600 "$HOME/.codex/auth.json"
+          elif [[ -n "${CHATGPT_AUTH_JSON:-}" ]]; then
+            printf '%s' "$CHATGPT_AUTH_JSON" > "$HOME/.codex/auth.json"
+            chmod 600 "$HOME/.codex/auth.json"
+          fi
+
+      - name: Live provider smoke at 12 children
+        if: steps.auth.outputs.auth_available == 'true'
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/probe_prompt.txt <<'EOF'
+          This is a concurrency capability probe. Do not do any substantive research.
+          Use the native collaboration tools. Spawn exactly 12 child agents before waiting for any of them.
+          Each child receives a unique index 1..12 and must answer only CHILD_<index>_OK.
+          Use fork_turns="none" when supported so child context is minimal.
+          After all 12 are spawned, wait for all of them to complete.
+          Final response must contain exactly one line beginning PROVIDER_CHILD_PROBE_12 and then the count of successful child replies and the 12 received markers.
+          Do not create files, run shell commands, browse the web, or perform any mutating action.
+          EOF
+
+          set +e
+          timeout 540s codex exec \
+            -c 'agents.enabled=true' \
+            -c 'features.multi_agent_v2={enabled=true,max_concurrent_threads_per_session=13,wait_agent_enabled=true,expose_spawn_agent_model_overrides=true}' \
+            -c 'approval_policy="never"' \
+            "$(cat /tmp/probe_prompt.txt)" 2>&1 | tee /tmp/provider_probe.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "CODEX_EXIT_CODE=$rc"
+          if grep -q 'PROVIDER_CHILD_PROBE_12' /tmp/provider_probe.log; then
+            echo 'PROVIDER_CHILD_12_RESULT=PASS_MARKER_PRESENT'
+          else
+            echo 'PROVIDER_CHILD_12_RESULT=NO_PASS_MARKER'
+          fi
+          exit "$rc"
+
+      - name: No authenticated provider path available
+        if: steps.auth.outputs.auth_available != 'true'
+        shell: bash
+        run: |
+          echo 'PROVIDER_CHILD_LIVE_PROBE=BLOCKED_NO_CODEX_AUTH'
+          echo 'No OPENAI_API_KEY, CODEX_AUTH_JSON, or CHATGPT_AUTH_JSON repository secret is available to this runner.'
