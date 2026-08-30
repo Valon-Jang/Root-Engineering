@@ -4,11 +4,12 @@ $profile = Join-Path $root 'profile'
 New-Item -ItemType Directory -Force -Path $root, $profile | Out-Null
 
 function Find-Chrome {
+    $pf86 = ${env:ProgramFiles(x86)}
     $candidates = @(
-        "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-        "$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe",
-        "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
-    )
+        (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'),
+        $(if ($pf86) { Join-Path $pf86 'Google\Chrome\Application\chrome.exe' }),
+        (Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe')
+    ) | Where-Object { $_ }
     foreach ($p in $candidates) { if (Test-Path $p) { return $p } }
     try {
         $reg = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe' -ErrorAction Stop).'(default)'
