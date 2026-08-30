@@ -1,0 +1,21 @@
+{
+  "schema": "carrier-web-v6/0.1",
+  "request_id": "smoke-20260830-03",
+  "generated_at": 1788057560.0425408,
+  "metrics": {
+    "queries": 8,
+    "search_hits": 0,
+    "unique_urls": 0,
+    "pages_ok": 0,
+    "pages_failed": 0,
+    "raw_chars": 0,
+    "evidence_chars": 0,
+    "evidence_items": 0,
+    "elapsed_ms": 3385.3,
+    "workers": 5
+  },
+  "search_errors": [],
+  "sources": [],
+  "evidence": [],
+  "note": "Raw page bodies stayed runner-side. Only compact evidence and provenance handles are committed."
+}
