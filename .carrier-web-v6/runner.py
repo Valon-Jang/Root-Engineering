@@ -6,6 +6,11 @@ import requests
 from bs4 import BeautifulSoup
 import collector
 
+# Compatibility shim: conservative compressor v0.2 no longer needs WORD itself,
+# but the discovery layer still uses it for sitemap/query scoring.
+if not hasattr(collector, 'WORD'):
+    collector.WORD = re.compile(r'[A-Za-z0-9가-힣_+-]{2,}')
+
 SEARCH_HOSTS = {'www.google.com','google.com','www.bing.com','bing.com','search.brave.com','www.mojeek.com','mojeek.com'}
 
 
