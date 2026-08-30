@@ -1,0 +1,19 @@
+{
+  "request_id": "smoke-20260830-01",
+  "queries": [
+    "OpenAI Codex CLI non-interactive exec sandbox approval official documentation",
+    "OpenAI Codex CLI Windows sandbox official documentation",
+    "Claude Code headless mode JSON output official documentation",
+    "Claude Code Windows sandbox official documentation",
+    "Gemini CLI headless JSON policy engine sandbox official documentation",
+    "GitHub Copilot CLI autopilot sandbox Windows official documentation",
+    "Cursor CLI permissions sandbox MCP official documentation",
+    "Cline CLI headless JSON MCP official documentation",
+    "AI coding agent CLI Windows sandbox comparison 2026",
+    "AI coding agent CLI recent Windows sandbox bugs 2026"
+  ],
+  "max_results_per_query": 5,
+  "max_pages": 35,
+  "max_bytes_per_page": 1200000,
+  "max_snippets_per_page": 6
+}
