@@ -233,19 +233,33 @@ Do not scan the whole Drive to find a Root. Address the bound folder directly; a
 
 ## 13. Acceptance criteria
 
-A valid Claude installation demonstrates:
+### 13.1 Installation acceptance
+
+A Claude installation is accepted only when both the installer preflight and a fresh-session binding check pass.
+
+The preflight must prove the storage operations the installed Root will actually depend on, using temporary data and read-back rather than capability-name assumptions.
+
+The fresh-session binding check must demonstrate:
 
 - the project instructions contain exactly one complete Root Engineering marker pair
 - a fresh chat in the same Project resolves the bound folder and reads `ROOT.md` without the installer attached
-- all required node routes exist and resolve by folder and file name
-- a task retrieves only the relevant routed nodes
+- the exact route to `CURRENT.md` resolves and only decision-relevant routed nodes are loaded
+- the Operational Memory route declared by `ROOT.md` resolves to its canonical owner
+- the observed fresh-session result is reported as evidence rather than assumed from static inspection
+- the unresolved acceptance item in `CURRENT.md` is changed only after the observed fresh-session check passes
+- multiple projects remain isolated and sensitive material is rejected
+
+A static repository inspection, generated instruction block, or successful file creation alone is not installation acceptance.
+
+### 13.2 Runtime transaction invariants
+
+The following are runtime guarantees and must be verified whenever their paths are exercised; they are not additional hidden prerequisites for the fresh-session binding check:
+
 - a durable update reaches one canonical owner and increments its revision
 - a stale update is detected by the pre-write re-read and re-merged instead of overwriting silently
-- an update interrupted before trash leaves the previous node intact and resolvable
+- an update interrupted before supersession cleanup leaves the previous canonical node intact and resolvable
 - repeated work retrieves its exact operational record before implementation
 - a matching verified fast path is selected without replaying its failed path
 - the first new failure remains visible, while unchanged same-path retry is prevented
 - blocked, static-only, installation-only, or restart-pending evidence is not promoted to verified success
-- multiple projects remain isolated
-- sensitive material is rejected
 - no token, quality, or latency improvement is claimed without a matched fresh-run benchmark

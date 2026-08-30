@@ -9,6 +9,12 @@ Use the Root as the project's external, canonical knowledge layer. Keep capabili
 
 Operating principle: **Storage is cheap. Context is expensive.** Preserve durable detail in Drive and control active context through routing, not destructive compression.
 
+## Package linkage
+
+The top-level Claude installer is the self-contained installation source. It embeds the protocol, instruction block, and node templates required to initialize a project without relying on these repository files being separately loaded at install time.
+
+This `SKILL.md`, `references/PROTOCOL.md`, and `assets/templates/*` directory is the maintained mirror/reference package. Repository validation must fail if an embedded installer payload differs from its mirror. Runtime behavior after installation comes from the Project instruction block plus the bound Root files; do not assume this repository checkout remains in context.
+
 ## Resolve the active Root
 
 1. Read the project folder ID from the project instructions' Root Engineering block.

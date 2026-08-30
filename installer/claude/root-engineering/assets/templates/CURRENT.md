@@ -4,7 +4,7 @@
 ## Confirmed facts
 
 - `Fact`: {{PROJECT_NAME}} is the project bound to Drive folder `{{PROJECT_FOLDER_ID}}`.
-- `Fact`: Root Engineering was initialized on {{DATE}} with Drive-hosted Markdown nodes and a Claude project-instruction connection block.
+- `Fact`: Drive-hosted Root Engineering Markdown nodes were initialized on {{DATE}}.
 
 ## Active decisions
 
@@ -24,7 +24,7 @@
 ## Unresolved
 
 - `Unresolved`: Confirm and record the project's current state, active goals, and next meaningful action from authoritative sources.
-- `Unresolved`: Run a fresh-chat acceptance check after initialization and replace this item with observed evidence.
+- `Unresolved`: Confirm the Project instruction connection block is present, then run the fresh-chat binding acceptance check and replace this item only with observed evidence.
 
 ## Provenance
 

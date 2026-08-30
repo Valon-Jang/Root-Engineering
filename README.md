@@ -67,6 +67,8 @@ The Codex package contains the Skill, protocol, project templates, and a no-modu
 - [Claude installer and acceptance guide](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md)
 - [Claude package folder](./installer/claude/root-engineering/)
 
+The top-level Claude installer is the **self-contained installation source**. It embeds the exact protocol, project-instruction block, and node templates needed for installation. The files under `installer/claude/root-engineering/` are the maintained mirror/reference package, not an additional attachment requirement. Repository CI verifies that the embedded installer payload and those mirror files stay identical.
+
 The Claude package keeps the Codex project-local Markdown model but stores nodes as plain `.md` files in a Drive project folder. Because that connector cannot patch file content, return a revision, or read part of a file, a durable update is a verified rewrite: re-read, merge minimally, increment the in-file `ROOT_REVISION`, create the replacement, read it back, and only then trash the superseded file. Nodes are therefore resolved by project folder ID plus fixed file name rather than by per-file ID.
 
 ### ChatGPT Project + Google Drive
