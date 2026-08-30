@@ -1801,8 +1801,10 @@ VERIFY checks:
 reconfirm Google Drive Capability
 → verify Project Binding values
 → verify Root ID / Folder boundary
-→ verify the four default Branches in ROOT Map
-→ verify each Branch ID and Parent
+→ verify the four default Knowledge Branches in ROOT Map
+→ verify each Knowledge Branch ID and Parent
+→ verify the Operational Memory direct specialist Node, ID, Parent, and exact fast-path index
+→ verify a matching known-failure record blocks unchanged same-path retry
 → verify Knowledge Lookup exists, has COMPLETE coverage, and has no unresolved placeholder
 → verify access to Protocol / Skill Root
 → verify Fast Knowledge Lookup rules in Protocol

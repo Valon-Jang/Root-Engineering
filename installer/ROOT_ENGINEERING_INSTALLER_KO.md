@@ -527,16 +527,18 @@ GLOBAL/Skill Library/SKILL_ROOT
 6. Foundation Doc 생성
 7. Current Knowledge Doc 생성
 8. Learned Knowledge Doc 생성
-9. History Doc 생성
-10. 모든 Doc을 Project Folder로 이동
-11. 실제 Document ID / URL / Parent Folder를 회수
-12. 각 Template의 Placeholder를 실제 값으로 치환해 내용 작성
-13. ROOT Map에 기본 4개 Branch ID 연결
-14. ROOT Knowledge Lookup을 빈 표와 Coverage COMPLETE로 초기화
-15. 각 Branch 내부 Root ID / Node ID / Parent 관계 확인
-16. 모든 문서 Read Back
-17. Project Instructions 완성본 생성
-18. Manifest 상태를 AWAITING_PROJECT_BINDING으로 변경
+9. Operational Memory Doc 생성
+10. History Doc 생성
+11. 모든 Doc을 Project Folder로 이동
+12. 실제 Document ID / URL / Parent Folder를 회수
+13. 각 Template의 Placeholder를 실제 값으로 치환해 내용 작성
+14. ROOT Map에 기본 4개 Knowledge Branch ID와 Operational Memory Fast-path Node 연결
+15. ROOT Knowledge Lookup을 빈 표와 Coverage COMPLETE로 초기화
+16. Operational Memory Fast-Path Index를 빈 상태로 초기화
+17. 각 Knowledge Branch와 Operational Memory Node 내부 Root ID / Node ID / Parent 관계 확인
+18. 모든 문서 Read Back
+19. Project Instructions 완성본 생성
+20. Manifest 상태를 AWAITING_PROJECT_BINDING으로 변경
 ```
 
 ### 13.3 초기 Foundation과 Project Purpose
@@ -742,11 +744,13 @@ ROOT
 ├─ Foundation
 ├─ Current Knowledge
 ├─ Learned Knowledge
+├─ Operational Memory  [Trigger-only Operational Fast Path]
 └─ History
 ```
 
-- ROOT는 기본 4개 직계 Branch만 안다.
-- `Knowledge Lookup`은 ROOT 안의 Routing Index이며 다섯 번째 Branch도, 두 번째 Source of Truth도 아니다.
+- Foundation, Current Knowledge, Learned Knowledge, History는 기본 4개 Knowledge Branch로 유지한다.
+- Operational Memory는 비단순 반복 작업·복구·업그레이드·재시도·정확한 Known-failure 재발 가능성이 있을 때만 읽는 직계 Specialist Fast-path Node다.
+- `Knowledge Lookup`은 ROOT 안의 Routing Index이며 Branch도, 두 번째 Source of Truth도 아니다.
 - 각 Branch는 자기 직계 Child만 안다.
 - 현재 Node의 정보가 부족하거나 Child의 `Read when`이 요청과 맞을 때만 다음 단계로 내려간다.
 - History와 Sources는 기본 Context가 아니다.
@@ -761,8 +765,11 @@ ROOT
 현재 사실·상태·결정·제약·미결·업무 지식
 → Current Knowledge
 
-재사용 가능한 검증된 방법·성공/실패 교훈
+일반화 가능한 검증된 방법·성공/실패 교훈
 → Learned Knowledge
+
+반복 작업의 정확한 실패 Fingerprint·Do-not-repeat·Preferred Path·Evidence Gate
+→ Operational Memory
 
 과거 결정의 이유·큰 전환·Rollback·비교
 → History
