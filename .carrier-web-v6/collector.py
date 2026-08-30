@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-import argparse, concurrent.futures, hashlib, ipaddress, json, pathlib, re, socket, time
+import argparse, concurrent.futures, ipaddress, json, math, pathlib, re, socket, time
 from urllib.parse import quote_plus, unquote, urlparse, parse_qs
 import requests
 from bs4 import BeautifulSoup
 
-UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 CarrierWebV6/0.1'
+UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 CarrierWebV6/0.2'
+
+# Conservative prose-only deletions. These are framing/filler expressions, not evidence selection rules.
 FILLERS=[
  r'(?i)\b(?:it is important to note that|it should be noted that|in other words|generally speaking|as a matter of fact)\b[,;:]?\s*',
  r'(?i)\b(?:currently,?\s+based on the information available,?|taking all of the above into consideration,?)\s*',
@@ -12,8 +14,7 @@ FILLERS=[
 ]
 PROTECTED_MARKERS=re.compile(r'(?i)\b(?:not|no|never|only|except|unless|until|before|after|if|when|hold|release|must|shall|may|might|cannot|can\'t|without|scope|authority|approved?|denied?|cancel(?:led)?|supersed(?:e|ed)|deprecated|warning|error|failed?)\b|(?:아니|않|못|없|만|제외|예외|조건|경우|이후|이전|까지|보류|해제|승인|취소|대체|범위|권한|실패)')
 NUM_ID=re.compile(r'https?://\S+|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}:\d{2}\b|\b\d+(?:\.\d+)?\s*(?:%|ms|s|sec|seconds?|minutes?|hours?|days?|MB|GB|KB|tokens?|USD|KRW|원|개|회)?\b|\b[A-Z][A-Z0-9_-]{2,}\b')
-WORD=re.compile(r'[A-Za-z0-9가-힣_+-]{2,}')
-SENT_SPLIT=re.compile(r'(?<=[.!?。！？])\s+|\n+')
+
 
 def safe_url(u):
     try:
@@ -29,12 +30,14 @@ def safe_url(u):
         return True
     except Exception: return False
 
+
 def clean_url(u):
     if not u: return None
     if 'duckduckgo.com/l/' in u:
         q=parse_qs(urlparse(u).query).get('uddg')
         if q: u=unquote(q[0])
     return u.split('#')[0]
+
 
 def search_ddg(q,n,session):
     r=session.get('https://html.duckduckgo.com/html/?q='+quote_plus(q),timeout=15,headers={'User-Agent':UA})
@@ -45,6 +48,7 @@ def search_ddg(q,n,session):
         if len(out)>=n: break
     return out
 
+
 def search_bing(q,n,session):
     r=session.get('https://www.bing.com/search?q='+quote_plus(q)+f'&count={max(n,10)}',timeout=15,headers={'User-Agent':UA})
     r.raise_for_status(); s=BeautifulSoup(r.text,'html.parser'); out=[]
@@ -53,6 +57,7 @@ def search_bing(q,n,session):
         if href and safe_url(href): out.append({'url':href,'title':title,'engine':'bing'})
         if len(out)>=n: break
     return out
+
 
 def do_search(q,n):
     s=requests.Session(); errs=[]
@@ -63,12 +68,15 @@ def do_search(q,n):
         except Exception as e: errs.append(f'{fn.__name__}:{type(e).__name__}:{e}')
     return q,[],errs
 
+
 def visible_text(content,ctype):
+    """Remove non-content web chrome before the compression baseline is measured."""
     if 'html' not in ctype.lower(): return content.decode('utf-8','replace')
     soup=BeautifulSoup(content,'html.parser')
     for t in soup(['script','style','noscript','svg','canvas','template']): t.decompose()
     for t in soup.select('nav,footer,aside'): t.decompose()
     return '\n'.join(' '.join(x.split()) for x in soup.stripped_strings if x.strip())
+
 
 def fetch_page(task):
     idx,u,title,q,max_bytes=task; t=time.time(); s=requests.Session(); h={'User-Agent':UA,'Accept':'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.2'}
@@ -83,39 +91,73 @@ def fetch_page(task):
     except Exception as e:
         return {'idx':idx,'url':u,'title':title,'query':q,'error':f'{type(e).__name__}:{e}','text':'','raw_bytes':0,'ms':round((time.time()-t)*1000,1)}
 
-def compact_sentence(s):
-    orig=' '.join(s.split())
+
+def compact_line(line):
+    """Delete only conservative filler while protecting decision-bearing spans."""
+    orig=' '.join(line.split())
     if not orig: return orig
-    protected=NUM_ID.findall(orig); markers=PROTECTED_MARKERS.findall(orig); x=orig
+    protected=NUM_ID.findall(orig); marker_count=len(PROTECTED_MARKERS.findall(orig)); x=orig
     for pat in FILLERS: x=re.sub(pat,'',x)
     x=re.sub(r'\s+',' ',x).strip(' ,;')
-    if not x or any(p not in x for p in protected) or len(PROTECTED_MARKERS.findall(x))<len(markers): return orig
+    if not x: return orig
+    if any(p not in x for p in protected): return orig
+    if len(PROTECTED_MARKERS.findall(x)) < marker_count: return orig
     return x
 
-def query_terms(q):
-    stop={'the','and','for','with','from','into','that','this','what','when','where','how','why','official','docs','documentation'}
-    return {w.lower() for w in WORD.findall(q) if len(w)>2 and w.lower() not in stop}
 
-def snippets(text,q,limit):
-    terms=query_terms(q); cand=[]
-    for s in SENT_SPLIT.split(text):
-        s=' '.join(s.split())
-        if len(s)<35 or len(s)>1000: continue
-        low=s.lower(); overlap=sum(1 for t in terms if t in low); nums=len(NUM_ID.findall(s)); markers=len(PROTECTED_MARKERS.findall(s))
-        score=overlap*5+min(nums,4)*1.5+min(markers,3)*1.2+min(len(s),300)/300
-        if overlap or nums or markers: cand.append((score,s))
-    cand.sort(key=lambda x:x[0],reverse=True); out=[]; seen=set()
-    for _,s in cand:
-        c=compact_sentence(s); k=re.sub(r'\W+','',c.lower())[:240]
-        if k and k not in seen: seen.add(k); out.append(c)
-        if len(out)>=limit: break
+def conservative_compress(text,min_retention=0.70):
+    """Never remove more than (1-min_retention) of visible body text.
+
+    No sentence ranking, summarization, relevance filtering, or semantic deletion is performed.
+    If lexical trimming would cross the retention floor, changed lines are restored until the
+    hard floor is satisfied.
+    """
+    if not text: return text,1.0
+    min_retention=max(0.70,min(float(min_retention),1.0))
+    raw_lines=text.splitlines()
+    rows=[]
+    for line in raw_lines:
+        orig=' '.join(line.split())
+        comp=compact_line(orig)
+        rows.append([orig,comp,max(0,len(orig)-len(comp))])
+    compressed='\n'.join(r[1] for r in rows)
+    floor=math.ceil(len(text)*min_retention)
+    if len(compressed) < floor:
+        # Restore the most aggressively shortened lines first until >=70% is retained.
+        changed=sorted((i for i,r in enumerate(rows) if r[2]>0), key=lambda i: rows[i][2], reverse=True)
+        for i in changed:
+            rows[i][1]=rows[i][0]
+            compressed='\n'.join(r[1] for r in rows)
+            if len(compressed) >= floor: break
+    if len(compressed) < floor:
+        compressed=text
+    retention=len(compressed)/max(1,len(text))
+    return compressed,retention
+
+
+def chunk_text(text,max_chars=2600):
+    """Chunk without dropping or reordering any compressed text."""
+    if not text: return []
+    out=[]; buf=''
+    for line in text.splitlines():
+        piece=line if not buf else '\n'+line
+        if len(buf)+len(piece) <= max_chars:
+            buf+=piece
+            continue
+        if buf: out.append(buf); buf=''
+        while len(line)>max_chars:
+            out.append(line[:max_chars]); line=line[max_chars:]
+        buf=line
+    if buf: out.append(buf)
     return out
+
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--request',required=True); ap.add_argument('--out',required=True); ap.add_argument('--raw-dir',required=True); a=ap.parse_args()
     started=time.time(); req=json.load(open(a.request,encoding='utf-8')); rid=req.get('request_id') or pathlib.Path(a.request).stem
     queries=[str(x).strip() for x in req.get('queries',[]) if str(x).strip()][:50]; seeds=[str(x).strip() for x in req.get('urls',[]) if str(x).strip()][:100]
-    perq=max(1,min(int(req.get('max_results_per_query',5)),10)); max_pages=max(1,min(int(req.get('max_pages',40)),100)); max_bytes=max(100000,min(int(req.get('max_bytes_per_page',1500000)),3000000)); snip=max(1,min(int(req.get('max_snippets_per_page',5)),12))
+    perq=max(1,min(int(req.get('max_results_per_query',5)),10)); max_pages=max(1,min(int(req.get('max_pages',40)),100)); max_bytes=max(100000,min(int(req.get('max_bytes_per_page',1500000)),3000000))
+    min_retention=max(0.70,min(float(req.get('min_text_retention',0.70)),1.0))
     if not queries and not seeds: raise SystemExit('request needs queries or urls')
     search_errors=[]; found=[]
     with concurrent.futures.ThreadPoolExecutor(max_workers=5,thread_name_prefix='interceptor-search') as ex:
@@ -131,16 +173,32 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=5,thread_name_prefix='interceptor-fetch') as ex:
         for f in concurrent.futures.as_completed([ex.submit(fetch_page,t) for t in tasks]): pages.append(f.result())
     pages.sort(key=lambda x:x['idx']); rawdir=pathlib.Path(a.raw_dir); rawdir.mkdir(parents=True,exist_ok=True)
-    sources=[]; evidence=[]; evseen=set(); raw_chars=compressed_chars=ok=0
+    sources=[]; evidence=[]; raw_chars=compressed_chars=ok=0
     for p in pages:
         handle=f's{len(sources)}'
         if p.get('text'):
-            ok+=1; raw_chars+=len(p['text']); (rawdir/f'{handle}.txt').write_text(p['text'],encoding='utf-8',errors='replace'); ss=snippets(p['text'],p['query'],snip); compressed_chars+=len('\n'.join(ss))
-            sources.append({'h':handle,'url':p['url'],'title':p.get('title','')[:240],'query':p['query'],'status':p.get('status'),'raw_chars':len(p['text']),'fetch_ms':p['ms']})
-            for s in ss:
-                k=hashlib.sha256(re.sub(r'\W+','',s.lower()).encode()).hexdigest()
-                if k not in evseen: evseen.add(k); evidence.append({'s':handle,'text':s})
-        else: sources.append({'h':handle,'url':p['url'],'title':p.get('title','')[:240],'query':p['query'],'error':p.get('error'),'fetch_ms':p['ms']})
-    result={'schema':'carrier-web-v6/0.1','request_id':rid,'generated_at':time.time(),'metrics':{'queries':len(queries),'search_hits':len(found),'unique_urls':len(unique),'pages_ok':ok,'pages_failed':len(pages)-ok,'raw_chars':raw_chars,'evidence_chars':compressed_chars,'evidence_items':len(evidence),'elapsed_ms':round((time.time()-started)*1000,1),'workers':5},'search_errors':search_errors[:20],'sources':sources,'evidence':evidence,'note':'Raw page bodies stayed runner-side. Only compact evidence and provenance handles are committed.'}
+            ok+=1; raw=p['text']; raw_chars+=len(raw); (rawdir/f'{handle}.txt').write_text(raw,encoding='utf-8',errors='replace')
+            compact,retention=conservative_compress(raw,min_retention=min_retention); compressed_chars+=len(compact)
+            sources.append({'h':handle,'url':p['url'],'title':p.get('title','')[:240],'query':p['query'],'status':p.get('status'),'raw_chars':len(raw),'compressed_chars':len(compact),'retention':round(retention,4),'fetch_ms':p['ms']})
+            for part,chunk in enumerate(chunk_text(compact)):
+                evidence.append({'s':handle,'part':part,'text':chunk})
+        else:
+            sources.append({'h':handle,'url':p['url'],'title':p.get('title','')[:240],'query':p['query'],'error':p.get('error'),'fetch_ms':p['ms']})
+    retention=(compressed_chars/max(1,raw_chars)) if raw_chars else 1.0
+    result={
+        'schema':'carrier-web-v6/0.2-conservative',
+        'request_id':rid,
+        'generated_at':time.time(),
+        'compression_policy':{'mode':'filler-only','min_text_retention':min_retention,'max_text_reduction':round(1-min_retention,4),'semantic_selection':False,'summarization':False},
+        'metrics':{
+            'queries':len(queries),'search_hits':len(found),'unique_urls':len(unique),'pages_ok':ok,'pages_failed':len(pages)-ok,
+            'raw_chars':raw_chars,'evidence_chars':compressed_chars,'text_retention':round(retention,4),'text_reduction_pct':round((1-retention)*100,2),
+            'evidence_items':len(evidence),'elapsed_ms':round((time.time()-started)*1000,1),'workers':5,'search_error_count':len(search_errors)
+        },
+        'sources':sources,
+        'evidence':evidence,
+        'note':'Visible page body is preserved in order. Only conservative filler is removed; at least 70% of each page body is retained. No Top-N evidence selection or summarization.'
+    }
     pathlib.Path(a.out).parent.mkdir(parents=True,exist_ok=True); pathlib.Path(a.out).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8'); print(json.dumps(result['metrics'],ensure_ascii=False))
+
 if __name__=='__main__': main()
