@@ -1,0 +1,11 @@
+{
+  "request_id": "compression-cap-20260830-01",
+  "urls": [
+    "https://docs.cline.bot/usage/cli-overview",
+    "https://docs.github.com/en/copilot/concepts/about-cloud-and-local-sandboxes",
+    "https://docs.github.com/en/copilot/how-tos/cloud-and-local-sandboxes/configuring-local-sandbox-settings"
+  ],
+  "max_pages": 3,
+  "max_bytes_per_page": 1500000,
+  "min_text_retention": 0.70
+}
