@@ -60,6 +60,26 @@ jobs:
         shell: bash
         run: /tmp/naver-carrier-venv/bin/python .bridge/carrier/naver_worker.py prepare
 
+      - name: Capture full Naver verification page
+        if: ${{ inputs.mode == 'bootstrap' }}
+        env:
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          /tmp/naver-carrier-venv/bin/python - <<'PY'
+          import os, pathlib, time
+          from selenium import webdriver
+          from selenium.webdriver.chrome.service import Service
+          o=webdriver.ChromeOptions(); o.debugger_address='127.0.0.1:9222'
+          d=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=o)
+          try:
+              time.sleep(1)
+              body=d.find_element('tag name','body')
+              body.screenshot('/tmp/naver-carrier/out/login.png')
+          finally:
+              d.quit()
+          PY
+
       - name: Upload login QR when human approval is needed
         uses: actions/upload-artifact@v4
         with:
