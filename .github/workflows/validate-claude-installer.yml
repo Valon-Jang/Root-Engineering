@@ -1,0 +1,26 @@
+name: Validate Claude installer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md
+      - installer/claude/root-engineering/**
+      - tools/validate_claude_installer.py
+      - .github/workflows/validate-claude-installer.yml
+  pull_request:
+    paths:
+      - README.md
+      - installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md
+      - installer/claude/root-engineering/**
+      - tools/validate_claude_installer.py
+      - .github/workflows/validate-claude-installer.yml
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Claude installer package linkage
+        run: python tools/validate_claude_installer.py
