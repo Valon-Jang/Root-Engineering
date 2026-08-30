@@ -1,0 +1,6 @@
+interface:
+  display_name: "Root Engineering"
+  short_description: "Route durable knowledge and verified fast paths"
+  default_prompt: "Use $root-engineering to initialize or navigate this project's Root, apply any matching operational fast path, and preserve only verified durable results."
+policy:
+  allow_implicit_invocation: true

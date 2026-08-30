@@ -39,7 +39,25 @@ It is usually unnecessary for one-off prompts, disposable tasks, or information 
 
 ## Install and Verify
 
-The current reference implementation uses **ChatGPT Project + Google Drive live app access**.
+Choose the adapter for the AI environment that will own the project connection.
+
+### Codex
+
+Install the repository's standalone `root-engineering` Skill with Codex's built-in installer:
+
+```text
+$skill-installer install the skill from https://github.com/Valon-Jang/Root-Engineering/tree/main/installer/codex/root-engineering
+```
+
+Then open the target repository and ask `$root-engineering` to initialize and validate the project-local Root while preserving existing `AGENTS.md` content.
+
+- [Codex installer and acceptance guide](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md)
+- [Codex 설치 및 검증 안내](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md)
+- [Installable Skill folder](./installer/codex/root-engineering/)
+
+The Codex package contains the Skill, protocol, project templates, and a no-module PowerShell initializer/validator. It stages a complete `.root/` before publishing it, rejects invalid or symlinked targets, preserves existing project instructions, validates exact routes, and includes isolated self-tests for Linux and Windows.
+
+### ChatGPT Project + Google Drive
 
 1. Open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
 2. Attach it to the first chat of a new ChatGPT Project.
@@ -48,22 +66,21 @@ The current reference implementation uses **ChatGPT Project + Google Drive live 
 
 Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
 
-The installer does more than describe a folder structure. It checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test.
+The ChatGPT installer checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test. Its single-file package supports installation, verification, repair, and upgrade with a shared Global Protocol and a complete-coverage Knowledge Lookup.
 
-Installer v0.1.11 is a single-file package for installation, verification, repair, and upgrade. Shared operating behavior lives in the Global Protocol, while ChatGPT Project Instructions contain only the project-specific connection block. A complete-coverage Knowledge Lookup inside ROOT resolves named areas before any full-Branch existence scan. When supported, independent startup reads run concurrently and an existing target read is reused for an optimistic, revision-guarded document batch; a conflict triggers the re-read instead of every successful write. Routine writes use the atomic response and returned revision, while critical changes receive one affected-scope verification read. Scope-preserving merge rules keep authority, configuration, revision, material, Lot, Sub-Lot, Serial, timing, exceptions, and unresolved issues distinct. Upgrade queues remain explicit by installed level and report only the paths actually changed.
-
-### What the installer establishes
+### What the adapters establish
 
 ```text
 Canonical Root
-├── Knowledge Lookup [routing index]
+├── Root map and Knowledge Lookup
 ├── Foundation
 ├── Current Knowledge
 ├── Learned Knowledge
+├── Operational Memory [Codex adapter]
 └── History
 ```
 
-The fresh-chat test verifies that a new conversation can identify the Project Binding, retrieve the Root, use the complete-coverage Lookup, navigate to Current Knowledge, and continue from the persisted project state.
+Each adapter includes a fresh-session acceptance path that identifies the correct project binding, retrieves the Root, follows the exact route to Current Knowledge, and continues from persisted project state.
 
 This creates the path from methodology to operation:
 
@@ -79,7 +96,7 @@ Verify in a Fresh Chat
 Use and Update the Root
 ```
 
-→ [Open the English installer](./installer/ROOT_ENGINEERING_INSTALLER.md)
+→ [Install for Codex](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) · [Install for ChatGPT Project](./installer/ROOT_ENGINEERING_INSTALLER.md)
 
 ---
 
@@ -242,8 +259,10 @@ Start with the path that matches your goal:
 
 | Goal | Document |
 |---|---|
-| Install and verify a working Root | [English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
-| Install using Korean user guidance | [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
+| Install and verify with Codex | [Codex installer](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) |
+| Codex 설치 및 검증 | [Codex 한글 설치기](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md) |
+| Install with ChatGPT Project + Google Drive | [ChatGPT English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
+| ChatGPT Project에서 한글로 설치 | [ChatGPT 한글 설치기](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
 | Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
 | Review the paired experiment | [Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) |
 | Reproduce the benchmark prompts | [Prompt package](./benchmarks/project-atlas-v0.1/prompts/README.md) |
