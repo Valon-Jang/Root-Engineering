@@ -1,0 +1,37 @@
+name: Naver Local Persistent Mail
+
+on:
+  push:
+    branches:
+      - naver-local-persistent-20260830
+    paths:
+      - .bridge/local/mail-command.enc
+
+permissions:
+  contents: write
+
+concurrency:
+  group: naver-local-persistent-mail
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: [self-hosted, Windows, X64, naver-mail]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout command
+        uses: actions/checkout@v4
+        with:
+          ref: naver-local-persistent-20260830
+
+      - name: Execute encrypted mail command against persistent Chrome
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          COMMAND_BRANCH: naver-local-persistent-20260830
+          NMB_PRIVATE_KEY: ${{ env.LOCALAPPDATA }}\NaverMailBridge\private.pem
+          NMB_DEBUGGER: 127.0.0.1:9222
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python .bridge/local/send_mail.py .bridge/local/mail-command.enc
