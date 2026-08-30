@@ -30,13 +30,16 @@ jobs:
           python tools/repair_claude_package_connectivity.py
           python tools/validate_claude_installer.py
           git diff --check
-      - name: Publish repair
+      - name: Publish repaired package files
         shell: bash
         run: |
-          rm -f tools/repair_claude_package_connectivity.py
-          rm -f .github/workflows/repair-claude-package-connectivity.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add README.md \
+            installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md \
+            installer/claude/root-engineering/SKILL.md \
+            installer/claude/root-engineering/references/PROTOCOL.md \
+            installer/claude/root-engineering/assets/templates/CURRENT.md
+          git diff --cached --check
           git commit -m "Repair Claude installer package connectivity"
           git push
