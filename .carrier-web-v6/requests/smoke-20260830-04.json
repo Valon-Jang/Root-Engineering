@@ -1,0 +1,17 @@
+{
+  "request_id": "smoke-20260830-04",
+  "queries": [
+    "site:developers.openai.com codex cli exec sandbox approval",
+    "site:docs.anthropic.com claude code headless json output",
+    "site:github.com google-gemini gemini-cli policy sandbox headless",
+    "site:docs.github.com copilot cli sandbox windows",
+    "site:cursor.com cli permissions sandbox mcp",
+    "site:docs.cline.bot cli headless json mcp",
+    "site:docs.anthropic.com claude code sandboxing",
+    "site:developers.openai.com codex windows"
+  ],
+  "max_results_per_query": 5,
+  "max_pages": 35,
+  "max_bytes_per_page": 1500000,
+  "max_snippets_per_page": 6
+}
