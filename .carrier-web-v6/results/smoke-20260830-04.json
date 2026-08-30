@@ -1,0 +1,307 @@
+{
+  "schema": "carrier-web-v6/0.1",
+  "request_id": "smoke-20260830-04",
+  "generated_at": 1788057651.4265022,
+  "metrics": {
+    "queries": 8,
+    "search_hits": 7,
+    "unique_urls": 7,
+    "pages_ok": 7,
+    "pages_failed": 0,
+    "raw_chars": 40730,
+    "evidence_chars": 3385,
+    "evidence_items": 35,
+    "elapsed_ms": 10218.9,
+    "workers": 5
+  },
+  "search_errors": [
+    {
+      "query": "site:github.com google-gemini gemini-cli policy sandbox headless",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Agithub.com+google-gemini+gemini-cli+policy+sandbox+headless&source=web"
+    },
+    {
+      "query": "site:github.com google-gemini gemini-cli policy sandbox headless",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=site%3Agithub.com+google-gemini+gemini-cli+policy+sandbox+headless"
+    },
+    {
+      "query": "site:github.com google-gemini gemini-cli policy sandbox headless",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=google-gemini+gemini-cli+policy+sandbox+headless&source=web"
+    },
+    {
+      "query": "site:github.com google-gemini gemini-cli policy sandbox headless",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=google-gemini+gemini-cli+policy+sandbox+headless"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Adocs.anthropic.com+claude+code+headless+json+output&source=web"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=site%3Adocs.anthropic.com+claude+code+headless+json+output"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=claude+code+headless+json+output&source=web"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code headless json output",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=claude+code+headless+json+output"
+    },
+    {
+      "query": "site:cursor.com cli permissions sandbox mcp",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Acursor.com+cli+permissions+sandbox+mcp&source=web"
+    },
+    {
+      "query": "site:cursor.com cli permissions sandbox mcp",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=site%3Acursor.com+cli+permissions+sandbox+mcp"
+    },
+    {
+      "query": "site:cursor.com cli permissions sandbox mcp",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=cli+permissions+sandbox+mcp&source=web"
+    },
+    {
+      "query": "site:cursor.com cli permissions sandbox mcp",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=cli+permissions+sandbox+mcp"
+    },
+    {
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Adevelopers.openai.com+codex+cli+exec+sandbox+approval&source=web"
+    },
+    {
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=site%3Adevelopers.openai.com+codex+cli+exec+sandbox+approval"
+    },
+    {
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=codex+cli+exec+sandbox+approval&source=web"
+    },
+    {
+      "query": "site:developers.openai.com codex cli exec sandbox approval",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=codex+cli+exec+sandbox+approval"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code sandboxing",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Adocs.anthropic.com+claude+code+sandboxing&source=web"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code sandboxing",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=site%3Adocs.anthropic.com+claude+code+sandboxing"
+    },
+    {
+      "query": "site:docs.anthropic.com claude code sandboxing",
+      "error": "search_mojeek:HTTPError:403 Client Error: Forbidden for url: https://www.mojeek.com/search?q=claude+code+sandboxing"
+    },
+    {
+      "query": "site:developers.openai.com codex windows",
+      "error": "search_brave:HTTPError:429 Client Error: Too Many Requests for url: https://search.brave.com/search?q=site%3Adevelopers.openai.com+codex+windows&source=web"
+    }
+  ],
+  "sources": [
+    {
+      "h": "s0",
+      "url": "https://docs.cline.bot/mcp/mcp-overview",
+      "title": "Cline docs.cline.bot › configurations  › mcp MCP - Cline",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 3747,
+      "fetch_ms": 307.9
+    },
+    {
+      "h": "s1",
+      "url": "https://docs.cline.bot/usage/cli-overview",
+      "title": "Cline docs.cline.bot › usage  › cli overview CLI Overview - Cline",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 3864,
+      "fetch_ms": 247.3
+    },
+    {
+      "h": "s2",
+      "url": "https://docs.cline.bot/usage/cli-overview#headless-mode",
+      "title": "Cline docs.cline.bot › cline-cli  › three-core-flows Headless Mode - Cline",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 3864,
+      "fetch_ms": 805.5
+    },
+    {
+      "h": "s3",
+      "url": "https://docs.cline.bot/cli/cli-reference",
+      "title": "Cline docs.cline.bot › usage  › cli reference CLI Reference - Cline",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 7841,
+      "fetch_ms": 333.9
+    },
+    {
+      "h": "s4",
+      "url": "https://docs.cline.bot/usage/tui",
+      "title": "Cline docs.cline.bot › usage  › tui TUI - Cline",
+      "query": "site:docs.cline.bot cli headless json mcp",
+      "status": 200,
+      "raw_chars": 1460,
+      "fetch_ms": 296.8
+    },
+    {
+      "h": "s5",
+      "url": "https://docs.github.com/en/copilot/how-tos/cloud-and-local-sandboxes/configuring-local-sandbox-settings",
+      "title": "GitHub docs.github.com › en  › copilot  › how-tos  › cloud-and-local-sandboxes  › configuring-local-sandbox-settings Configuring local sandbox settings - GitHub Copilot",
+      "query": "site:docs.github.com copilot cli sandbox windows",
+      "status": 200,
+      "raw_chars": 9080,
+      "fetch_ms": 525.3
+    },
+    {
+      "h": "s6",
+      "url": "https://docs.github.com/en/copilot/concepts/about-cloud-and-local-sandboxes",
+      "title": "GitHub docs.github.com › en  › copilot  › concepts  › about-cloud-and-local-sandboxes About cloud and local sandboxes for GitHub Copilot - GitHub Docs",
+      "query": "site:docs.github.com copilot cli sandbox windows",
+      "status": 200,
+      "raw_chars": 10874,
+      "fetch_ms": 598.5
+    }
+  ],
+  "evidence": [
+    {
+      "s": "s0",
+      "text": "MCP (Model Context Protocol) lets Cline use external tools and data sources through MCP servers."
+    },
+    {
+      "s": "s0",
+      "text": "Add, configure, and use MCP servers in Cline."
+    },
+    {
+      "s": "s0",
+      "text": "This opens the MCP settings JSON used by the extension; add/update entries under"
+    },
+    {
+      "s": "s0",
+      "text": "Configure servers in CLI MCP settings and use the same server definitions."
+    },
+    {
+      "s": "s0",
+      "text": "Add custom tools beyond built-in Cline tools"
+    },
+    {
+      "s": "s0",
+      "text": "Connect Cline to external APIs and services"
+    },
+    {
+      "s": "s1",
+      "text": "Use Cline CLI for interactive terminal sessions and automated headless workflows."
+    },
+    {
+      "s": "s1",
+      "text": "— use Cline as the coding agent in Zed, JetBrains IDEs, Neovim, and other ACP clients"
+    },
+    {
+      "s": "s1",
+      "text": ") — use the Cline Provider, ClinePass, or your own provider key ("
+    },
+    {
+      "s": "s1",
+      "text": "Output newline-delimited JSON messages"
+    },
+    {
+      "s": "s1",
+      "text": "each line is a JSON message object."
+    },
+    {
+      "s": "s1",
+      "text": "Headless is triggered when using flags like"
+    },
+    {
+      "s": "s3",
+      "text": "Complete command reference for Cline CLI including all commands, flags, and configuration options."
+    },
+    {
+      "s": "s3",
+      "text": "https://github.com/cline/typescript-lsp-plugin.git"
+    },
+    {
+      "s": "s3",
+      "text": "Cline CLI - AI coding assistant in your terminal"
+    },
+    {
+      "s": "s3",
+      "text": "version Show Cline CLI version number"
+    },
+    {
+      "s": "s3",
+      "text": "--hooks-dir <path> Directory path to additional hooks for runtime hook injection (default: ~/.cline/hooks)"
+    },
+    {
+      "s": "s3",
+      "text": "--data-dir <path> Use isolated local state at this directory path (default: ~/.cline)"
+    },
+    {
+      "s": "s4",
+      "text": "Use Cline’s terminal UI (TUI) for interactive coding workflows in your terminal."
+    },
+    {
+      "s": "s4",
+      "text": "The TUI is Cline’s interactive terminal interface."
+    },
+    {
+      "s": "s4",
+      "text": "The status area shows the active model, context usage, cost, workspace/branch, git diff stats, Plan/Act state, and whether auto-approve all is enabled."
+    },
+    {
+      "s": "s4",
+      "text": "It is designed for conversational, in-terminal work: ask questions, review plans, approve actions, and iterate quickly."
+    },
+    {
+      "s": "s4",
+      "text": "Use this file to discover all available pages before exploring further."
+    },
+    {
+      "s": "s4",
+      "text": "when you want collaboration and approvals."
+    },
+    {
+      "s": "s5",
+      "text": "slash command in Copilot CLI to control how the local sandbox restricts filesystem access, network connectivity, and system capabilities."
+    },
+    {
+      "s": "s5",
+      "text": "Understanding filesystem policies for local sandboxing in GitHub Copilot CLI"
+    },
+    {
+      "s": "s5",
+      "text": ": If Copilot can't run a command successfully in the sandbox, it stops working on the task and reports the failure."
+    },
+    {
+      "s": "s5",
+      "text": "setting controls what happens when Copilot can't run a command successfully inside the sandbox."
+    },
+    {
+      "s": "s5",
+      "text": "You can view your current sandbox settings from within a Copilot CLI session."
+    },
+    {
+      "s": "s5",
+      "text": "GitHub Copilot CLI configuration directory"
+    },
+    {
+      "s": "s6",
+      "text": "Copilot cloud and local sandboxes are the execution platform powering secure sandboxed experiences for GitHub Copilot CLI, both locally and in the cloud."
+    },
+    {
+      "s": "s6",
+      "text": "Cloud sandboxing lets you run Copilot CLI sessions inside fully isolated, ephemeral Linux environments hosted by GitHub."
+    },
+    {
+      "s": "s6",
+      "text": "command line option launches an interactive Copilot CLI session inside a cloud sandbox."
+    },
+    {
+      "s": "s6",
+      "text": "After you enable local sandboxing, the commands and tools that an agent runs on your behalf—shell commands, file search, and, by default, the MCP and language (LSP) servers the CLI starts—run inside an operating-system-level sandbox, limiting their access to your system."
+    },
+    {
+      "s": "s6",
+      "text": "You can't run the CLI programmatically in a cloud sandbox—that is, you can't combine the"
+    }
+  ],
+  "note": "Raw page bodies stayed runner-side. Only compact evidence and provenance handles are committed."
+}
