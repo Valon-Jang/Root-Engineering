@@ -21,6 +21,16 @@ jobs:
         shell: bash
         run: |
           set +e
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/upgrade_chatgpt_root_engineering_v0_1_12.py')
+          s = p.read_text(encoding='utf-8')
+          old = 's = insert_before(s, "## 20. Question-Driven Root Deepening", OPMEM_KO, "KO runtime operational gate")'
+          new = 's = insert_before(s, "## 20. 질문 기반 Root Deepening", OPMEM_KO, "KO runtime operational gate")'
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
           python tools/upgrade_chatgpt_root_engineering_v0_1_12.py > /tmp/root_upgrade.log 2>&1
           CODE=$?
           cat /tmp/root_upgrade.log
@@ -28,7 +38,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$CODE" -ne 0 ]; then
             cp /tmp/root_upgrade.log tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
-            git add tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
+            git add tools/upgrade_chatgpt_root_engineering_v0_1_12.py tools/upgrade_chatgpt_root_engineering_v0_1_12_failure.log
             git commit -m "Record ChatGPT v0.1.12 migration failure"
             git push
             exit "$CODE"
