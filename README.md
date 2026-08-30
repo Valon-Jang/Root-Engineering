@@ -18,7 +18,7 @@ The goal is simple:
 
 > **Make the next AI start from a better place than the previous one.**
 
-[Install Root Engineering](#install-and-verify) · [See how it works](#how-it-works) · [Review the benchmark](#preliminary-benchmark) · [Experimental research](#experimental-research-shadow-carrier) · [Read the detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md)
+[Install Root Engineering](#install-and-verify) · [See how it works](#how-it-works) · [Review the benchmark](#preliminary-benchmark) · [Read the detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md)
 
 ---
 
@@ -174,32 +174,6 @@ Methodology Revision
 
 ---
 
-## Experimental Research: Shadow Carrier
-
-A separate experimental track is testing whether deterministic Interceptors can accelerate a strong adaptive AI workflow **without replacing its reasoning or lowering quality**.
-
-The current Shadow Carrier hypothesis is simple:
-
-```text
-Normal reasoning performs the current step
-        ↓
-Interceptors pre-execute likely next read-only actions
-        ↓
-Unused results stay outside model context
-        ↓
-Compatible hit → use cache
-Miss → fall back to Normal
-```
-
-This research is intentionally labeled experimental. Early benchmarks found both positive and negative cases: parallel heterogeneous parsing can reduce machine latency, while naive broad web retrieval can be faster yet lose on evidence quality. The current direction preserves Normal adaptive search and uses Interceptors as a speculative latency-hiding layer rather than as five independent LLM subagents.
-
-- [Live Shadow Carrier research log](./research/SHADOW_CARRIER_RESEARCH_LOG.md)
-- [Shadow Carrier operating protocol](./docs/SHADOW_CARRIER_OPERATING_PROTOCOL.md)
-
-Experimental claims are promoted into the stable methodology only after reproducible evidence accumulates.
-
----
-
 ## Minimal Root
 
 A Root can begin with four knowledge branches and one map:
@@ -272,8 +246,6 @@ Start with the path that matches your goal:
 | Install using Korean user guidance | [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
 | Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
 | Review the paired experiment | [Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) |
-| Follow experimental Shadow Carrier research | [Research log](./research/SHADOW_CARRIER_RESEARCH_LOG.md) |
-| Read the Shadow Carrier operating protocol | [Operating protocol](./docs/SHADOW_CARRIER_OPERATING_PROTOCOL.md) |
 | Reproduce the benchmark prompts | [Prompt package](./benchmarks/project-atlas-v0.1/prompts/README.md) |
 
 ---
@@ -289,7 +261,6 @@ Current work focuses on:
 - improving selective retrieval
 - validating write, verification, and pruning rules
 - expanding reproducible before/after benchmarks
-- testing speculative Interceptor / Shadow Carrier acceleration as an experimental track
 - testing portable installation across AI systems
 
 The methodology is expected to evolve through practical use, documented failure cases, and measurable evaluation.
