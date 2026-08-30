@@ -34,4 +34,7 @@ jobs:
           NMB_DEBUGGER: 127.0.0.1:9222
         run: |
           $ErrorActionPreference = 'Stop'
-          python .bridge/local/send_mail.py .bridge/local/mail-command.enc
+          $python = (Get-Content "$env:LOCALAPPDATA\NaverMailBridge\python-path.txt" -Raw).Trim()
+          if (-not (Test-Path $python)) { throw "Configured Python executable not found: $python" }
+          & $python .bridge/local/send_mail.py .bridge/local/mail-command.enc
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
