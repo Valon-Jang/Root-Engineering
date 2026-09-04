@@ -43,6 +43,8 @@ CANONICAL = (
     "knowledge/OPERATIONAL.md",
     "knowledge/HISTORY.md",
 )
+METHODS = ("native", "zero-output-boundary", "manual-confirmation", "diagnostic")
+SIGNALS = ("HOST_EVENT", "CONTEXT_REPLACEMENT_OBSERVED", "MANUAL_CONFIRMATION")
 
 
 class RebirthError(RuntimeError):
@@ -121,6 +123,13 @@ def verify(root: Path) -> dict[str, Any]:
     root_id = manifest.get("root_id")
     if not project_id or not root_id:
         raise RebirthError("manifest identity is incomplete")
+    if manifest.get("package_version") != VERSION:
+        raise RebirthError("manifest package version mismatch")
+    if manifest.get("status") != "ACTIVE":
+        raise RebirthError("manifest is not ACTIVE")
+    state_version = state.get("package_version")
+    if state_version is not None and state_version != VERSION:
+        raise RebirthError("state package version mismatch")
 
     for label, record in (("state", state), ("capabilities", capabilities)):
         for key, expected in (("project_id", project_id), ("root_id", root_id)):
@@ -226,6 +235,8 @@ def prepare(root: Path, reason: str) -> dict[str, Any]:
     state = read_json(state_path)
     if state.get("pending_compaction"):
         raise RebirthError("a compaction transaction is already pending")
+    if state.get("status", "ACTIVE") != "ACTIVE":
+        raise RebirthError("runtime state is not ACTIVE")
     checkpoint_path = root / "runtime/CHECKPOINT.md"
     transaction = {
         "transaction_id": "RB-" + uuid.uuid4().hex[:12].upper(),
@@ -251,6 +262,10 @@ def prepare(root: Path, reason: str) -> dict[str, Any]:
 def complete(root: Path, observed: bool, method: str, signal: str) -> dict[str, Any]:
     if not observed:
         raise RebirthError("--observed is required; context epoch was not advanced")
+    if method not in METHODS:
+        raise RebirthError(f"unsupported compaction method: {method}")
+    if signal not in SIGNALS:
+        raise RebirthError(f"unsupported compaction signal: {signal}")
     checked = verify(root)
     state_path = root / "runtime/STATE.json"
     state = read_json(state_path)
@@ -373,8 +388,8 @@ def parser() -> argparse.ArgumentParser:
     prep.add_argument("--reason", default="user-requested")
     done = commands.add_parser("complete-compact")
     done.add_argument("--observed", action="store_true")
-    done.add_argument("--method", required=True)
-    done.add_argument("--signal", required=True)
+    done.add_argument("--method", choices=METHODS, required=True)
+    done.add_argument("--signal", choices=SIGNALS, required=True)
     stop = commands.add_parser("abort-compact")
     stop.add_argument("--reason", required=True)
     out = commands.add_parser("export")
