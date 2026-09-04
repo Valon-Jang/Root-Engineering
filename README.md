@@ -2,23 +2,62 @@
   <img src="./assets/root-engineering-social-preview.png" alt="Root Engineering tree and circuit-root emblem" width="100%">
 </p>
 
-# Root Engineering for AI
+# Root Engineering for AI — 1.0 Rebirth
 
-> **Model is replaceable. Root persists.**
+> **Model is replaceable. Context is replaceable. Root persists.**
 
-Root Engineering is a context-engineering methodology for preserving validated project knowledge, decisions, constraints, learning, and source relationships across AI sessions and models.
+Root Engineering is a context-engineering methodology for preserving validated project knowledge, decisions, constraints, learning, and source relationships around AI systems.
 
-It addresses three recurring failures in long-running AI work:
+**Root Engineering 1.0 — Rebirth** extends the original idea: not only the model, but also the model's active conversation context can be treated as replaceable working memory.
 
-- the same project context must be reconstructed repeatedly
-- previous decisions are forgotten or contradicted
-- outdated information is mixed with the current state
+The Chat-native Rebirth adapter separates:
 
-The goal is simple:
+```text
+Chat Transcript      = human-visible history
+Active Model Context = compactable working memory
+Checkpoint           = immediate resume state
+Local ROOT           = durable canonical project state
+```
 
-> **Make the next AI start from a better place than the previous one.**
+The goal is now:
 
-[Install Root Engineering](#install-and-verify) · [See how it works](#how-it-works) · [Review the benchmark](#preliminary-benchmark) · [Read the detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md)
+> **Preserve project truth, compact working context when safe, and continue the same human-facing Chat.**
+
+[Install Rebirth](#install-and-verify) · [Read the Rebirth architecture](./docs/ROOT_ENGINEERING_1.0_REBIRTH.md) · [Review the benchmark](#preliminary-benchmark) · [Read the detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md)
+
+---
+
+## What changed in 1.0 — Rebirth
+
+Root Engineering 0.x primarily solved cross-session continuity by keeping project state outside the model, with ChatGPT using Google Drive as a canonical store.
+
+Rebirth adds a Chat-native runtime:
+
+```text
+ordinary ChatGPT Chat
+        ↓
+/mnt/data/root-engineering/
+        ↓
+ROOT + knowledge owners + CHECKPOINT
+        ↓
+Persist → Verify → Compact → Rehydrate
+        ↓
+continue the same Chat
+```
+
+For the default ChatGPT Rebirth adapter:
+
+- **ChatGPT Project is not required.**
+- **Google Drive is not required.**
+- Chat-local `/mnt/data` is the primary current-runtime store when it is writable.
+- Google Drive, Git, and exported bundles become optional backup/recovery adapters.
+- `runtime/CHECKPOINT.md` is a first-class owner for the current work-in-progress state.
+- the command `압축해` / `compact` means **save durable state → refresh checkpoint → verify → compact → rehydrate**, not merely "summarize the chat."
+- **save failure blocks deliberate compaction.**
+
+Rebirth does not claim that `/mnt/data` survives every future runtime, nor that every ChatGPT thread exposes the same compaction trigger. Host-specific compaction paths are capability-gated and must be verified in their actual scope.
+
+→ [Root Engineering 1.0 Rebirth architecture](./docs/ROOT_ENGINEERING_1.0_REBIRTH.md)
 
 ---
 
@@ -26,61 +65,59 @@ The goal is simple:
 
 Root Engineering did not start as a methodology. I was using ChatGPT and Claude heavily — often pushing high-reasoning models until both plans hit their limits. ChatGPT Chat still gave me a separate surface to experiment with, so I started asking a different question: **how much smarter could ordinary chat feel if I improved the external context instead of just spending more model?**
 
-That led me to Markdown as manually maintained project memory. The first version was primitive: upload the MD files, talk with the model, replace the files when things changed. Even that was surprisingly powerful, especially for people who mostly used AI for search or document drafts and did not have access to coding-agent workflows.
+That led to Markdown as manually maintained project memory. The first version was primitive: upload the MD files, talk with the model, replace the files when things changed. Even that was surprisingly powerful.
 
-The next annoyance was predictable: **manually moving and replacing the MD files became the bottleneck.** Root Engineering grew from automating that storage/retrieval loop and formalizing the rules for what should be read, verified, updated, and preserved.
+The next bottleneck was predictable: manually moving and replacing the MD files. Root Engineering formalized what should be read, verified, updated, preserved, and pruned.
 
----
-
-## A Practical Workflow: Chat → Root → Codex
-
-Root Engineering is especially effective when Chat and coding agents are used for different jobs.
-
-1. **Think in Chat first.** Use ordinary ChatGPT or Claude to turn a vague idea into a concrete one. The low-friction interface matters — you can do this from a phone, even while lying down.
-2. **Use Question-Driven Deepening.** Ask the next question only when its answer can change the next decision. Deepen the taproot before branching into every possible feature.
-3. **Persist the useful state.** Keep confirmed facts, decisions, constraints, and important unresolved questions in the Root so the next session does not restart from zero.
-4. **Export a buildable brief.** Once the idea is stable enough, ask Chat to turn it into a design brief, PRD, implementation order, or work order.
-5. **Give that brief to Codex.** Let the coding agent build from an already-deepened specification instead of asking it to discover the product while coding.
-6. **Feed verified results back.** Implementation decisions, failures, and reusable lessons that pass verification become part of the Root for the next cycle.
-
-```text
-Chat / Phone
-    ↓
-Question-Driven Deepening
-    ↓
-Root
-    ↓
-Design Brief / Work Order
-    ↓
-Codex
-    ↓
-Verification
-    ↓
-Root
-```
-
-> **Chat is good at shaping the idea. Codex is good at building the idea. Root is what lets both continue from the same accumulated understanding.**
-
----
-
-## When Root Engineering Helps
-
-Root Engineering is designed for work where:
-
-- projects continue across many AI conversations
-- important decisions must survive model or tool changes
-- several sources contain overlapping or conflicting information
-- people repeatedly explain what has already been decided
-- outdated facts can cause incorrect actions
-- source provenance and decision history matter
-
-It is usually unnecessary for one-off prompts, disposable tasks, or information that can be reconstructed cheaply.
+Rebirth came from the next bottleneck: long-lived Chat threads themselves. Once human-visible transcript history, active model context, and durable Root state were treated as different resources, a new path appeared — **keep the project thread, replace the active context, preserve the Root.**
 
 ---
 
 ## Install and Verify
 
-Choose the adapter for the AI environment that will own the project connection.
+### ChatGPT — Rebirth 1.0.0 (default)
+
+1. Open the [canonical Rebirth installer](./installer/ROOT_ENGINEERING_REBIRTH_INSTALLER.md).
+2. Attach it to an ordinary ChatGPT Chat with a writable local workspace.
+3. Say: **“Read the package and install it.”**
+4. The installer verifies the chat-local workspace, creates the Local Root, and runs local consistency checks.
+
+Korean users can use [ROOT_ENGINEERING_REBIRTH_INSTALLER_KO.md](./installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_KO.md).
+
+Default local layout:
+
+```text
+/mnt/data/root-engineering/
+├── BOOT.md
+├── ROOT.md
+├── MANIFEST.json
+├── knowledge/
+│   ├── FOUNDATION.md
+│   ├── CURRENT.md
+│   ├── LEARNED.md
+│   ├── OPERATIONAL.md
+│   └── HISTORY.md
+└── runtime/
+    ├── CHECKPOINT.md
+    ├── STATE.json
+    └── CAPABILITIES.json
+```
+
+The package includes explicit guards for local write verification, save-before-compact, capability-scoped compaction, context epochs, selective boot, Operational Memory, and Checkpoint-based rehydration.
+
+Validation tools:
+
+- [Rebirth installer validator](./tools/validate_rebirth_installer.py)
+- [Rebirth local runtime self-test](./tools/rebirth_local_selftest.py)
+
+### ChatGPT Project + Google Drive — legacy/external adapter
+
+The existing Drive-native 0.x installer remains available for existing installations and as an external persistence/recovery path:
+
+- [ChatGPT Drive installer v0.1.12](./installer/ROOT_ENGINEERING_INSTALLER.md)
+- [ChatGPT Drive installer v0.1.12 — Korean](./installer/ROOT_ENGINEERING_INSTALLER_KO.md)
+
+A Drive-based Root can be migrated into a Rebirth Local Root while preserving proven Project/Root identity. Large source documents do not need to be copied automatically; their Drive IDs/URLs may remain external evidence routes.
 
 ### Codex
 
@@ -90,257 +127,224 @@ Install the repository's standalone `root-engineering` Skill with Codex's built-
 $skill-installer install the skill from https://github.com/Valon-Jang/Root-Engineering/tree/main/installer/codex/root-engineering
 ```
 
-Then open the target repository and ask `$root-engineering` to initialize and validate the project-local Root while preserving existing `AGENTS.md` content.
-
 - [Codex installer and acceptance guide](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md)
-- [Codex 설치 및 검증 안내](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md)
+- [Codex 설치 및 검증](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md)
 - [Installable Skill folder](./installer/codex/root-engineering/)
-
-The Codex package contains the Skill, protocol, project templates, and a no-module PowerShell initializer/validator. It stages a complete `.root/` before publishing it, rejects invalid or symlinked targets, preserves existing project instructions, validates exact routes, and includes isolated self-tests for Linux and Windows.
 
 ### Claude Project + Google Drive
 
-1. Connect the Google Drive connector in Claude and confirm it returns a real file listing.
-2. Open a chat inside a Claude Project, attach the [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md), and say: **“Read the package and install it.”**
-3. Paste the generated connection block into the Project's instructions.
-4. Verify in a new chat in the same Project.
+The Claude adapter remains available for environments where Drive-backed Markdown persistence is the appropriate runtime:
 
-- [Claude installer and acceptance guide](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md)
+- [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md)
 - [Claude package folder](./installer/claude/root-engineering/)
 
-The top-level Claude installer is the **self-contained installation source**. It embeds the exact protocol, project-instruction block, and node templates needed for installation. The files under `installer/claude/root-engineering/` are the maintained mirror/reference package, not an additional attachment requirement. Repository CI verifies that the embedded installer payload and those mirror files stay identical.
+---
 
-The Claude package keeps the Codex project-local Markdown model but stores nodes as plain `.md` files in a Drive project folder. Because that connector cannot patch file content, return a revision, or read part of a file, a durable update is a verified rewrite: re-read, merge minimally, increment the in-file `ROOT_REVISION`, create the replacement, read it back, and only then trash the superseded file. Nodes are therefore resolved by project folder ID plus fixed file name rather than by per-file ID.
-
-### ChatGPT Project + Google Drive
-
-1. Open the [canonical English installer](./installer/ROOT_ENGINEERING_INSTALLER.md).
-2. Attach it to the first chat of a new ChatGPT Project.
-3. Say: **“Read the package and install it.”**
-4. Follow the prompts for Google Drive preflight, Root creation, Project Binding, and fresh-chat verification.
-
-Korean users may use the separate [Korean installer](./installer/ROOT_ENGINEERING_INSTALLER_KO.md).
-
-The ChatGPT installer checks storage access, creates the Canonical Root, generates project-specific instructions, connects the Root to the project, and runs a fresh-chat acceptance test. Its single-file package supports installation, verification, repair, and upgrade with a shared Global Protocol and a complete-coverage Knowledge Lookup.
-
-**ChatGPT installer v0.1.12** adds a Drive-native Operational Memory fast path shared conceptually with the Codex and Claude adapters: repeated non-trivial operations use an exact `subsystem/action/failure-mode` key, known failed paths are not replayed unchanged, and a replacement is promoted only after the original outcome and required evidence pass. ChatGPT keeps native Google Docs partial updates and Revision/write-control semantics; it does **not** inherit Claude's rewrite-and-trash storage workaround.
-
-### What the adapters establish
+## How Rebirth works
 
 ```text
-Canonical Root
-├── Root map and Knowledge Lookup
-├── Foundation
-├── Current Knowledge
-├── Learned Knowledge
-├── Operational Memory [all adapters]
-└── History
+User works in one primary Chat
+        ↓
+New durable state?
+        ↓ yes
+Patch the smallest correct Root owner
+        ↓
+Refresh CHECKPOINT when context maintenance is requested
+        ↓
+Verify writes
+        ↓
+Compact active model context only through a supported or verified path
+        ↓
+Rehydrate BOOT + CHECKPOINT + only required owners
+        ↓
+Continue the same Chat
 ```
 
-Each adapter includes a fresh-session acceptance path that identifies the correct project binding, retrieves the Root, follows the exact route to Current Knowledge, and continues from persisted project state.
+### The hard invariant
 
-This creates the path from methodology to operation:
+> **SAVE FAILURE = NO COMPACT**
+
+A compaction request is a state transaction. If required Root/Checkpoint persistence cannot be verified, Rebirth keeps the active context and stops instead of risking silent state loss.
+
+### Root vs Checkpoint
+
+`ROOT / knowledge/*` stores durable project truth.
+
+`runtime/CHECKPOINT.md` stores the temporary resume state of the current work:
 
 ```text
-Install
-  ↓
-Create Canonical Root
-  ↓
-Bind Project
-  ↓
-Verify in a Fresh Chat
-  ↓
-Use and Update the Root
+Current goal
+Completed work relevant to resumption
+Current transient state
+Next actions
+Pending blockers
+Resume instruction
 ```
 
-→ [Install for Codex](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) · [Install for Claude Project](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md) · [Install for ChatGPT Project](./installer/ROOT_ENGINEERING_INSTALLER.md)
+This prevents short-lived work progress from polluting long-term project knowledge while still allowing a compacted context to resume immediately.
+
+### Context epochs
+
+Each confirmed compaction advances the runtime context epoch:
+
+```text
+Epoch 0 → Epoch 1 → Epoch 2 → ...
+```
+
+This provides a measurable basis for long-horizon tests such as resume accuracy, decision retention, no-repeat behavior, latency/context trend, and quality loss across repeated compactions.
 
 ---
 
-## How It Works
+## The compaction path
 
-```text
-Canonical Root
-      ↓
-Selective Context
-      ↓
-Reasoning / Action
-      ↓
-Verification
-      ↓
-Minimum Root Patch
-      ↓
-Future Session
-```
+Rebirth deliberately does not invent private ChatGPT endpoints.
 
-A Root keeps one authoritative representation of the project's currently accepted state.
+Priority order:
 
-The AI starts from a Root Map and reads only the branches relevant to the current task. After the work is completed and verified, it selectively preserves results that materially improve future reasoning.
+1. **Native supported compact action** — only when the current host actually exposes one.
+2. **Verified zero-output tool/sampling boundary** — only when the same environment has demonstrated that behavior and success can be verified.
+3. **Bounded diagnostic pressure** — diagnosis only, small increments, immediate stop on success.
 
-> **Navigate the Root. Do not dump the Root.**
-
-### Without Root vs. with Root
-
-| Without Root | With Root |
-|---|---|
-| Decisions remain scattered across chats and documents | Accepted decisions have a canonical location |
-| Each session reconstructs project context | Each session starts from validated current state |
-| Old and new information may be mixed | Superseded information is separated from current knowledge |
-| More context is loaded indiscriminately | Only task-relevant branches are retrieved |
-| Useful lessons disappear after execution | Verified reusable lessons can persist |
-| Changing models feels like restarting the project | Project knowledge remains external to the model |
+The related public experiment is maintained separately in [persistent-project-thread](https://github.com/Valon-Jang/persistent-project-thread). In the tested long-lived ChatGPT thread, trigger reduction reached a zero-output `pass` boundary after earlier oversized pressure experiments. That observation is environment-specific evidence, not a universal ChatGPT guarantee.
 
 ---
 
-## Root and Loop
+## A practical workflow: Chat → Root → execution
 
-> **Loop Engineering improves the current run.**<br>
-> **Root Engineering improves the next run.**
+1. **Think in Chat first.** Turn a vague idea into a concrete one.
+2. **Use Question-Driven Deepening.** Ask only what can change the next decision.
+3. **Persist useful state.** Confirmed facts, decisions, constraints, important unresolved items, and verified lessons go to the correct Root owner.
+4. **Keep transient work in Checkpoint.** Do not turn every task-progress detail into durable knowledge.
+5. **Compact safely when needed.** Save → verify → compact → rehydrate.
+6. **Use isolated execution environments where appropriate.** Codex, agents, destructive tests, or security boundaries may still use separate execution threads.
+7. **Feed verified results back into the Root.**
 
-Loops improve execution through iteration: attempt, evaluate, correct, and retry.
-
-Roots determine what validated knowledge and decisions should survive after those loops finish. The two approaches are complementary.
-
----
-
-## Preliminary Benchmark
-
-[Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) connects the methodology to an inspectable experiment.
-
-It is a manual paired comparison between:
-
-- **Native condition:** GPT-5.6 Sol (High)
-- **Root Engineering condition:** GPT-5.6 Sol (High)
-
-The benchmark designer and prompt submitter was **GPT-5.6 Sol (XHigh)**. Native and Root are the actual compared conditions and use matched model and reasoning settings.
-
-Both conditions performed similarly on simple continuity tasks. The first divergence appeared at **Stage 2**, when exact configuration scope and source provenance became important. Stage 5 recorded a selective-retrieval failure that changed the Native decision path, while Root preserved the expected state. **Stage 4 and Stage 6 remained ties.**
-
-Two measured complex retrievals showed lower UI-reported thinking time in the Root condition, but Root required substantially more update and canonicalization time. The observed workload did **not** demonstrate an end-to-end Root speed advantage.
-
-These are **preliminary manual small-n observations, not statistical proof**.
-
-### Inspect the experiment
-
-- [Benchmark overview](./benchmarks/project-atlas-v0.1/README.md)
-- [Methodology and controls](./benchmarks/project-atlas-v0.1/methodology.md)
-- [Stage 0–6 experiment map](./benchmarks/project-atlas-v0.1/experiment-map.md)
-- [Observed results](./benchmarks/project-atlas-v0.1/results.md)
-- [Timing interpretation](./benchmarks/project-atlas-v0.1/timing.md)
-- [Raw timing data](./benchmarks/project-atlas-v0.1/data/timing.csv)
-- [Submitted prompts](./benchmarks/project-atlas-v0.1/prompts/README.md)
-
-The full path is therefore:
-
-```text
-Methodology
-  ↓
-Installer
-  ↓
-Fresh-Chat Verification
-  ↓
-Paired Benchmark
-  ↓
-Results and Failure Analysis
-  ↓
-Methodology Revision
-```
+> **Chat shapes the work. Execution tools perform isolated work. Root preserves truth. Checkpoint preserves immediate continuity.**
 
 ---
 
 ## Minimal Root
 
-A Root can begin with four knowledge branches and one map:
+The durable knowledge tree remains intentionally small:
 
 ```text
 ROOT
 ├── Foundation
 ├── Current Knowledge
 ├── Learned Knowledge
+├── Operational Memory
 └── History
 ```
 
-- **Foundation** preserves stable purpose, principles, boundaries, and human intent.
-- **Current Knowledge** contains current facts, status, decisions, constraints, and unresolved issues.
-- **Learned Knowledge** contains validated reusable methods and failure lessons.
-- **History** preserves superseded states that still matter for understanding change.
-- **ROOT** acts as the map and digest used to find the required branch.
+- **Foundation** — stable purpose, principles, boundaries, Human Intent.
+- **Current Knowledge** — currently valid facts, decisions, constraints, status, unresolved issues.
+- **Learned Knowledge** — verified reusable methods and generalized lessons.
+- **Operational Memory** — exact repeated-operation keys, failed-path constraints, verified hot paths, required evidence.
+- **History** — superseded states that still matter for transition, rollback, or failure prevention.
 
-Start small. Create new branches because real retrieval patterns require them, not because a larger taxonomy looks complete.
+Create additional children only when real independent retrieval/update patterns require them.
+
+> **Navigate the Root. Do not dump the Root.**
 
 ---
 
-## Core Principles
+## Core principles
 
-1. **Preserve selectively:** Save only what materially improves future reasoning.
+1. **Preserve selectively.** Save only what materially improves future reasoning or execution.
+2. **Keep one canonical current state.** Do not duplicate current truth across competing owners.
+3. **Separate project knowledge from models and active context.** Both are replaceable execution resources.
+4. **Separate durable Root from transient Checkpoint.**
+5. **Read selectively.** Load only what the current task needs.
+6. **Verify before persistence.** Model inference must not silently become project fact.
+7. **Reuse verified successful paths and preserve failed paths as constraints.**
+8. **Patch minimally and prune locally.**
+9. **Do not compact before required state is safely persisted.**
 
-2. **Keep one canonical current state:** Do not duplicate current truth across competing locations.
-
-3. **Separate knowledge from models:** Project knowledge should survive model and tool replacement.
-
-4. **Read selectively:** Load only the branches required for the current task.
-
-5. **Verify before persistence:** Model inference must not silently become project fact.
-
-6. **Patch minimally and prune locally:** Update the smallest necessary area and clean knowledge when interacting with it.
-
-The save gate is:
+The save gate remains:
 
 > **Would losing this information materially increase the chance that a future AI must rediscover it, make a worse decision, or repeat a previous failure?**
 
 ---
 
-## What Root Engineering Is Not
+## Root and Loop
+
+> **Loop Engineering improves the current run.**  
+> **Root Engineering improves what survives the run.**
+
+Rebirth adds:
+
+> **Context maintenance keeps the human-facing project thread viable without making raw conversation history the project database.**
+
+---
+
+## Preliminary benchmark
+
+[Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) remains the original paired Root-vs-native continuity experiment.
+
+It found early divergence when exact configuration scope and source provenance became important, while also showing that Root maintenance itself has non-trivial update/canonicalization cost. These are preliminary small-n manual observations, not statistical proof.
+
+Inspect:
+
+- [Benchmark overview](./benchmarks/project-atlas-v0.1/README.md)
+- [Methodology and controls](./benchmarks/project-atlas-v0.1/methodology.md)
+- [Observed results](./benchmarks/project-atlas-v0.1/results.md)
+- [Timing interpretation](./benchmarks/project-atlas-v0.1/timing.md)
+
+Rebirth adds a new benchmark direction: repeated `Persist → Checkpoint → Compact → Rehydrate` cycles in the same primary Chat, measuring state accuracy and degradation across context epochs.
+
+---
+
+## What Root Engineering is not
 
 Root Engineering is not a transcript archive and does not mean saving everything.
 
-It does not prescribe a specific model, database, vector store, graph, or agent framework. Those technologies may participate in an implementation, but the methodology focuses on the knowledge lifecycle around them:
+It does not prescribe one database, vector store, graph, or agent framework. Rebirth also does not claim that a ChatGPT-local filesystem is universally permanent or that compaction physically deletes transcript/provider records.
+
+The methodology focuses on the knowledge and runtime lifecycle:
 
 ```text
-Acquire → Evaluate → Use → Verify → Persist Selectively → Retrieve Selectively → Update / Prune
+Acquire
+→ Evaluate
+→ Use
+→ Verify
+→ Persist Selectively
+→ Checkpoint Transient Work
+→ Compact Working Context When Safe
+→ Retrieve Selectively
+→ Update / Prune
 ```
-
-It complements AI memory and RAG:
-
-- a memory system asks what information can be retrieved later
-- RAG asks which existing information should be retrieved now
-- Root Engineering also asks what deserves to become authoritative project knowledge after the interaction
 
 ---
 
 ## Documentation
 
-The [detailed methodology reference](./docs/ROOT_ENGINEERING_REFERENCE.md) contains the full definitions, conceptual model, operating rules, comparisons, examples, roadmap, philosophy, and terminology that previously lived in this README.
-
-Start with the path that matches your goal:
-
 | Goal | Document |
 |---|---|
-| Install and verify with Codex | [Codex installer](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) |
-| Codex 설치 및 검증 | [Codex 한글 설치기](./installer/ROOT_ENGINEERING_CODEX_INSTALLER_KO.md) |
-| Install with Claude Project + Google Drive | [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md) |
-| Install with ChatGPT Project + Google Drive | [ChatGPT English installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
-| ChatGPT Project에서 한글로 설치 | [ChatGPT 한글 설치기](./installer/ROOT_ENGINEERING_INSTALLER_KO.md) |
-| Understand the complete methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
-| Review the paired experiment | [Project Atlas Benchmark v0.1](./benchmarks/project-atlas-v0.1/) |
-| Reproduce the benchmark prompts | [Prompt package](./benchmarks/project-atlas-v0.1/prompts/README.md) |
+| Install Rebirth in ordinary ChatGPT Chat | [Rebirth installer](./installer/ROOT_ENGINEERING_REBIRTH_INSTALLER.md) |
+| Rebirth 한글 설치 | [Rebirth 한글 설치기](./installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_KO.md) |
+| Understand Rebirth architecture | [Rebirth 1.0 architecture](./docs/ROOT_ENGINEERING_1.0_REBIRTH.md) |
+| Existing ChatGPT Drive installation | [Legacy Drive installer](./installer/ROOT_ENGINEERING_INSTALLER.md) |
+| Install with Codex | [Codex installer](./installer/ROOT_ENGINEERING_CODEX_INSTALLER.md) |
+| Install with Claude + Drive | [Claude installer](./installer/ROOT_ENGINEERING_CLAUDE_INSTALLER.md) |
+| Detailed original methodology | [Detailed reference](./docs/ROOT_ENGINEERING_REFERENCE.md) |
+| Review the original paired experiment | [Project Atlas Benchmark](./benchmarks/project-atlas-v0.1/) |
 
 ---
 
-## Current Status
+## Current status
 
-Root Engineering is an early-stage methodology and reference architecture.
+**Root Engineering 1.0.0 — Rebirth** is the current Chat-native architecture.
 
-Current work focuses on:
+Verified locally for the release package:
 
-- testing model-independent persistence
-- reducing context reconstruction
-- improving selective retrieval
-- validating write, verification, and pruning rules
-- expanding reproducible before/after benchmarks
-- testing portable installation across AI systems
+- Rebirth installer structural validator: PASS
+- chat-local Root file creation: PASS
+- identity read-back across canonical owners: PASS
+- Checkpoint independent update: PASS
+- save-failure compaction guard simulation: PASS
+- context epoch increment only after simulated confirmation: PASS
 
-The methodology is expected to evolve through practical use, documented failure cases, and measurable evaluation.
+Host-specific compaction remains capability-gated. The earlier long-lived ChatGPT experiment provides evidence for a zero-output boundary fallback in that tested environment, while repeated multi-epoch quality testing remains an open benchmark target.
 
 ---
 
@@ -348,23 +352,16 @@ The methodology is expected to evolve through practical use, documented failure 
 
 Useful contributions include:
 
-- implementation patterns
-- failure cases
-- benchmark designs and reproductions
+- repeated-compaction experiments
+- host compaction capability observations
+- state-loss and recovery failure cases
 - storage adapters
-- retrieval and pruning strategies
-- model portability tests
-- practical case studies
+- benchmark designs and reproductions
+- retrieval/pruning improvements
+- model/runtime portability tests
+- practical long-horizon case studies
 
 Strong evidence is more valuable than additional terminology.
-
----
-
-## Citation
-
-If you reference Root Engineering as defined in this repository, cite this repository and the specific release or commit used.
-
-A formal citation file and versioned releases will be added as the methodology stabilizes.
 
 ---
 
@@ -374,18 +371,8 @@ Except where otherwise noted, the methodology, documentation, installers, and be
 
 Copyright © 2026 Valon-Jang.
 
-When sharing or adapting the material, provide appropriate attribution, link to this repository and the license, and indicate whether changes were made.
-
 ---
 
-## About the Name
-
-The phrase **Root Engineering** may appear in unrelated technical, biological, or engineering contexts.
-
-In this repository, it specifically refers to the methodology defined here for persistent external knowledge architecture around AI systems.
-
----
-
-> # Model is replaceable. Root persists.
-
-An AI project should not lose its accumulated understanding every time the model, session, agent, or tool changes.
+> # Model is replaceable. Context is replaceable. Root persists.
+>
+> **The transcript may remain. The active context may die. The checkpoint bridges the transition. The Root preserves truth. The same project continues.**
