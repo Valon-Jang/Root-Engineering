@@ -274,6 +274,41 @@ def self_test() -> None:
         print("ROOT_SIDECAR_SELF_TEST_PASS")
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
+    # Inject a failure immediately after active-sidecar read-back. The source
+    # must stay byte-identical and the newly created `.root/` must disappear.
+    with tempfile.TemporaryDirectory(prefix="root-sidecar-failclosed-") as temp:
+        workspace = Path(temp)
+        source = workspace / "WORK_FAILURE_CASE.md"
+        original_bytes = b"# Failure case\r\n\r\nKeep me exact.\r\n"
+        source.write_bytes(original_bytes)
+        original_verify = verify_control
+        calls = 0
+
+        def fail_after_activation(root: Path, expected: dict[str, bytes], workspace: Path) -> None:
+            nonlocal calls
+            original_verify(root, expected, workspace)
+            calls += 1
+            if calls == 2:
+                raise AdoptionError("injected final verification failure")
+
+        globals()["verify_control"] = fail_after_activation
+        try:
+            try:
+                adopt(workspace, True)
+            except AdoptionError as exc:
+                if "injected final verification failure" not in str(exc):
+                    raise
+            else:
+                raise AssertionError("injected adoption failure was not raised")
+        finally:
+            globals()["verify_control"] = original_verify
+
+        if (workspace / ROOT).exists():
+            raise AssertionError("failed sidecar remained active")
+        if source.read_bytes() != original_bytes:
+            raise AssertionError("source bytes changed during fail-closed test")
+        print("ROOT_SIDECAR_FAIL_CLOSED_TEST_PASS")
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)

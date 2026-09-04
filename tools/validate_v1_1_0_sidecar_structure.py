@@ -109,6 +109,8 @@ def main() -> int:
         )
     if "ROOT_SIDECAR_SELF_TEST_PASS" not in completed.stdout:
         raise AssertionError("sidecar self-test did not emit PASS marker")
+    if "ROOT_SIDECAR_FAIL_CLOSED_TEST_PASS" not in completed.stdout:
+        raise AssertionError("sidecar fail-closed test did not emit PASS marker")
 
     print("VALIDATE_ROOT_ENGINEERING_V1_1_0_PASS")
     print(completed.stdout)
