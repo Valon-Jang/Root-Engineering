@@ -27,10 +27,16 @@ ast.parse(source, filename=str(RUNTIME))
 
 required_runtime = [
     'VERSION = "1.0.0"',
+    "METHODS = (",
+    "SIGNALS = (",
     "pending_compaction",
     "canonical_digest",
     "checkpoint_sha256",
+    "manifest package version mismatch",
+    "runtime state is not ACTIVE",
     "--observed is required",
+    "unsupported compaction method",
+    "unsupported compaction signal",
     "canonical state changed after prepare",
     "checkpoint changed after prepare",
     "def export_snapshot",
