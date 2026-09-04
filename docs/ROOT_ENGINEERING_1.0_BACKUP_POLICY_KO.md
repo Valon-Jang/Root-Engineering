@@ -99,6 +99,7 @@ Scratch, Cache, Packaging 과정에서만 생기는 Timestamp 등 불안정한 �
   "canonical_root_hash": "<HASH>",
   "backed_up_at": "<ISO-8601>",
   "backup_kind": "LATEST",
+  "sync_trigger": "EXPLICIT_COMPACT_ONLY",
   "verification": "PASS"
 }
 ```
@@ -164,6 +165,9 @@ Restore는 명시적 작업이다. 복원 전에 다음을 검증한다.
 
 ```json
 {
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -203,7 +207,7 @@ Restore는 명시적 작업이다. 복원 전에 다음을 검증한다.
 다음을 모두 만족해야 PASS다.
 
 1. Package/Schema Version이 `1.0.0` 그대로다.
-2. 백업은 Timer가 아니라 Event 기반이다.
+2. 백업은 Timer가 아니라 명시적 Compaction 시점 기반이다.
 3. Canonical Hash가 같으면 Upload를 생략한다.
 4. `latest`는 교체 인정 전에 검증한다.
 5. Snapshot은 Milestone·명시 요청·Migration·중요 변경에만 만든다.

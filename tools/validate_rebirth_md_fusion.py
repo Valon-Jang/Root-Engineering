@@ -15,8 +15,10 @@ INSTALLER_METADATA_KEYS = {
     "schema_version": "1.0.0",
     "three_layer_memory_model": "transcript-active-context-local-root",
     "checkpoint_owner": "runtime/CHECKPOINT.md",
-    "compaction_transaction": "persist-verify-compact-rehydrate",
-    "backup_sync_policy": "event-driven-dirty-only",
+    "compaction_transaction": "persist-verify-backup-compact-rehydrate",
+    "external_backup_sync_trigger": "explicit-compact-only",
+    "scheduled_backup_sync": "false",
+    "idle_backup_sync": "false",
     "backup_on_compaction": "configured-and-hash-changed",
     "optional_backup_failure_blocks_compaction": "false",
     "strict_backup_compaction_command": "true",
@@ -35,7 +37,9 @@ REQUIRED: dict[str, set[str]] = {
     },
     "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_KO.md": {
         "Local Save가 검증된 뒤",
-        "backup_sync_policy: event-driven-dirty-only",
+        "external_backup_sync_trigger: explicit-compact-only",
+        "scheduled_backup_sync: false",
+        "idle_backup_sync: false",
         "external_backup_pending = true",
         "백업하고 압축해",
         "정상 흐름은 Local → External Backup",
@@ -57,13 +61,13 @@ REQUIRED: dict[str, set[str]] = {
         "정책 문구가 있다는 것과 실행 가능한 Adapter가 있다는 것은 다르다.",
     },
     "docs/ROOT_ENGINEERING_1.0_BACKUP_POLICY.md": {
-        "event-driven",
+        "EXPLICIT_COMPACT_ONLY",
         "hash",
         "Local → external",
         "strict backup-and-compact failure blocks compaction",
     },
     "docs/ROOT_ENGINEERING_1.0_BACKUP_POLICY_KO.md": {
-        "Event 기반",
+        "EXPLICIT_COMPACT_ONLY",
         "Hash",
         "Local → External",
         "백업하고 압축해",
@@ -178,7 +182,7 @@ def main() -> int:
     print("- authority map and single trigger owner: present")
     print("- EN/KO installer metadata: synchronized")
     print("- Root resolution + Local Storage Gate: present")
-    print("- event/hash/adapter-gated external backup: present")
+    print("- explicit-compact/hash/adapter-gated external backup: present")
     print("- optional vs strict backup semantics: present")
     print("- Local Capability Workspace without second Root: present")
     print("- persistent-project-thread retained as research provenance: present")

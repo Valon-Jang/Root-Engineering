@@ -72,6 +72,10 @@ def main() -> None:
         "last_compaction": None,
         "boundary_compaction_verified": False,
         "boundary_verification_scope": None,
+        "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+        "scheduled_backup_sync": False,
+        "idle_backup_sync": False,
+        "external_backup_pending": False,
     }
     atomic_write(BASE / "runtime" / "STATE.json", json.dumps(state, indent=2))
     atomic_write(
@@ -134,6 +138,9 @@ def main() -> None:
     state = json.loads((BASE / "runtime" / "STATE.json").read_text())
     assert state["context_epoch"] == 1
     assert state["compaction_count"] == 1
+    assert state["external_backup_sync_trigger"] == "EXPLICIT_COMPACT_ONLY"
+    assert state["scheduled_backup_sync"] is False
+    assert state["idle_backup_sync"] is False
 
     print("REBIRTH_SELFTEST_PASS")
     print(f"project_id={project_id}")

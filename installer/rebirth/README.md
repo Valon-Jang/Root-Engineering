@@ -4,6 +4,8 @@
 
 This folder turns the canonical Rebirth method into an executable state/compaction transaction for one long-lived ordinary ChatGPT conversation.
 
+This mode is a **Complete Chat Runtime** — informally, a **완성형 Chat** — built around one ordinary ChatGPT Chat rather than a custom API/CLI client. The name is Root Engineering terminology, not an official OpenAI feature.
+
 ## Canonical package composition
 
 The files are fused by responsibility rather than copied into competing documents.
@@ -61,7 +63,7 @@ Resolve Local Root
 → persist smallest canonical owners
 → refresh CHECKPOINT
 → verify + seal
-→ if a configured adapter exists and hash changed, update verified external `latest`
+→ during explicit compact maintenance, update verified external `latest` if configured and hash changed
 → compact through the capability ladder
 → verify compaction
 → advance context epoch
@@ -74,6 +76,8 @@ Required local save or Storage Gate failure means **no compact**.
 For ordinary `압축해`, optional external-backup failure marks `external_backup_pending = true` and may continue because the verified Local Root remains authoritative.
 
 For `백업하고 압축해`, external backup is strict; missing adapter, ambiguous target, upload failure, or failed remote verification means **no compact**.
+
+Scheduled and idle synchronization are disabled by default; recovery sync occurs during explicit `압축해`/`compact` or `백업해`.
 
 Google Drive synchronization is real only when a Drive connector/tool is available, the backup target is bound, upload is executed, and the remote artifact/manifest is verified.
 

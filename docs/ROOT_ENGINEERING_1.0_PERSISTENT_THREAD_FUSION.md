@@ -109,7 +109,7 @@ The fused order is non-negotiable:
 6. Patch the required owner(s) and refresh CHECKPOINT.
 7. Read back and verify every required local write.
 8. Seal the canonical digest + CHECKPOINT hash.
-9. Evaluate the configured external-backup event.
+9. Synchronize configured recovery during this explicit compact maintenance window.
 10. Attempt active-context compaction through the capability ladder.
 11. Verify compaction.
 12. Advance the context epoch only after verified success.
@@ -252,7 +252,7 @@ PASS only when:
 - Root resolution precedes persistence;
 - storage health is checked against the actual Root filesystem;
 - smallest-owner save and CHECKPOINT read-back verify;
-- external backup is event-driven, hash-gated, adapter-gated, and one-way;
+- external backup defaults to `EXPLICIT_COMPACT_ONLY`, remains hash-gated, adapter-gated, and one-way;
 - ordinary and strict backup failure semantics remain distinct;
 - compaction success is observed before epoch advancement;
 - same-thread rehydration is defined;

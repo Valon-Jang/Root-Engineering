@@ -21,6 +21,8 @@ Research provenance:
 
 The research repository supplies evidence. Rebirth owns the production contract.
 
+The ChatGPT-native mode is a **Complete Chat Runtime** — informally, a **완성형 Chat**. This is Root Engineering terminology, not an official OpenAI feature or product name.
+
 ## Resource model
 
 ```text
@@ -164,7 +166,7 @@ This prevents context reduction from racing ahead of durable state.
 
 ## External backup semantics
 
-Backup is event-driven, hash-gated, adapter-gated, and one-way.
+Backup defaults to explicit compact-time synchronization and remains hash-gated, adapter-gated, and one-way. Scheduled, idle, timer-based, and background sync are disabled.
 
 For ordinary `압축해`:
 
@@ -327,7 +329,7 @@ Validation must prove:
 1. authority and semantic-mirror relationships are explicit;
 2. one compaction trigger owner exists;
 3. Pre-Compaction Save and Storage Gates exist;
-4. backup is event/hash/adapter gated with optional vs strict failure separation;
+4. backup defaults to `EXPLICIT_COMPACT_ONLY` and remains hash/adapter gated with optional vs strict failure separation;
 5. capability assets cannot become a competing Root;
 6. context epoch advances only after observed success;
 7. package and schema remain `1.0.0`.

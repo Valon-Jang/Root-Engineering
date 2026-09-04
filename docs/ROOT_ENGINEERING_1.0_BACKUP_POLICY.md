@@ -11,7 +11,7 @@ The backup policy must protect recovery without turning every ordinary conversat
 
 ## 2. Core rule
 
-> **Local state is saved by meaning. External backup is synchronized by event.**
+> **Local state is saved by meaning. External recovery is synchronized at explicit compact maintenance.**
 
 Do not depend on a hidden background timer in an ordinary Chat.
 
@@ -19,7 +19,7 @@ Do not depend on a hidden background timer in an ordinary Chat.
 Local Root change
 → verify local write
 → compute canonical Root hash
-→ wait for a qualifying backup event
+→ wait for explicit compact maintenance
 → unchanged hash: skip
 → changed hash: update verified latest backup
 ```
@@ -31,11 +31,11 @@ Local Root change
 | ordinary conversation | no external write |
 | verified Local Root patch | mark backup pending when canonical hash changed |
 | `압축해` / `compact` | update `latest` only if adapter is configured and hash changed |
-| critical authority, routing, or structure change | update `latest` immediately when configured |
+| critical authority, routing, or structure change during active work | local save only; external sync waits for explicit compact/backup maintenance |
 | `백업해` / `backup` | force immediate verified `latest` backup |
 | `백업하고 압축해` / `backup and compact` | require verified external backup before compaction |
-| `마무리하자` / explicit closeout | update `latest` when changed |
-| release, named milestone, migration, restore, destructive change | update `latest` and create immutable snapshot |
+| scheduled / idle / timer / background worker | disabled by default |
+| release, named milestone, migration, restore, destructive change | immutable snapshot only inside the same explicit compact/backup window or by explicit request |
 | no hash change | skip upload |
 
 ## 4. Latest and snapshots
@@ -97,6 +97,7 @@ Minimum fields:
   "canonical_root_hash": "<HASH>",
   "backed_up_at": "<ISO-8601>",
   "backup_kind": "LATEST",
+  "sync_trigger": "EXPLICIT_COMPACT_ONLY",
   "verification": "PASS"
 }
 ```
@@ -130,7 +131,7 @@ Local save and external backup must both verify
 → any required failure = NO COMPACT
 ```
 
-Retry a pending optional backup at the next qualifying event or explicit `백업해`. Do not loop repeatedly through the same failed path.
+Retry a pending optional backup at the next explicit `압축해` or explicit `백업해` request. Do not loop repeatedly through the same failed path.
 
 ## 8. Authority direction
 
@@ -162,6 +163,9 @@ Recommended optional fields in `runtime/STATE.json`:
 
 ```json
 {
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -201,7 +205,7 @@ When strict backup fails:
 PASS only when:
 
 1. package and schema versions remain `1.0.0`;
-2. backup is event-driven rather than timer-dependent;
+2. the default sync trigger is `EXPLICIT_COMPACT_ONLY`;
 3. unchanged canonical hashes skip upload;
 4. `latest` is verified before replacement is accepted;
 5. snapshots are milestone/explicit/migration/critical-change gated;

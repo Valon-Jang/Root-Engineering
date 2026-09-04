@@ -27,6 +27,40 @@ The goal is now:
 
 ---
 
+## Complete Chat Runtime — “완성형 Chat”
+
+Rebirth calls its ChatGPT-native mode a **Complete Chat Runtime** — informally, a **완성형 Chat**.
+
+This is Root Engineering terminology, not an official OpenAI product name or feature claim. It is not a custom API client, CLI wrapper, coding-agent workspace, or external chat server. It is an operating pattern around one ordinary ChatGPT Chat:
+
+```text
+one ordinary ChatGPT Chat
++ retained human-visible transcript
++ compactable active model context
++ chat-local ROOT
++ resumable CHECKPOINT
++ optional compact-time recovery mirror
+= Complete Chat Runtime
+```
+
+> **The Chat remains the workspace. Context becomes maintainable. Root becomes the project memory.**
+
+### Recovery synchronization without active-work latency
+
+```text
+ordinary active work        → Local ROOT only
+압축해 / compact             → synchronize configured latest recovery copy
+백업해 / backup              → one explicit backup without compaction
+scheduled / idle / timer     → disabled
+background synchronization   → disabled
+```
+
+Local state is persisted and verified before any external tool boundary. Optional backup failure is visible and recorded as pending; strict `백업하고 압축해` fails closed.
+
+→ [Explicit compact-time recovery policy](./docs/ROOT_ENGINEERING_1.0_BACKUP_POLICY.md)
+
+---
+
 ## What changed in 1.0 — Rebirth
 
 Root Engineering 0.x primarily solved cross-session continuity by keeping project state outside the model, with ChatGPT using Google Drive as a canonical store.
@@ -40,7 +74,7 @@ ordinary ChatGPT Chat
         ↓
 ROOT + knowledge owners + CHECKPOINT
         ↓
-Persist → Verify → Compact → Rehydrate
+Persist → Verify → Synchronize configured recovery copy → Compact → Rehydrate
         ↓
 continue the same Chat
 ```
@@ -52,7 +86,7 @@ For the default ChatGPT Rebirth adapter:
 - Chat-local `/mnt/data` is the primary current-runtime store when it is writable.
 - Google Drive, Git, and exported bundles become optional backup/recovery adapters.
 - `runtime/CHECKPOINT.md` is a first-class owner for the current work-in-progress state.
-- the command `압축해` / `compact` means **save durable state → refresh checkpoint → verify → compact → rehydrate**, not merely "summarize the chat."
+- the command `압축해` / `compact` means **save durable state → refresh checkpoint → verify → synchronize the configured recovery copy → compact → rehydrate**, not merely "summarize the chat."
 - **save failure blocks deliberate compaction.**
 
 Rebirth does not claim that `/mnt/data` survives every future runtime, nor that every ChatGPT thread exposes the same compaction trigger. Host-specific compaction paths are capability-gated and must be verified in their actual scope.
@@ -215,7 +249,7 @@ The related public experiment is maintained separately in [persistent-project-th
 2. **Use Question-Driven Deepening.** Ask only what can change the next decision.
 3. **Persist useful state.** Confirmed facts, decisions, constraints, important unresolved items, and verified lessons go to the correct Root owner.
 4. **Keep transient work in Checkpoint.** Do not turn every task-progress detail into durable knowledge.
-5. **Compact safely when needed.** Save → verify → compact → rehydrate.
+5. **Compact safely when needed.** Save → verify → synchronize the configured recovery copy → compact → rehydrate.
 6. **Use isolated execution environments where appropriate.** Codex, agents, destructive tests, or security boundaries may still use separate execution threads.
 7. **Feed verified results back into the Root.**
 

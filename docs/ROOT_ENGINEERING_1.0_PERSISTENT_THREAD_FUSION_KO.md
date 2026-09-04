@@ -261,3 +261,6 @@ Compaction은 Active Model Context 유지보수다. 사람이 보는 Transcript 
 ---
 
 > **Transcript는 남을 수 있다. Active Context는 압축할 수 있다. Checkpoint가 전환을 잇고 Root가 진실을 보존한다. Skill은 재사용 능력을 보존한다. 같은 프로젝트는 계속된다.**
+
+
+Default external recovery trigger: `EXPLICIT_COMPACT_ONLY`; scheduled/idle/timer/background sync is disabled.

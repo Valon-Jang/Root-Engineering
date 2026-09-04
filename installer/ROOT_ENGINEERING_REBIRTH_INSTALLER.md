@@ -19,16 +19,18 @@ supported_modes:
 three_layer_memory_model: transcript-active-context-local-root
 checkpoint_owner: runtime/CHECKPOINT.md
 context_epoch: true
-compaction_transaction: persist-verify-compact-rehydrate
+compaction_transaction: persist-verify-backup-compact-rehydrate
 save_failure_blocks_compaction: true
 native_compaction_policy: exposed-supported-only
 boundary_fallback_policy: same-environment-verified-only
 large_pressure_policy: diagnostic-only-bounded
 external_storage_role: optional-backup-recovery-source
-backup_sync_policy: event-driven-dirty-only
+external_backup_sync_trigger: explicit-compact-only
+scheduled_backup_sync: false
+idle_backup_sync: false
 backup_on_compaction: configured-and-hash-changed
 backup_latest_policy: verified-replace
-backup_snapshot_policy: milestone-explicit-migration
+backup_snapshot_policy: compact-window-milestone-explicit-migration
 optional_backup_failure_blocks_compaction: false
 strict_backup_compaction_command: true
 backup_direction: local-to-external-one-way
@@ -38,7 +40,7 @@ backup_direction: local-to-external-one-way
 
 > **Model is replaceable. Context is replaceable. Root persists.**
 >
-> **Save the state → compact the context → rehydrate the work → continue the same Chat.**
+> **Save the state → synchronize recovery if configured → compact the context → rehydrate the work → continue the same Chat.**
 
 This is the canonical Chat-native installer for Root Engineering 1.0.0 — **Rebirth**.
 It is designed for an ordinary ChatGPT conversation and does not require a ChatGPT Project or Google Drive.
@@ -77,6 +79,8 @@ Default Runtime path:
 ```
 
 The method does not claim that `/mnt/data` survives every future Chat/Runtime lifecycle. Local ROOT is the primary **current-runtime** store. Google Drive, Git, or exported files may be used as optional backup/recovery adapters.
+
+The preferred ChatGPT experience is a **Complete Chat Runtime** — informally, a **완성형 Chat**. This is Root Engineering terminology, not an official OpenAI feature or product name.
 
 The independent `Valon-Jang/persistent-project-thread` repository is research/evidence provenance. Rebirth owns the production contract. Do not install its separate Skill beside `root-engineering-rebirth` in the same trigger scope.
 
@@ -332,7 +336,7 @@ After successful compaction and rehydration:
 8. IF local verification fails → STOP. DO NOT COMPACT.
 9. Seal canonical digest + CHECKPOINT hash.
 10. Compute current canonical Root hash and compare with last_backup_root_hash.
-11. If an external adapter is configured and the event requires sync:
+11. If an external adapter is configured for this explicit compact transaction:
     - unchanged hash → skip upload;
     - changed hash → update verified latest backup;
     - milestone/explicit/migration event → also create immutable snapshot.
@@ -429,6 +433,9 @@ Minimum fields:
   "last_compaction": null,
   "boundary_compaction_verified": false,
   "boundary_verification_scope": null,
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -480,23 +487,24 @@ Google Drive / Git / export bundle / filesystem backup
 External adapters are not required for normal Rebirth operation.
 Use them for cross-runtime recovery, durable off-chat backup, collaboration, version history, or migration.
 
-### 9.1 Event-driven cadence — no timer loop
+### 9.1 Explicit compact-time cadence — no scheduled or idle loop
 
-Backup cadence is based on meaningful events, not elapsed time. Do not claim or depend on an invisible background timer in an ordinary Chat.
+External recovery synchronization has one default trigger: an explicit `압축해` / `compact` maintenance transaction.
 
 | Event | External backup action |
 |---|---|
 | ordinary conversation | none |
-| verified Local Root patch | mark backup pending when canonical hash changed |
-| `압축해` / `compact` | update `latest` only when adapter is configured and hash changed |
-| critical authority/routing/structure change | update `latest` immediately when configured |
-| `백업해` / `backup` | force immediate verified `latest` backup |
-| `백업하고 압축해` / `backup and compact` | require verified external backup before compaction |
-| `마무리하자` / explicit closeout | update `latest` when changed |
-| release, major milestone, migration, restore, destructive change | update `latest` and create immutable snapshot |
+| verified Local Root patch during active work | local save only |
+| `압축해` / `compact` | update verified `latest` when an adapter is configured and the canonical hash changed |
+| `백업해` / `backup` | one explicit verified backup without compaction |
+| `백업하고 압축해` | require verified external backup before compaction |
+| milestone / migration / restore / destructive change | immutable snapshot only inside the same explicit compact/backup window or by explicit user request |
+| scheduled / idle / timer / background worker | disabled by default |
 | no semantic/hash change | skip external write |
 
-The Local Root remains authoritative during the current Runtime.
+`runtime/STATE.json` records `external_backup_sync_trigger = EXPLICIT_COMPACT_ONLY`, `scheduled_backup_sync = false`, and `idle_backup_sync = false`.
+
+This keeps connector latency outside ordinary active work and does not assume that a separately scheduled Runtime can read the same chat-local `/mnt/data`.
 
 ### 9.2 Hash-gated latest backup
 
@@ -583,7 +591,7 @@ Strict mode:
 → any required failure = NO COMPACT
 ```
 
-Retry pending optional backup at the next qualifying event or explicit `백업해`.
+Retry pending optional backup at the next explicit `압축해` or explicit `백업해` request.
 Do not repeatedly retry the same failed operation without a materially different path.
 
 ### 9.5 One-way authority and restore
@@ -620,7 +628,7 @@ For project-dependent work, read ROOT and only required routed owners.
 When resuming active work, read CHECKPOINT.
 
 COMPACT transaction:
-Resolve Root → Storage Gate → Persist durable state → Refresh CHECKPOINT → Verify + seal → Sync changed optional backup → Compact → Rehydrate → Continue same Chat.
+Resolve Root → Storage Gate → Persist durable state → Refresh CHECKPOINT → Verify + seal → Sync changed optional backup during explicit compact maintenance → Compact → Rehydrate → Continue same Chat.
 
 Backup policy:
 - Local Root is authoritative.
@@ -798,6 +806,9 @@ Read ROOT routing, then this checkpoint, then only required owners. Continue fro
   "last_compaction": null,
   "boundary_compaction_verified": false,
   "boundary_verification_scope": null,
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -817,7 +828,9 @@ Read ROOT routing, then this checkpoint, then only required owners. Continue fro
   "native_compact_action": "UNKNOWN",
   "zero_output_boundary_compaction": "UNVERIFIED",
   "external_backup_adapter": "OPTIONAL",
-  "external_backup_sync_policy": "EVENT_DRIVEN_HASH_GATED",
+  "external_backup_sync_policy": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_strict_command": "백업하고 압축해",
   "capability_assets": []
 }
@@ -854,7 +867,7 @@ PASS only if:
 10. no installation step requires Google Drive or a ChatGPT Project;
 11. `/mnt/data` durability is not overstated;
 12. compaction capability state is honest: supported, verified fallback, or unavailable/unknown;
-13. external backup cadence is event-driven and hash-gated;
+13. external backup defaults to `EXPLICIT_COMPACT_ONLY` and remains hash-gated;
 14. unchanged canonical hash skips external upload;
 15. policy text is not reported as adapter execution;
 16. ordinary `압축해` may proceed after optional backup failure only after `external_backup_pending = true`;
@@ -931,7 +944,7 @@ Root Engineering 1.0.0 — Rebirth ready
 - Compaction path: NATIVE / VERIFIED-BOUNDARY / LIMITED
 - Primary storage: chat-local workspace
 - External backup: NOT CONFIGURED / READY / PENDING
-- Backup cadence: EVENT-DRIVEN + HASH-GATED
+- Backup cadence: EXPLICIT_COMPACT_ONLY + HASH-GATED
 - Backup authority direction: LOCAL → EXTERNAL
 ```
 

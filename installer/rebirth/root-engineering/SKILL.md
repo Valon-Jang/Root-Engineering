@@ -1,6 +1,6 @@
 ---
 name: root-engineering-rebirth
-description: Operate Root Engineering 1.0 Rebirth in one long-lived ordinary ChatGPT conversation using a chat-local Root, resumable Checkpoint, verified compaction transaction, event-driven external backup, and reusable local capabilities. Use when the user asks to install Rebirth, keep one project in one chat, save and compact the chat, back up and compact, continue after compaction, verify or repair the local Root, export recovery state, or migrate an older Root.
+description: Operate Root Engineering 1.0 Rebirth in one long-lived ordinary ChatGPT conversation using a chat-local Root, resumable Checkpoint, verified compaction transaction, explicit compact-time external recovery sync, and reusable local capabilities. Use when the user asks to install Rebirth, keep one project in one chat, save and compact the chat, back up and compact, continue after compaction, verify or repair the local Root, export recovery state, or migrate an older Root.
 ---
 
 # Root Engineering 1.0 — Rebirth Skill
@@ -69,7 +69,7 @@ Resolve Root
 → Checkpoint
 → Verify
 → Seal
-→ Optional changed backup
+→ Compact-time changed backup
 → Compact
 → Verify compaction
 → Rehydrate
@@ -151,7 +151,9 @@ This seals the canonical digest and Checkpoint hash.
 
 ### 7. Evaluate external backup
 
-External backup is event-driven, hash-gated, adapter-gated, and one-way.
+External recovery sync is explicit-compact-time, hash-gated, adapter-gated, and one-way.
+
+Default recovery trigger = explicit `압축해` / `compact` only. Scheduled sync = disabled. Idle/background sync = disabled.
 
 For ordinary `압축해`:
 

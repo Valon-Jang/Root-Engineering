@@ -19,16 +19,18 @@ supported_modes:
 three_layer_memory_model: transcript-active-context-local-root
 checkpoint_owner: runtime/CHECKPOINT.md
 context_epoch: true
-compaction_transaction: persist-verify-compact-rehydrate
+compaction_transaction: persist-verify-backup-compact-rehydrate
 save_failure_blocks_compaction: true
 native_compaction_policy: exposed-supported-only
 boundary_fallback_policy: same-environment-verified-only
 large_pressure_policy: diagnostic-only-bounded
 external_storage_role: optional-backup-recovery-source
-backup_sync_policy: event-driven-dirty-only
+external_backup_sync_trigger: explicit-compact-only
+scheduled_backup_sync: false
+idle_backup_sync: false
 backup_on_compaction: configured-and-hash-changed
 backup_latest_policy: verified-replace
-backup_snapshot_policy: milestone-explicit-migration
+backup_snapshot_policy: compact-window-milestone-explicit-migration
 optional_backup_failure_blocks_compaction: false
 strict_backup_compaction_command: true
 backup_direction: local-to-external-one-way
@@ -38,7 +40,7 @@ backup_direction: local-to-external-one-way
 
 > **Model is replaceable. Context is replaceable. Root persists.**
 >
-> **상태를 저장하고 → Context를 압축하고 → 작업을 복구해 → 같은 Chat을 계속 사용한다.**
+> **상태 저장 → 연결된 복구본 동기화 → Context 압축 → 작업 복구 → 같은 Chat 계속.**
 
 이 파일은 Root Engineering 1.0.0 **Rebirth**의 Chat-native 한글 설치본이다.
 일반 ChatGPT Chat에서 사용하며 ChatGPT Project나 Google Drive를 필수로 요구하지 않는다.
@@ -65,6 +67,8 @@ LOCAL ROOT
 ```
 
 `/mnt/data`가 모든 미래 Chat/Runtime에서 영구 보존된다고 가정하지 않는다. Local ROOT는 **현재 Runtime의 Primary 저장소**이며 Google Drive, Git, Export Bundle은 선택적 Backup·Recovery Adapter다.
+
+권장 ChatGPT 경험은 **Complete Chat Runtime**, 즉 비공식 표현으로 **완성형 Chat**이다. 이는 Root Engineering의 용어이며 OpenAI 공식 기능명이나 제품명이 아니다.
 
 ## 1. 설치 실행 규칙
 
@@ -274,7 +278,7 @@ Backup 검증 성공 후:
 4. 모든 필수 Local Write 검증
 5. Local 검증 실패 → STOP, 압축 금지
 6. 현재 Canonical Root Hash 계산 후 last_backup_root_hash와 비교
-7. External Adapter가 설정되어 있고 Event가 Sync를 요구하면:
+7. 이 명시적 Compaction Transaction에 External Adapter가 설정되어 있으면:
    - Hash 동일 → Upload Skip
    - Hash 변경 → 검증된 latest 갱신
    - Milestone/Explicit/Migration Event → Immutable Snapshot도 생성
@@ -355,6 +359,9 @@ STOP
   "last_compaction": null,
   "boundary_compaction_verified": false,
   "boundary_verification_scope": null,
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -399,23 +406,24 @@ Google Drive / Git / Export Bundle / 기타 Filesystem
 외부 Adapter는 Rebirth 일반 작동의 필수 조건이 아니다.
 Runtime 손실 대비 Backup, Cross-runtime Recovery, Collaboration, Version History, Migration을 위해 사용할 수 있다.
 
-### 9.1 Event-driven Cadence — Timer Loop 없음
+### 9.1 명시적 Compaction 시점 동기화 — 예약·Idle Loop 없음
 
-Backup은 경과 시간이 아니라 의미 있는 Event에 따라 실행한다. 일반 Chat에서 보이지 않는 Background Timer를 주장하거나 의존하지 않는다.
+외부 복구본 동기화의 기본 Trigger는 사용자가 명시한 `압축해` / `compact` Maintenance Transaction 하나다.
 
 | Event | External Backup Action |
 |---|---|
-| 일반 대화 | 외부 Write 없음 |
-| 검증된 Local Root Patch | Canonical Hash가 바뀌면 Backup Pending 표시 |
-| `압축해` / `compact` | Adapter가 설정되고 Hash가 바뀐 경우에만 `latest` 갱신 |
-| Critical Authority/Routing/Structure 변경 | 설정된 경우 즉시 `latest` 갱신 |
-| `백업해` / `backup` | 검증된 `latest` 즉시 강제 갱신 |
+| 일반 대화 | 없음 |
+| 작업 중 검증된 Local Root Patch | Local Save만 수행 |
+| `압축해` / `compact` | Adapter가 설정되고 Canonical Hash가 바뀐 경우 검증된 `latest` 갱신 |
+| `백업해` / `backup` | Compaction 없이 한 번 명시적 Backup |
 | `백업하고 압축해` | Compaction 전에 External Backup 검증 필수 |
-| `마무리하자` / Explicit Closeout | 변경됐으면 `latest` 갱신 |
-| Release, Major Milestone, Migration, Restore, Destructive Change | `latest` 갱신 + Immutable Snapshot 생성 |
+| Milestone / Migration / Restore / Destructive Change | 같은 명시적 Compaction/Backup Window 안이거나 사용자 명시 요청일 때만 Immutable Snapshot 생성 |
+| 예약 / Idle / Timer / Background Worker | 기본 비활성 |
 | Semantic/Hash 변경 없음 | External Write Skip |
 
-현재 Runtime에서는 Local Root가 정본이다.
+`runtime/STATE.json`에는 `external_backup_sync_trigger = EXPLICIT_COMPACT_ONLY`, `scheduled_backup_sync = false`, `idle_backup_sync = false`를 기록한다.
+
+이 정책은 일반 작업 중 Connector Latency를 없애고 별도 예약 Runtime이 같은 Chat-local `/mnt/data`를 본다고 가정하지 않는다.
 
 ### 9.2 Hash-gated Latest Backup
 
@@ -498,7 +506,7 @@ Strict Mode:
 → 필수 실패 하나라도 있으면 NO COMPACT
 ```
 
-Pending Backup은 다음 Qualifying Event 또는 Explicit `백업해`에서 재시도한다.
+Pending Backup은 다음 명시적 `압축해` 또는 `백업해` 요청에서 재시도한다.
 같은 실패 Operation을 같은 Turn에서 변경 없이 반복하지 않는다.
 
 ### 9.5 One-way Authority와 Restore
@@ -535,7 +543,7 @@ State: /mnt/data/root-engineering/runtime/STATE.json
 진행 중 작업 재개 시 CHECKPOINT를 읽는다.
 
 COMPACT:
-Durable State 저장 → CHECKPOINT 갱신 → Local 검증 → 변경된 선택적 Backup 동기화 → Compact → Rehydrate → Same Chat Continue.
+Durable State 저장 → CHECKPOINT 갱신 → Local 검증 → 명시적 Compaction 시점에 변경된 선택적 Backup 동기화 → Compact → Rehydrate → Same Chat Continue.
 
 Backup Policy:
 - Local Root가 정본이다.
@@ -627,6 +635,9 @@ ROOT Routing → CHECKPOINT → 필요한 Owner만 읽고 Next부터 계속한�
   "last_compaction": null,
   "boundary_compaction_verified": false,
   "boundary_verification_scope": null,
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_adapter": "NONE",
   "external_backup_pending": false,
   "current_root_hash": null,
@@ -646,7 +657,9 @@ ROOT Routing → CHECKPOINT → 필요한 Owner만 읽고 Next부터 계속한�
   "native_compact_action": "UNKNOWN",
   "zero_output_boundary_compaction": "UNVERIFIED",
   "external_backup_adapter": "OPTIONAL",
-  "external_backup_sync_policy": "EVENT_DRIVEN_HASH_GATED",
+  "external_backup_sync_policy": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_strict_command": "백업하고 압축해"
 }
 ```

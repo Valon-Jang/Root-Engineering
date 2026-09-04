@@ -19,6 +19,11 @@ required = [
     "supported native compact action",
     "zero-output boundary fallback",
     "Never claim chat-local `/mnt/data` is permanent",
+    "EXPLICIT_COMPACT_ONLY",
+    "Complete Chat Runtime",
+    "idle_backup_sync: false",
+    "scheduled_backup_sync: false",
+    "external_backup_sync_trigger: explicit-compact-only",
 ]
 
 forbidden = [

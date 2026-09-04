@@ -45,6 +45,7 @@ CANONICAL = (
 )
 METHODS = ("native", "zero-output-boundary", "manual-confirmation", "diagnostic")
 SIGNALS = ("HOST_EVENT", "CONTEXT_REPLACEMENT_OBSERVED", "MANUAL_CONFIRMATION")
+BACKUP_TRIGGER = "EXPLICIT_COMPACT_ONLY"
 
 
 class RebirthError(RuntimeError):
@@ -127,6 +128,13 @@ def verify(root: Path) -> dict[str, Any]:
         raise RebirthError("manifest package version mismatch")
     if manifest.get("status") != "ACTIVE":
         raise RebirthError("manifest is not ACTIVE")
+    if state.get("external_backup_sync_trigger", BACKUP_TRIGGER) != BACKUP_TRIGGER:
+        raise RebirthError("backup trigger must remain EXPLICIT_COMPACT_ONLY")
+    if state.get("scheduled_backup_sync", False):
+        raise RebirthError("scheduled backup sync must remain disabled")
+    if state.get("idle_backup_sync", False):
+        raise RebirthError("idle backup sync must remain disabled")
+
     state_version = state.get("package_version")
     if state_version is not None and state_version != VERSION:
         raise RebirthError("state package version mismatch")
@@ -351,7 +359,7 @@ def self_test() -> dict[str, Any]:
             atomic_text(root / "knowledge" / f"{name}.md", f"# {name}\n- Project ID: {project_id}\n- Root ID: {root_id}\n")
         atomic_text(root / "runtime/CHECKPOINT.md", f"# ACTIVE CHECKPOINT\n- Project ID: {project_id}\n- Root ID: {root_id}\n## Exact Next Action\nTest.\n## Resume Instruction\nResume.\n")
         atomic_json(root / "MANIFEST.json", {"package_version": VERSION, "status": "ACTIVE", "project_id": project_id, "root_id": root_id})
-        atomic_json(root / "runtime/STATE.json", {"package_version": VERSION, "status": "ACTIVE", "project_id": project_id, "root_id": root_id, "context_epoch": 0, "compaction_count": 0, "checkpoint_revision": 0, "pending_compaction": None})
+        atomic_json(root / "runtime/STATE.json", {"package_version": VERSION, "status": "ACTIVE", "project_id": project_id, "root_id": root_id, "context_epoch": 0, "compaction_count": 0, "checkpoint_revision": 0, "pending_compaction": None, "external_backup_sync_trigger": BACKUP_TRIGGER, "scheduled_backup_sync": False, "idle_backup_sync": False, "external_backup_pending": False})
         atomic_json(root / "runtime/CAPABILITIES.json", {"package_version": VERSION, "project_id": project_id, "root_id": root_id, "compaction": {"native": "UNKNOWN", "zero_output_boundary": "UNKNOWN"}})
         verify(root)
         prepare(root, "self-test")

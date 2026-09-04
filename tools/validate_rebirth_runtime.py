@@ -44,7 +44,7 @@ required_runtime = [
 required_skill = [
     "Resolve Root",
     "→ Storage Gate",
-    "→ Optional changed backup",
+    "→ Compact-time changed backup",
     "Run the Local Storage Gate",
     "현재 작업을 저장 중입니다…",
     "저장 완료. 대화를 압축 중입니다…",

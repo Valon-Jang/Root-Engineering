@@ -11,11 +11,13 @@ import sys
 REQUIRED_INSTALLER = {
     "package_version: 1.0.0",
     "schema_version: 1.0.0",
-    "backup_sync_policy: event-driven-dirty-only",
+    "external_backup_sync_trigger: explicit-compact-only",
+    "scheduled_backup_sync: false",
+    "idle_backup_sync: false",
     "backup_on_compaction: configured-and-hash-changed",
     "optional_backup_failure_blocks_compaction: false",
     "strict_backup_compaction_command: true",
-    "### 9.1 Event-driven cadence — no timer loop",
+    "### 9.1 Explicit compact-time cadence — no scheduled or idle loop",
     "root-engineering-latest.zip",
     "external_backup_pending = true",
     "`백업하고 압축해`",
@@ -24,7 +26,7 @@ REQUIRED_INSTALLER = {
 
 REQUIRED_POLICY = {
     "Version impact: none",
-    "event-driven",
+    "EXPLICIT_COMPACT_ONLY",
     "root-engineering-latest.zip",
     "BACKUP_MANIFEST.json",
     "Local → external",
@@ -78,7 +80,7 @@ def main() -> int:
     print("REBIRTH BACKUP POLICY VALIDATION: PASS")
     print("- package version: 1.0.0")
     print("- schema version: 1.0.0")
-    print("- event-driven hash-gated backup policy: present")
+    print("- explicit-compact-only hash-gated backup policy: present")
     print("- optional vs strict backup failure semantics: present")
     print("- Local -> external one-way authority: present")
     return 0
