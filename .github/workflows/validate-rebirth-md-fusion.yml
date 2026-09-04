@@ -6,14 +6,22 @@ on:
       - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER*.md"
       - "installer/rebirth/**"
       - "docs/ROOT_ENGINEERING_1.0_*.md"
+      - "tools/validate_rebirth_installer.py"
+      - "tools/validate_rebirth_backup_policy.py"
       - "tools/validate_rebirth_md_fusion.py"
+      - "tools/validate_rebirth_runtime.py"
+      - "tools/rebirth_local_selftest.py"
       - ".github/workflows/validate-rebirth-md-fusion.yml"
   pull_request:
     paths:
       - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER*.md"
       - "installer/rebirth/**"
       - "docs/ROOT_ENGINEERING_1.0_*.md"
+      - "tools/validate_rebirth_installer.py"
+      - "tools/validate_rebirth_backup_policy.py"
       - "tools/validate_rebirth_md_fusion.py"
+      - "tools/validate_rebirth_runtime.py"
+      - "tools/rebirth_local_selftest.py"
       - ".github/workflows/validate-rebirth-md-fusion.yml"
 
 permissions:
