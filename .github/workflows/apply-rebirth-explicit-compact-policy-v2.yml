@@ -55,7 +55,7 @@ jobs:
           path = Path('tools/validate_rebirth_runtime.py')
           text = path.read_text(encoding='utf-8')
           old = '    "→ Optional changed backup",'
-          new = '    "→ during explicit compact maintenance, update verified external `latest` if configured and hash changed",'
+          new = '    "→ Compact-time changed backup",'
           if old not in text and new not in text:
               raise SystemExit('runtime validator backup-flow anchor missing')
           path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
