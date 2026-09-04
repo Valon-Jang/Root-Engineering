@@ -42,12 +42,17 @@ required_runtime = [
     "def export_snapshot",
 ]
 required_skill = [
-    "Persist → Checkpoint → Verify → Compact → Rehydrate",
+    "Resolve Root",
+    "→ Storage Gate",
+    "→ Optional changed backup",
+    "Run the Local Storage Gate",
     "현재 작업을 저장 중입니다…",
     "저장 완료. 대화를 압축 중입니다…",
     "압축 완료. 이어서 진행할게.",
-    "Save failure = no compact",
-    "Never invent or call a private/internal RPC",
+    "Required local save failure = no compact.",
+    "External policy text is not proof that an adapter executed.",
+    "Never invent or call a private/internal RPC.",
+    "Strict `백업하고 압축해`",
 ]
 for token in required_runtime:
     if token not in source:
