@@ -1,0 +1,37 @@
+name: Validate Rebirth MD Fusion
+
+on:
+  push:
+    paths:
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER*.md"
+      - "installer/rebirth/**"
+      - "docs/ROOT_ENGINEERING_1.0_*.md"
+      - "tools/validate_rebirth_md_fusion.py"
+      - ".github/workflows/validate-rebirth-md-fusion.yml"
+  pull_request:
+    paths:
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER*.md"
+      - "installer/rebirth/**"
+      - "docs/ROOT_ENGINEERING_1.0_*.md"
+      - "tools/validate_rebirth_md_fusion.py"
+      - ".github/workflows/validate-rebirth-md-fusion.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate installer
+        run: python tools/validate_rebirth_installer.py
+      - name: Validate backup policy
+        run: python tools/validate_rebirth_backup_policy.py
+      - name: Validate MD fusion
+        run: python tools/validate_rebirth_md_fusion.py
+      - name: Validate runtime
+        run: python tools/validate_rebirth_runtime.py
