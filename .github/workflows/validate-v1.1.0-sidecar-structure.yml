@@ -1,0 +1,37 @@
+name: Validate Rebirth 1.1 Sidecar Structure
+
+on:
+  push:
+    paths:
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0.md"
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0_KO.md"
+      - "installer/LATEST_STAGED.json"
+      - "NEXT_VERSION"
+      - "docs/releases/v1.1.0-sidecar-work-graph.md"
+      - "tools/root_sidecar_adopt.py"
+      - "tools/validate_v1_1_0_sidecar_structure.py"
+      - ".github/workflows/validate-v1.1.0-sidecar-structure.yml"
+  pull_request:
+    paths:
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0.md"
+      - "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0_KO.md"
+      - "installer/LATEST_STAGED.json"
+      - "NEXT_VERSION"
+      - "docs/releases/v1.1.0-sidecar-work-graph.md"
+      - "tools/root_sidecar_adopt.py"
+      - "tools/validate_v1_1_0_sidecar_structure.py"
+      - ".github/workflows/validate-v1.1.0-sidecar-structure.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate staged installer and byte-preserving adoption
+        run: python tools/validate_v1_1_0_sidecar_structure.py
