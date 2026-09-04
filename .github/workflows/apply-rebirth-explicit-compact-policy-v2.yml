@@ -51,6 +51,8 @@ jobs:
 
       - name: Validate Rebirth package
         run: |
+          sudo mkdir -p /mnt/data
+          sudo chown "$(id -u):$(id -g)" /mnt/data
           python tools/validate_rebirth_installer.py
           python tools/validate_rebirth_backup_policy.py
           python tools/validate_rebirth_md_fusion.py
