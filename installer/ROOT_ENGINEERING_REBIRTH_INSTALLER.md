@@ -25,6 +25,13 @@ native_compaction_policy: exposed-supported-only
 boundary_fallback_policy: same-environment-verified-only
 large_pressure_policy: diagnostic-only-bounded
 external_storage_role: optional-backup-recovery-source
+backup_sync_policy: event-driven-dirty-only
+backup_on_compaction: configured-and-hash-changed
+backup_latest_policy: verified-replace
+backup_snapshot_policy: milestone-explicit-migration
+optional_backup_failure_blocks_compaction: false
+strict_backup_compaction_command: true
+backup_direction: local-to-external-one-way
 ---
 
 # ROOT ENGINEERING 1.0.0 — REBIRTH
@@ -227,11 +234,33 @@ At the start, show a short natural status such as:
 현재 작업을 저장 중입니다…
 ```
 
-After persistence verifies:
+After local persistence verifies:
+
+- when no external backup is configured or the local Root hash is unchanged:
 
 ```text
 저장 완료. 대화를 압축 중입니다…
 ```
+
+- when an external backup adapter is configured and the local Root changed:
+
+```text
+로컬 저장 완료. 복구본을 동기화 중입니다…
+```
+
+After verified backup success:
+
+```text
+복구본 동기화 완료. 대화를 압축 중입니다…
+```
+
+If an optional backup fails during ordinary `압축해`, keep the local save, mark the backup pending, and say:
+
+```text
+로컬 저장은 완료됐지만 복구본 동기화는 보류됐습니다. 대화 압축은 계속합니다.
+```
+
+For `백업하고 압축해` / `backup and compact`, backup is strict. If external backup cannot be verified, stop before compaction and report that the local save is safe but the requested backup did not complete.
 
 After successful compaction and rehydration:
 
@@ -245,13 +274,23 @@ After successful compaction and rehydration:
 1. Inspect new durable state since the last canonical update.
 2. Route durable items to the smallest correct Root owners.
 3. Refresh runtime/CHECKPOINT.md.
-4. Verify every required write.
-5. IF verification fails → STOP. DO NOT COMPACT.
-6. Attempt active-context compaction using the priority below.
-7. Verify compaction using a host-exposed/native confirmation or a previously demonstrated reliable signal.
-8. On success, increment context_epoch in runtime/STATE.json.
-9. Rehydrate from BOOT + CHECKPOINT + only required Root owners.
-10. Continue the same Chat.
+4. Verify every required local write.
+5. IF local verification fails → STOP. DO NOT COMPACT.
+6. Compute the current canonical Root hash and compare it with last_backup_root_hash.
+7. If an external adapter is configured and an event requires sync:
+   - unchanged hash → skip upload;
+   - changed hash → update verified latest backup;
+   - milestone/explicit/migration event → also create an immutable snapshot.
+8. If optional backup fails during ordinary `압축해`:
+   - set external_backup_pending = true;
+   - keep the verified Local Root authoritative;
+   - continue to compaction with a visible warning.
+9. If strict `백업하고 압축해` backup fails → STOP. DO NOT COMPACT.
+10. Attempt active-context compaction using the priority below.
+11. Verify compaction using a host-exposed/native confirmation or a previously demonstrated reliable signal.
+12. On success, increment context_epoch in runtime/STATE.json.
+13. Rehydrate from BOOT + CHECKPOINT + only required Root owners.
+14. Continue the same Chat.
 ```
 
 ### Compaction priority
@@ -323,7 +362,13 @@ Minimum fields:
   "root_revision": 0,
   "last_compaction": null,
   "boundary_compaction_verified": false,
-  "boundary_verification_scope": null
+  "boundary_verification_scope": null,
+  "external_backup_adapter": "NONE",
+  "external_backup_pending": false,
+  "current_root_hash": null,
+  "last_backup_root_hash": null,
+  "last_backup_at": null,
+  "last_snapshot_at": null
 }
 ```
 
@@ -364,7 +409,131 @@ Google Drive / Git / export bundle / filesystem backup
 ```
 
 External adapters are not required for normal Rebirth operation.
-Use them when the user wants cross-runtime recovery, durable off-chat backup, collaboration, version history, or migration.
+Use them for cross-runtime recovery, durable off-chat backup, collaboration, version history, or migration.
+
+### 9.1 Event-driven cadence — no timer loop
+
+Backup cadence is based on meaningful events, not elapsed time. Do not claim or depend on an invisible background timer in an ordinary Chat.
+
+Default policy:
+
+| Event | External backup action |
+|---|---|
+| ordinary conversation | none |
+| verified Local Root patch | mark external backup pending when the canonical hash changed |
+| `압축해` / `compact` | update `latest` only when an adapter is configured and the hash changed |
+| critical authority/routing/structure change | update `latest` immediately when configured |
+| `백업해` / `backup` | force an immediate verified `latest` backup |
+| `백업하고 압축해` / `backup and compact` | require verified backup before compaction |
+| `마무리하자` / explicit closeout | update `latest` when changed |
+| release, major milestone, migration, restore, or destructive change | update `latest` and create an immutable snapshot |
+| no semantic or hash change | skip external write |
+
+The Local Root remains authoritative during the current Runtime.
+
+### 9.2 Hash-gated latest backup
+
+Compute a deterministic hash over the canonical export set, excluding disposable scratch files and unstable packaging metadata.
+
+Recommended canonical export set:
+
+```text
+BOOT.md
+ROOT.md
+MANIFEST.json
+knowledge/**
+runtime/CHECKPOINT.md
+runtime/STATE.json
+runtime/CAPABILITIES.json
+linked small canonical Sources explicitly included by policy
+```
+
+If `current_root_hash == last_backup_root_hash`, do not upload again.
+
+When changed, update a single recoverable `latest` bundle:
+
+```text
+Root Engineering Backups/
+└── <PROJECT_ID>/
+    ├── latest/
+    │   ├── root-engineering-latest.zip
+    │   └── BACKUP_MANIFEST.json
+    └── snapshots/
+        └── <ISO_DATE>_epoch-<N>_<REASON>.zip
+```
+
+`BACKUP_MANIFEST.json` should include at minimum:
+
+```json
+{
+  "project_id": "<PROJECT_ID>",
+  "root_id": "<ROOT_ID>",
+  "root_engineering_version": "1.0.0",
+  "context_epoch": 0,
+  "canonical_root_hash": "<HASH>",
+  "backed_up_at": "<ISO-8601>",
+  "backup_kind": "LATEST",
+  "verification": "PASS"
+}
+```
+
+Replace `latest` only after upload and read-back/hash verification succeed.
+Do not create a new immutable snapshot for every compaction.
+
+### 9.3 Snapshot gate
+
+Create an immutable snapshot only for:
+
+- a release or named milestone;
+- migration between storage adapters or runtimes;
+- restore before accepting a different canonical state;
+- a critical authority/routing/schema change;
+- a potentially destructive operation;
+- an explicit user request.
+
+Snapshots explain or recover significant transitions. They are not an activity log.
+
+### 9.4 Failure semantics
+
+Two failures have different meanings:
+
+```text
+required Local Root / CHECKPOINT save failure
+→ STOP
+→ NO COMPACT
+
+optional external backup failure during ordinary `압축해`
+→ Local Root remains authoritative
+→ external_backup_pending = true
+→ compaction may continue with a visible warning
+```
+
+Strict mode is different:
+
+```text
+`백업하고 압축해`
+→ Local save and external backup must both verify
+→ any required failure = NO COMPACT
+```
+
+Retry a pending optional backup at the next qualifying event or explicit `백업해`.
+Do not repeatedly retry within the same failed operation without a materially different path.
+
+### 9.5 One-way authority and restore
+
+After a Drive-based Root is migrated to Local Rebirth:
+
+```text
+Drive latest canonical read
+→ Local Root conversion
+→ Local identity/content verification
+→ final Drive migration snapshot
+→ former Drive Root retained as legacy/read-only recovery source
+→ normal flow becomes Local → external backup
+```
+
+Do not automatically merge Drive changes back into the Local Root during normal operation.
+Restore is an explicit operation: select one backup, verify Project ID, Root ID, version compatibility, manifest, and content hash, then replace the smallest required local scope or restore the full bundle only when the user requested it.
 
 Never claim chat-local `/mnt/data` is permanent across all future sessions unless that durability is actually verified by the host.
 
@@ -384,9 +553,15 @@ For project-dependent work, read ROOT and only required routed owners.
 When resuming active work, read CHECKPOINT.
 
 COMPACT transaction:
-Persist durable state → Refresh CHECKPOINT → Verify → Compact → Rehydrate → Continue same Chat.
+Persist durable state → Refresh CHECKPOINT → Verify → Sync changed optional backup → Compact → Rehydrate → Continue same Chat.
 
-Hard rule: save failure = no compact.
+Backup policy:
+- Local Root is authoritative.
+- Sync external `latest` on qualifying events only when the canonical hash changed.
+- Create immutable snapshots only for milestones, explicit requests, migration/restore, or critical changes.
+- `백업하고 압축해` requires verified external backup; ordinary `압축해` may continue after an optional backup failure with `external_backup_pending = true`.
+
+Hard rule: required local save failure = no compact.
 ```
 
 ### ROOT.md
@@ -546,7 +721,9 @@ Read ROOT routing, then this checkpoint, then only required owners. Continue fro
   "workspace_path": "/mnt/data/root-engineering",
   "native_compact_action": "UNKNOWN",
   "zero_output_boundary_compaction": "UNVERIFIED",
-  "external_backup_adapter": "OPTIONAL"
+  "external_backup_adapter": "OPTIONAL",
+  "external_backup_sync_policy": "EVENT_DRIVEN_HASH_GATED",
+  "external_backup_strict_command": "백업하고 압축해"
 }
 ```
 
@@ -580,7 +757,13 @@ PASS only if:
 9. known Operational failures are not replayed unchanged;
 10. no installation step requires Google Drive or a ChatGPT Project;
 11. `/mnt/data` durability is not overstated;
-12. compaction capability state is honest: supported, verified fallback, or unavailable/unknown.
+12. compaction capability state is honest: supported, verified fallback, or unavailable/unknown;
+13. external backup cadence is event-driven and hash-gated, not timer-based;
+14. an unchanged canonical hash skips external upload;
+15. ordinary `압축해` may proceed after an optional backup failure only after setting `external_backup_pending = true`;
+16. strict `백업하고 압축해` blocks compaction when external backup is unverified;
+17. immutable snapshots are milestone/explicit/migration/critical-change gated;
+18. normal authority flow is Local → external backup, with no automatic bidirectional merge.
 
 ## 12. REPAIR
 
@@ -591,7 +774,16 @@ When identity cannot be proven, stop instead of silently adopting another Root.
 
 ## 13. EXPORT / BACKUP
 
-When the user requests backup or cross-runtime recovery, create a complete export bundle of the canonical local Root structure. External adapters may then upload/commit that bundle without changing the local Root's authority unless the user explicitly changes the primary adapter.
+When the user requests backup or cross-runtime recovery:
+
+1. create a deterministic export of the canonical local Root structure;
+2. compute and record its canonical Root hash;
+3. skip an unchanged `latest` upload unless the user explicitly requests a new snapshot;
+4. upload/commit through the configured external adapter;
+5. verify the uploaded bundle and `BACKUP_MANIFEST.json`;
+6. update `last_backup_root_hash`, `last_backup_at`, and `external_backup_pending` only after verification.
+
+External backup does not change Local Root authority unless the user explicitly performs an adapter migration or restore.
 
 ## 14. Acceptance gate for Rebirth
 
@@ -635,6 +827,9 @@ Root Engineering 1.0.0 — Rebirth ready
 - ChatGPT Project required: NO
 - Compaction path: NATIVE / VERIFIED-BOUNDARY / LIMITED
 - Primary storage: chat-local workspace
+- External backup: NOT CONFIGURED / READY / PENDING
+- Backup cadence: EVENT-DRIVEN + HASH-GATED
+- Backup authority direction: LOCAL → EXTERNAL
 ```
 
 ---
