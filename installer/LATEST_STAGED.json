@@ -1,0 +1,12 @@
+{
+  "package_id": "root-engineering-rebirth-chat-installer",
+  "version": "1.1.0",
+  "codename": "Rebirth",
+  "release_name": "Sidecar Work Graph",
+  "status": "staged-next-version",
+  "base_compatible_version": "1.0.0",
+  "installer": "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0.md",
+  "korean_mirror": "installer/ROOT_ENGINEERING_REBIRTH_INSTALLER_v1.1.0_KO.md",
+  "release_notes": "docs/releases/v1.1.0-sidecar-work-graph.md",
+  "existing_markdown_policy": "byte-exact-register-in-place"
+}
