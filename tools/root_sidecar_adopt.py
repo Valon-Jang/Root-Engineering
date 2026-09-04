@@ -210,6 +210,7 @@ def adopt(workspace: Path, apply: bool) -> dict:
     root_id = "RR-" + uuid.uuid4().hex[:16].upper()
     expected = make_files(before, project_id, root_id, timestamp)
     candidate = workspace / f"{ROOT}.candidate-{uuid.uuid4().hex}"
+    activated = False
     try:
         candidate.mkdir()
         for rel, data in expected.items():
@@ -219,6 +220,7 @@ def adopt(workspace: Path, apply: bool) -> dict:
         if errors:
             raise AdoptionError("; ".join(errors))
         os.replace(candidate, active)
+        activated = True
         verify_control(active, expected, workspace)
         errors = compare(before, inventory(workspace))
         if errors:
@@ -226,6 +228,10 @@ def adopt(workspace: Path, apply: bool) -> dict:
     except Exception:
         if candidate.exists():
             shutil.rmtree(candidate, ignore_errors=True)
+        if activated and active.exists():
+            # This transaction created the sidecar. Remove only that new
+            # control plane so a failed final verification cannot appear ACTIVE.
+            shutil.rmtree(active, ignore_errors=True)
         raise
     summary.update(
         root=str(active), project_id=project_id, root_id=root_id,
