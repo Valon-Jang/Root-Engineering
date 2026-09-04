@@ -63,7 +63,7 @@ REQUIRED: dict[str, set[str]] = {
         "strict backup-and-compact failure blocks compaction",
     },
     "docs/ROOT_ENGINEERING_1.0_BACKUP_POLICY_KO.md": {
-        "Event-driven",
+        "Event 기반",
         "Hash",
         "Local → External",
         "백업하고 압축해",
@@ -72,7 +72,7 @@ REQUIRED: dict[str, set[str]] = {
         "LOCAL CAPABILITY WORKSPACE",
         "Document authority",
         "Local Storage Gate",
-        "External adapter reality",
+        "A Google Drive policy is not proof that a Drive adapter ran.",
         "Persistent Project Thread",
     },
     "installer/rebirth/root-engineering/SKILL.md": {
