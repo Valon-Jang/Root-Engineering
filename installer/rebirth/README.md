@@ -9,7 +9,7 @@ This folder turns the canonical Rebirth method into an executable compaction tra
 - `../ROOT_ENGINEERING_REBIRTH_INSTALLER.md` — canonical English installation and architecture contract;
 - `../ROOT_ENGINEERING_REBIRTH_INSTALLER_KO.md` — Korean installation contract;
 - `root-engineering/SKILL.md` — agent operating procedure;
-- `runtime/rebirth_transaction.py` — deterministic Checkpoint, sealing, epoch, abort, and export guard;
+- `runtime/rebirth_transaction.py` — deterministic Checkpoint, sealing, backup-record, epoch, abort, and export guard;
 - `../../tools/validate_rebirth_runtime.py` — package validator and self-test launcher.
 
 ## What the runtime does
@@ -18,13 +18,14 @@ This folder turns the canonical Rebirth method into an executable compaction tra
 write exact CHECKPOINT
 → verify Root identity and canonical owners
 → seal canonical digest + Checkpoint hash
+→ export/synchronize recovery state during explicit compact maintenance if configured
+→ record VERIFIED / PENDING / SKIPPED backup outcome
 → wait for host/native or verified boundary compaction
-→ reject completion if sealed state changed
+→ reject completion if sealed canonical state changed
 → advance context epoch only after observed success
-→ export recovery snapshots when requested
 ```
 
-It does **not** implement ChatGPT's private compaction service, invent an internal RPC, or claim that `/mnt/data` survives every product/runtime lifecycle.
+It does **not** implement ChatGPT's private compaction service, invent an internal RPC, upload to Google Drive without an exposed connector, or claim that `/mnt/data` survives every product/runtime lifecycle.
 
 ## Validate the package
 
@@ -41,7 +42,7 @@ Expected final validator output:
 ```text
 REBIRTH_RUNTIME_VALIDATION_PASS
 runtime_bytes=<size>
-self_tests=7
+self_tests=10
 ```
 
 ## Install the runtime guard
@@ -71,10 +72,25 @@ python /mnt/data/root-engineering/tools/rebirth_transaction.py \
 The Skill defines the user command as:
 
 ```text
-Persist → Checkpoint → Verify → Compact → Rehydrate
+Persist → Checkpoint → Verify → Backup if configured → Compact → Rehydrate
 ```
 
-The transaction must be prepared before compaction. Completion requires explicit observed evidence, and any canonical or Checkpoint change after preparation fails closed. Save or verification failure means no compaction.
+The transaction must be prepared before any external/tool boundary. Completion requires explicit observed compaction evidence, and any canonical or Checkpoint change after preparation fails closed. Save or verification failure means no compaction.
+
+A configured recovery adapter is synchronized only inside this explicit maintenance window. Scheduled, idle, timer-based, and background synchronization are disabled by default. This keeps backup latency out of active work and avoids assuming another runtime can read the same `/mnt/data`.
+
+Use `record-backup` to persist the outcome:
+
+```bash
+python /mnt/data/root-engineering/tools/rebirth_transaction.py \
+  --root /mnt/data/root-engineering record-backup \
+  --status VERIFIED \
+  --adapter google-drive \
+  --artifact-sha256 <SHA256> \
+  --remote-reference <VERIFIED_ID_OR_URL>
+```
+
+Optional backup failure is recorded as `PENDING` and reported. The Local Root remains canonical unless the user explicitly requires a verified external backup before compaction.
 
 ## Storage boundary
 

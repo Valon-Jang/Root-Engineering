@@ -44,6 +44,7 @@ def main() -> None:
         "# ROOT ENGINEERING 1.0 — REBIRTH BOOT\n"
         "Root: ROOT.md\n"
         "Checkpoint: runtime/CHECKPOINT.md\n"
+        "Compact-time backup only; scheduled and idle sync are disabled.\n"
         "Hard rule: save failure = no compact.\n",
     )
     atomic_write(
@@ -60,7 +61,8 @@ def main() -> None:
 
     atomic_write(
         BASE / "runtime" / "CHECKPOINT.md",
-        "# ACTIVE CHECKPOINT\n## Current Goal\nSelf-test\n## Next\nVerify compaction guard.\n",
+        "# ACTIVE CHECKPOINT\n## Current Goal\nSelf-test\n## Next\nVerify compaction guard.\n"
+        "## Resume Instruction\nContinue from Next.\n",
     )
 
     state = {
@@ -72,15 +74,28 @@ def main() -> None:
         "last_compaction": None,
         "boundary_compaction_verified": False,
         "boundary_verification_scope": None,
+        "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+        "scheduled_backup_sync": False,
+        "idle_backup_sync": False,
+        "external_backup_pending": False,
+        "last_external_backup": None,
     }
     atomic_write(BASE / "runtime" / "STATE.json", json.dumps(state, indent=2))
     atomic_write(
         BASE / "runtime" / "CAPABILITIES.json",
         json.dumps(
             {
+                "schema_version": "1.0.0",
                 "local_workspace": "VERIFIED",
                 "native_compact_action": "UNKNOWN",
                 "zero_output_boundary_compaction": "UNVERIFIED",
+                "external_backup": {
+                    "adapter": "OPTIONAL",
+                    "sync_trigger": "EXPLICIT_COMPACT_ONLY",
+                    "scheduled_sync": "DISABLED",
+                    "idle_sync": "DISABLED",
+                    "failure_policy": "WARN_AND_MARK_PENDING",
+                },
             },
             indent=2,
         ),
@@ -110,7 +125,8 @@ def main() -> None:
         BASE / "runtime" / "CHECKPOINT.md",
         "# ACTIVE CHECKPOINT\n## Current Goal\nSelf-test\n"
         "## Completed\n- Local Root created.\n"
-        "## Next\n- Simulate save failure guard.\n",
+        "## Next\n- Simulate save failure guard.\n"
+        "## Resume Instruction\nContinue from Next.\n",
     )
     verify_contains(
         BASE / "runtime" / "CHECKPOINT.md",
@@ -123,10 +139,24 @@ def main() -> None:
         compact_called = True
     assert compact_called is False
 
+    # Backup is permitted only in the explicit compact maintenance window.
+    state = json.loads((BASE / "runtime" / "STATE.json").read_text())
+    assert state["external_backup_sync_trigger"] == "EXPLICIT_COMPACT_ONLY"
+    assert state["scheduled_backup_sync"] is False
+    assert state["idle_backup_sync"] is False
+
+    # Optional backup failure is visible and pending, not silently successful.
+    state["external_backup_pending"] = True
+    state["last_external_backup"] = {"status": "PENDING", "adapter": "google-drive"}
+    atomic_write(BASE / "runtime" / "STATE.json", json.dumps(state, indent=2))
+    reread = json.loads((BASE / "runtime" / "STATE.json").read_text())
+    assert reread["external_backup_pending"] is True
+    assert reread["last_external_backup"]["status"] == "PENDING"
+
     required_save_verified = True
     compaction_confirmed = True
     if required_save_verified and compaction_confirmed:
-        state = json.loads((BASE / "runtime" / "STATE.json").read_text())
+        state = reread
         state["context_epoch"] += 1
         state["compaction_count"] += 1
         atomic_write(BASE / "runtime" / "STATE.json", json.dumps(state, indent=2))
@@ -140,6 +170,7 @@ def main() -> None:
     print(f"root_id={root_id}")
     print(f"files={sum(1 for p in BASE.rglob('*') if p.is_file())}")
     print(f"context_epoch={state['context_epoch']}")
+    print(f"backup_sync_trigger={state['external_backup_sync_trigger']}")
 
 
 if __name__ == "__main__":

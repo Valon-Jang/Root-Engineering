@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the Root Engineering 1.0.0 Rebirth backup-policy update."""
+"""Validate Root Engineering 1.0.0 Rebirth explicit compact-time recovery sync."""
 
 from __future__ import annotations
 
@@ -11,24 +11,29 @@ import sys
 REQUIRED_INSTALLER = {
     "package_version: 1.0.0",
     "schema_version: 1.0.0",
-    "backup_sync_policy: event-driven-dirty-only",
-    "backup_on_compaction: configured-and-hash-changed",
-    "optional_backup_failure_blocks_compaction: false",
-    "strict_backup_compaction_command: true",
-    "### 9.1 Event-driven cadence — no timer loop",
-    "root-engineering-latest.zip",
-    "external_backup_pending = true",
-    "`백업하고 압축해`",
-    "Local → external backup",
+    "external_backup_sync_trigger: explicit-compact-only",
+    "scheduled_backup_sync: false",
+    "idle_backup_sync: false",
+    "### Default backup cadence: explicit COMPACT only",
+    "EXPLICIT_COMPACT_ONLY",
+    "external_backup_pending=true",
+    "SAVE FAILURE = NO COMPACT",
 }
 
 REQUIRED_POLICY = {
     "Version impact: none",
-    "event-driven",
+    "EXPLICIT_COMPACT_ONLY",
+    "Scheduled, idle, timer-based, and background synchronization are disabled",
     "root-engineering-latest.zip",
     "BACKUP_MANIFEST.json",
+    "Complete Chat Runtime",
     "Local → external",
-    "strict backup-and-compact failure blocks compaction",
+}
+
+FORBIDDEN = {
+    "backup_sync_policy: event-driven-dirty-only",
+    "critical authority, routing, or structure change | update `latest` immediately",
+    "`마무리하자` / explicit closeout | update `latest`",
 }
 
 
@@ -36,7 +41,9 @@ def require(path: Path, needles: set[str]) -> list[str]:
     if not path.is_file():
         return [f"missing file: {path}"]
     text = path.read_text(encoding="utf-8")
-    return [f"{path}: missing {needle!r}" for needle in sorted(needles) if needle not in text]
+    errors = [f"{path}: missing {needle!r}" for needle in sorted(needles) if needle not in text]
+    errors += [f"{path}: forbidden legacy policy {needle!r}" for needle in sorted(FORBIDDEN) if needle in text]
+    return errors
 
 
 def main() -> int:
@@ -52,14 +59,8 @@ def main() -> int:
     repo = args.repo.resolve()
 
     errors: list[str] = []
-    errors += require(
-        repo / "installer" / "ROOT_ENGINEERING_REBIRTH_INSTALLER.md",
-        REQUIRED_INSTALLER,
-    )
-    errors += require(
-        repo / "docs" / "ROOT_ENGINEERING_1.0_BACKUP_POLICY.md",
-        REQUIRED_POLICY,
-    )
+    errors += require(repo / "installer" / "ROOT_ENGINEERING_REBIRTH_INSTALLER.md", REQUIRED_INSTALLER)
+    errors += require(repo / "docs" / "ROOT_ENGINEERING_1.0_BACKUP_POLICY.md", REQUIRED_POLICY)
 
     version = repo / "VERSION"
     if not version.is_file():
@@ -77,10 +78,10 @@ def main() -> int:
 
     print("REBIRTH BACKUP POLICY VALIDATION: PASS")
     print("- package version: 1.0.0")
-    print("- schema version: 1.0.0")
-    print("- event-driven hash-gated backup policy: present")
-    print("- optional vs strict backup failure semantics: present")
-    print("- Local -> external one-way authority: present")
+    print("- sync trigger: EXPLICIT_COMPACT_ONLY")
+    print("- scheduled/idle/background sync: disabled")
+    print("- Local -> external recovery authority: present")
+    print("- Complete Chat Runtime framing: present")
     return 0
 
 

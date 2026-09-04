@@ -19,12 +19,18 @@ required = [
     "supported native compact action",
     "zero-output boundary fallback",
     "Never claim chat-local `/mnt/data` is permanent",
+    "external_backup_sync_trigger: explicit-compact-only",
+    "scheduled_backup_sync: false",
+    "idle_backup_sync: false",
+    "Default backup cadence: explicit COMPACT only",
+    "external_backup_pending",
 ]
 
 forbidden = [
     "thread/compact/start RPC >",
     "Google Drive is required",
     "Project Instructions must",
+    "scheduled task performs backup",
 ]
 
 missing = [item for item in required if item not in text]

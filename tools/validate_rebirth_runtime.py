@@ -29,6 +29,8 @@ required_runtime = [
     'VERSION = "1.0.0"',
     "METHODS = (",
     "SIGNALS = (",
+    "BACKUP_STATUSES = (",
+    'BACKUP_TRIGGER = "EXPLICIT_COMPACT_ONLY"',
     "pending_compaction",
     "canonical_digest",
     "checkpoint_sha256",
@@ -40,14 +42,22 @@ required_runtime = [
     "canonical state changed after prepare",
     "checkpoint changed after prepare",
     "def export_snapshot",
+    "def record_backup",
+    "scheduled backup sync must remain disabled",
+    "idle backup sync must remain disabled",
+    "external_backup_pending",
 ]
 required_skill = [
-    "Persist → Checkpoint → Verify → Compact → Rehydrate",
+    "Persist → Checkpoint → Verify → Backup if configured → Compact → Rehydrate",
     "현재 작업을 저장 중입니다…",
+    "로컬 저장 완료. 복구본을 동기화 중입니다…",
     "저장 완료. 대화를 압축 중입니다…",
     "압축 완료. 이어서 진행할게.",
     "Save failure = no compact",
     "Never invent or call a private/internal RPC",
+    "Scheduled sync = disabled",
+    "Idle/background sync = disabled",
+    "record-backup",
 ]
 for token in required_runtime:
     if token not in source:
@@ -60,6 +70,7 @@ forbidden = [
     "thread/compact/start RPC >",
     "Google Drive is required",
     "Project Instructions must",
+    "scheduled task performs backup",
 ]
 for token in forbidden:
     if token in source or token in skill:
@@ -80,7 +91,7 @@ try:
     result = json.loads(completed.stdout)
 except json.JSONDecodeError as exc:
     fail(f"self-test output is not JSON: {exc}")
-if result != {"ok": True, "tests": 7, "version": "1.0.0"}:
+if result != {"ok": True, "tests": 10, "version": "1.0.0"}:
     fail(f"unexpected self-test result: {result}")
 
 print("REBIRTH_RUNTIME_VALIDATION_PASS")

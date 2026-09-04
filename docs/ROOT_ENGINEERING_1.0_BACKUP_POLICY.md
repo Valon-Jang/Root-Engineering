@@ -1,46 +1,74 @@
-# Root Engineering 1.0 Rebirth — External Backup Policy
+# Root Engineering 1.0 Rebirth — External Recovery Sync Policy
 
 Status: normative policy for Root Engineering 1.0.0 Rebirth  
 Version impact: none; package and schema remain `1.0.0`
 
 ## 1. Purpose
 
-Rebirth uses the chat-local Root as the primary current-runtime authority. External storage such as Google Drive, Git, or an exported bundle is a backup, recovery, collaboration, or migration adapter.
+Rebirth uses the Chat-local Root as the primary authority for the current runtime. Google Drive, Git, or an exported bundle may hold a recovery copy, but external synchronization must not make ordinary Chat work slower.
 
-The backup policy must protect recovery without turning every ordinary conversation turn into an external write.
+This policy therefore uses an explicit maintenance boundary:
 
-## 2. Core rule
+> **Work locally while the user is working. Synchronize the recovery copy when the user says `압축해` / `compact`.**
 
-> **Local state is saved by meaning. External backup is synchronized by event.**
+An explicit standalone `백업해` / `backup` request is also allowed. Scheduled, idle, timer-based, and background synchronization are disabled by default.
 
-Do not depend on a hidden background timer in an ordinary Chat.
+## 2. Why compact-time synchronization
+
+`압축해` already marks the moment when Rebirth must:
+
+1. promote durable state to the correct Root owner;
+2. refresh the current-work Checkpoint;
+3. verify Local Root integrity;
+4. maintain the active model context;
+5. rehydrate and continue the same Chat.
+
+Using this same boundary for the external recovery copy has three advantages:
+
+- no connector latency is added during ordinary active work;
+- the state being backed up has already been classified and verified;
+- the design does not assume that a separate scheduled runtime can read the same Chat-local `/mnt/data`.
+
+## 3. Default trigger contract
+
+| Event | External recovery action |
+|---|---|
+| ordinary conversation | none |
+| Local Root patch during active work | local save only; mark changed state locally |
+| `압축해` / `compact` | synchronize configured recovery copy when content changed |
+| `백업해` / `backup` | synchronize once without compaction |
+| `백업하고 압축해` / `backup and compact` | require verified external recovery copy before compaction |
+| scheduled task, idle period, timer, background worker | disabled by default |
+| no semantic/hash change | skip external write |
+
+The default synchronization trigger recorded in runtime state is:
 
 ```text
-Local Root change
-→ verify local write
-→ compute canonical Root hash
-→ wait for a qualifying backup event
-→ unchanged hash: skip
-→ changed hash: update verified latest backup
+EXPLICIT_COMPACT_ONLY
 ```
 
-## 3. Default cadence
+## 4. Transaction order
 
-| Event | Action |
-|---|---|
-| ordinary conversation | no external write |
-| verified Local Root patch | mark backup pending when canonical hash changed |
-| `압축해` / `compact` | update `latest` only if adapter is configured and hash changed |
-| critical authority, routing, or structure change | update `latest` immediately when configured |
-| `백업해` / `backup` | force immediate verified `latest` backup |
-| `백업하고 압축해` / `backup and compact` | require verified external backup before compaction |
-| `마무리하자` / explicit closeout | update `latest` when changed |
-| release, named milestone, migration, restore, destructive change | update `latest` and create immutable snapshot |
-| no hash change | skip upload |
+The Local Root and Checkpoint must be safe before any external connector/tool boundary:
 
-## 4. Latest and snapshots
+```text
+Persist durable Local Root state
+→ Refresh CHECKPOINT
+→ Verify local writes
+→ Seal canonical Root digest + Checkpoint hash
+→ Export deterministic recovery bundle
+→ Synchronize configured external latest copy
+→ Verify or record PENDING
+→ Compact active context if it has not already compacted
+→ Rehydrate minimal state
+→ Continue the same Chat
+```
 
-Recommended layout:
+An external backup tool call may itself become the host sampling boundary where compaction occurs. When that compaction is confirmed, it counts as the transaction's compaction event. Rehydrate and finish the transaction; do not fire a second compaction trigger.
+
+## 5. Recovery bundle and hash gate
+
+Recommended external layout:
 
 ```text
 Root Engineering Backups/
@@ -52,37 +80,9 @@ Root Engineering Backups/
         └── <ISO_DATE>_epoch-<N>_<REASON>.zip
 ```
 
-`latest` is replaceable and optimized for recovery. Replace it only after upload and read-back/hash verification pass.
+The normal compact-time write updates only `latest`. Skip the external write when the deterministic bundle hash matches the last verified recovery copy.
 
-A snapshot is immutable and should exist only for a meaningful transition:
-
-- release or named milestone;
-- adapter/runtime migration;
-- restore before accepting different canonical state;
-- critical authority, routing, or schema change;
-- potentially destructive operation;
-- explicit user request.
-
-Do not create a new snapshot for every compaction.
-
-## 5. Canonical hash
-
-Hash a deterministic canonical export set:
-
-```text
-BOOT.md
-ROOT.md
-MANIFEST.json
-knowledge/**
-runtime/CHECKPOINT.md
-runtime/STATE.json
-runtime/CAPABILITIES.json
-small linked canonical Sources explicitly included by policy
-```
-
-Exclude scratch files, caches, timestamps generated only by packaging, and other unstable non-semantic data.
-
-If the current hash equals the last verified backup hash, do not upload again.
+An immutable snapshot is optional and should be created only during the same explicit maintenance window for a release, named milestone, migration, restore boundary, critical authority/schema change, destructive operation, or explicit user request. Do not create a new immutable snapshot for every compaction.
 
 ## 6. Backup manifest
 
@@ -97,18 +97,19 @@ Minimum fields:
   "canonical_root_hash": "<HASH>",
   "backed_up_at": "<ISO-8601>",
   "backup_kind": "LATEST",
+  "sync_trigger": "EXPLICIT_COMPACT_ONLY",
   "verification": "PASS"
 }
 ```
 
-The manifest and bundle must agree on identity and hash.
+Accept a recovery copy as current only after identity, artifact existence, and content/hash evidence are verified through the exposed adapter.
 
 ## 7. Failure semantics
 
-Required local persistence and optional external backup are different contracts.
+Required Local persistence and optional external recovery synchronization are different contracts.
 
 ```text
-Local Root or CHECKPOINT save failure
+Local Root or CHECKPOINT save/verification failure
 → STOP
 → NO COMPACT
 ```
@@ -116,96 +117,74 @@ Local Root or CHECKPOINT save failure
 For ordinary `압축해`:
 
 ```text
-optional external backup failure
+optional external recovery sync failure
 → keep verified Local Root authoritative
 → set external_backup_pending = true
-→ show a warning
+→ report the failure
 → compaction may continue
 ```
 
 For strict `백업하고 압축해`:
 
 ```text
-Local save and external backup must both verify
+Local save and external recovery copy must both verify
 → any required failure = NO COMPACT
 ```
 
-Retry a pending optional backup at the next qualifying event or explicit `백업해`. Do not loop repeatedly through the same failed path.
+Do not silently call a pending or unverified upload successful. Do not repeatedly retry the same failed path inside one maintenance operation.
 
-## 8. Authority direction
+## 8. Authority direction and restore
 
-After migrating a Drive-based Root to Rebirth:
+After a Drive-based Root is migrated into Rebirth, normal operation is one-way:
 
 ```text
-Drive canonical read
-→ Local conversion
-→ Local identity/content verification
-→ final migration snapshot
-→ former Drive Root retained as legacy/read-only recovery source
-→ normal operation becomes Local → external backup
+Local Root → external recovery copy
 ```
 
-Do not automatically merge external changes back into the Local Root during normal operation.
-
-Restore is explicit. Before restoration, verify:
-
-- Project ID;
-- Root ID;
-- version/schema compatibility;
-- backup manifest;
-- content hash;
-- intended restore scope.
+Do not automatically merge external changes back into the Local Root during normal work. Restore is a separate explicit operation that verifies Project ID, Root ID, version/schema compatibility, manifest, content hash, and intended restore scope.
 
 ## 9. Runtime state
 
-Recommended optional fields in `runtime/STATE.json`:
+Recommended fields in `runtime/STATE.json`:
 
 ```json
 {
-  "external_backup_adapter": "NONE",
+  "external_backup_sync_trigger": "EXPLICIT_COMPACT_ONLY",
+  "scheduled_backup_sync": false,
+  "idle_backup_sync": false,
   "external_backup_pending": false,
-  "current_root_hash": null,
-  "last_backup_root_hash": null,
-  "last_backup_at": null,
-  "last_snapshot_at": null
+  "last_external_backup": null
 }
 ```
 
-These fields track backup state; they do not change project truth.
+These fields describe recovery state and policy; they do not change project truth.
 
-## 10. User-visible behavior
+## 10. Complete Chat Runtime relationship
 
-During ordinary `압축해`:
-
-```text
-현재 작업을 저장 중입니다…
-로컬 저장 완료. 복구본을 동기화 중입니다…
-복구본 동기화 완료. 대화를 압축 중입니다…
-압축 완료. 이어서 진행합니다.
-```
-
-When optional backup fails:
+The compact-time policy supports Rebirth's **Complete Chat Runtime** framing:
 
 ```text
-로컬 저장은 완료됐지만 복구본 동기화는 보류됐습니다. 대화 압축은 계속합니다.
+ordinary ChatGPT Chat
++ Local Root
++ Checkpoint
++ explicit compact-time recovery sync
++ active-context compaction
+= one long-lived project Chat without mid-work backup latency
 ```
 
-When strict backup fails:
-
-```text
-로컬 저장은 완료됐지만 요청한 복구본을 검증하지 못해 대화 압축을 중단했습니다.
-```
+“Complete Chat Runtime” is Root Engineering terminology, not an official OpenAI product name or feature claim.
 
 ## 11. Acceptance conditions
 
 PASS only when:
 
 1. package and schema versions remain `1.0.0`;
-2. backup is event-driven rather than timer-dependent;
-3. unchanged canonical hashes skip upload;
-4. `latest` is verified before replacement is accepted;
-5. snapshots are milestone/explicit/migration/critical-change gated;
-6. ordinary optional-backup failure marks pending and may continue compaction;
+2. default recovery sync trigger is `EXPLICIT_COMPACT_ONLY`;
+3. scheduled, idle, timer-based, and background sync are disabled;
+4. Local Root and Checkpoint are verified before external synchronization;
+5. unchanged recovery content skips the external write;
+6. optional sync failure is visible and recorded as pending;
 7. strict backup-and-compact failure blocks compaction;
-8. normal authority direction is Local → external;
-9. restore is explicit and identity/hash verified.
+8. a compaction observed during the external tool boundary is reused rather than triggered twice;
+9. normal authority direction remains Local → external;
+10. ordinary active work carries no routine external-backup latency.
