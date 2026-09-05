@@ -14,6 +14,12 @@ The integration principle is:
 
 Persistent Project Thread remains the independent experiment and evidence repository. Root Engineering Rebirth is the canonical operational implementation.
 
+The 2026-09-05 long-horizon observation also falsified the stronger assumption that successful active-context compaction can make one ChatGPT thread indefinitely persistent. Rebirth therefore absorbs a new architectural conclusion:
+
+> **The thread is an execution resource, not the persistence authority.**
+
+Current Rebirth `1.0.0` still operates inside one Chat when that Chat remains viable. Automatic thread/session rollover is **not** claimed as implemented in this version. The research direction, however, now treats thread replacement as compatible with project continuity because project authority belongs to Root/Checkpoint rather than the thread itself.
+
 ## 2. Authority map
 
 Each document has one role.
@@ -51,7 +57,7 @@ Within a Rebirth installation, `root-engineering-rebirth` is the sole operationa
 - `컴팩션`
 - `채팅 정리해`
 - `백업하고 압축해`
-- same-thread rehydration
+- same-thread rehydration while the current Chat remains viable
 
 Do not install a second `persistent-project-thread` Skill into the same trigger scope. Its verified findings are absorbed into the Rebirth Skill; its repository remains linked as evidence.
 
@@ -63,13 +69,18 @@ This prevents:
 - repeated no-op boundaries;
 - ambiguous success reporting.
 
+Automatic provider-thread rollover is outside the current `1.0.0` executable trigger contract. If a future version implements it, Root Engineering remains the sole owner of the rollover policy and persistence gate.
+
 ## 4. Fused state model
 
-Rebirth keeps the three-memory-layer model and adds two supporting resources:
+Rebirth now distinguishes the thread/session surface from the memory and persistence layers:
 
 ```text
+THREAD / CHAT SURFACE
+= current product-level execution container; usable while viable, not canonical project identity
+
 CHAT TRANSCRIPT
-= human-visible retained history
+= human-visible retained history; may accumulate independently of active context
 
 ACTIVE MODEL CONTEXT
 = compactable inference working memory
@@ -78,13 +89,25 @@ LOCAL ROOT
 = durable canonical project state
 
 CHECKPOINT
-= immediate resume bridge across context replacement
+= immediate resume bridge across context replacement and future session replacement
 
 LOCAL CAPABILITY WORKSPACE
 = reusable Skills, verified hot paths, helpers, manifests, and runtime assets
 ```
 
-`CHECKPOINT` is not long-term knowledge. The Local Capability Workspace is not a second Root.
+The tested long-horizon ChatGPT workflow showed that repeated active-context compaction did not make the same thread indefinitely usable. The exact internal cause of that product/thread-level boundary is unknown; this contract does not claim a specific OpenAI retention rule, token threshold, UI threshold, database limit, or private implementation detail.
+
+The architecture-level invariant is narrower and stronger:
+
+```text
+PROJECT / AGENT IDENTITY
+    ≠ THREAD
+    ≠ CHAT TRANSCRIPT
+    ≠ ACTIVE MODEL CONTEXT
+    ≠ TOOL / MODEL RUNTIME
+```
+
+`CHECKPOINT` is not long-term knowledge. The Local Capability Workspace is not a second Root. The thread itself is also not a Root.
 
 Canonical capability meaning belongs in:
 
@@ -114,8 +137,12 @@ The fused order is non-negotiable:
 11. Verify compaction.
 12. Advance the context epoch only after verified success.
 13. Rehydrate from BOOT → ROOT → CHECKPOINT → required owners only.
-14. Continue the same Chat.
+14. Continue the same Chat while that thread remains viable.
 ```
+
+Compaction is therefore a **context-maintenance operation**, not a guarantee of thread permanence.
+
+If the current thread later becomes unavailable, the current `1.0.0` package does not claim an automatic transparent rollover mechanism. The project state must already be safe in Root/Checkpoint and any configured recovery copy before an explicit restore or future rollover path is attempted.
 
 ### 5.1 Root resolution
 
@@ -143,7 +170,7 @@ runtime/CHECKPOINT.md   → immediate resume state only
 runtime/CAPABILITIES.json → availability/path/hash/scope of executable capabilities
 ```
 
-Do not dump the transcript. Do not create a second canonical owner when one already exists.
+Do not dump the transcript. Do not create a second canonical owner when one already exists. Do not treat the current provider thread as a canonical owner.
 
 ## 6. Local Storage Gate
 
@@ -219,21 +246,61 @@ Never invent a private RPC. Never treat a no-op as a universal force-compact com
 
 The minefield and trigger-reduction experiments are research provenance, not production assumptions.
 
-## 9. Transcript rule
+Compaction success proves only that active-context maintenance succeeded. It does **not** prove that the human-visible transcript shrank or that the product thread gained unlimited lifetime.
 
-Compaction maintains active model context; it does not request deletion of the human-visible transcript.
+## 9. Transcript and thread rule
 
-The tested Persistent Project Thread retained scrollable pre-compaction messages while the active context was repeatedly compacted. This supports an operational distinction, not a claim about ChatGPT's private database design.
+Compaction maintains active model context; it does not request deletion or compression of the human-visible transcript.
+
+The tested Persistent Project Thread retained scrollable pre-compaction messages while the active context was repeatedly compacted. A later long-horizon observation found that the accumulated thread eventually became unavailable for continued work despite successful context compaction.
+
+These two findings must be kept together:
 
 ```text
 human historical inspection → transcript
 model working-memory relief → compaction
+current execution container → thread / Chat surface
 project truth              → Local Root
 immediate continuation     → CHECKPOINT
 reusable behavior          → capability workspace
 ```
 
-## 10. MD synchronization rules
+Therefore:
+
+> **Active-context lifetime and thread lifetime are different problems.**
+
+The current ChatGPT-hosted limitation is treated as a product/thread boundary discovered by experiment, not as the end of the Root Engineering research program.
+
+Research provenance:
+
+- `Valon-Jang/persistent-project-thread/evidence/LONG_HORIZON_THREAD_LIMIT_2026-09-05.md`
+
+## 10. Research continuation — thread-replaceable continuity
+
+The falsified question was:
+
+> **How do we make one ChatGPT thread permanent?**
+
+Root Engineering continues with the more general question:
+
+> **How do we make the project survive models, contexts, runtimes, and threads?**
+
+Architecture-level research directions include:
+
+- provider-session/thread rollover behind one stable project identity;
+- Root + Checkpoint rehydration into a fresh execution surface;
+- human-view compression where raw history is preserved separately from what is rendered by default;
+- transcript/event retrieval without loading the whole history into active context;
+- agent identity that survives model, session, and runtime replacement;
+- lifecycle health signals for deciding when to compact context versus when to replace a session.
+
+These are research directions. They are **not** claims that current ChatGPT Rebirth `1.0.0` already performs transparent thread rollover or human-visible transcript compression.
+
+The generalized principle is:
+
+> **Model is replaceable. Context is replaceable. Thread is replaceable. Root persists.**
+
+## 11. MD synchronization rules
 
 1. English installer is canonical; Korean installer must be a semantic mirror.
 2. Backup details live in the backup-policy documents; other files summarize and link rather than fork the policy.
@@ -242,8 +309,9 @@ reusable behavior          → capability workspace
 5. A changed production rule must update every affected semantic mirror and validator in the same patch.
 6. No patch may add a second canonical `압축해` owner.
 7. Package/schema remain `1.0.0` for this fusion because the existing layout and identity contracts remain compatible.
+8. Research conclusions about thread replaceability must not be misrepresented as an implemented transparent rollover feature.
 
-## 11. Acceptance gate
+## 12. Acceptance gate
 
 PASS only when:
 
@@ -255,11 +323,15 @@ PASS only when:
 - external backup defaults to `EXPLICIT_COMPACT_ONLY`, remains hash-gated, adapter-gated, and one-way;
 - ordinary and strict backup failure semantics remain distinct;
 - compaction success is observed before epoch advancement;
-- same-thread rehydration is defined;
+- same-thread rehydration is defined for the current `1.0.0` operating scope;
+- the current thread is not treated as canonical project identity or a guaranteed permanent resource;
+- no automatic thread rollover is claimed unless separately implemented and verified;
 - capability assets are indexed without becoming a competing Root;
 - English/Korean semantics do not diverge in the touched scope;
 - the research repository is cited as provenance, not production authority.
 
 ---
 
-> **Transcript can remain. Active context can be compacted. Checkpoint bridges the transition. Root preserves truth. Skills preserve reusable capability. The same project continues.**
+> **Transcript may remain. Active context can be compacted. Thread may still end. Checkpoint bridges transitions. Root preserves truth. Skills preserve reusable capability. The same project can continue beyond replaceable execution resources.**
+
+> **Model is replaceable. Context is replaceable. Thread is replaceable. Root persists.**
