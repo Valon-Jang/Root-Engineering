@@ -14,6 +14,12 @@
 
 Persistent Project Thread 저장소는 독립 연구·증거 저장소로 유지한다. 실제 설치된 Root의 운영 정본은 Root Engineering Rebirth다.
 
+2026-09-05 장기 관찰에서는 성공적인 Active-context Compaction만으로 하나의 ChatGPT Thread를 무기한 유지할 수 있다는 더 강한 가설도 반증되었다. 따라서 Rebirth는 새로운 구조적 결론을 흡수한다.
+
+> **Thread는 실행 Resource이지 Persistence Authority가 아니다.**
+
+현재 Rebirth `1.0.0`은 해당 Chat이 유효한 동안에는 여전히 하나의 Chat 안에서 동작한다. 자동 Thread/Session Rollover가 이번 버전에 구현되었다고 주장하지 않는다. 다만 연구 구조에서는 Project Authority가 Thread가 아니라 Root/Checkpoint에 있으므로 Thread 교체 역시 Project Continuity와 양립 가능한 것으로 취급한다.
+
 ## 2. 문서 권한 지도
 
 각 문서는 역할을 하나만 가진다.
@@ -51,7 +57,7 @@ Rebirth 설치 범위에서는 `root-engineering-rebirth`만 다음 실행을 �
 - `컴팩션`
 - `채팅 정리해`
 - `백업하고 압축해`
-- 압축 후 Same-thread Rehydration
+- 현재 Chat이 유효한 동안의 Same-thread Rehydration
 
 동일 Trigger Scope에 별도의 `persistent-project-thread` Skill을 함께 설치하지 않는다. 검증된 동작은 Rebirth Skill에 흡수하고, 연구 저장소는 Evidence Link로 유지한다.
 
@@ -63,13 +69,18 @@ Rebirth 설치 범위에서는 `root-engineering-rebirth`만 다음 실행을 �
 - No-op Boundary 반복 발사
 - 성공 상태 모호화
 
+자동 Provider Thread Rollover는 현재 `1.0.0` 실행 Trigger 계약 범위 밖이다. 향후 버전이 이를 구현하더라도 Rollover Policy와 Persistence Gate의 단일 Owner는 Root Engineering이어야 한다.
+
 ## 4. 융합된 상태 모델
 
-Rebirth는 세 개의 Memory Layer를 유지하고 두 개의 보조 Resource를 둔다.
+Rebirth는 이제 Thread/Session Surface를 Memory 및 Persistence Layer와 분리한다.
 
 ```text
+THREAD / CHAT SURFACE
+= 현재 Product-level 실행 Container. 유효한 동안 사용하지만 Project Identity 정본은 아님
+
 CHAT TRANSCRIPT
-= 사람이 보는 보존된 대화 역사
+= 사람이 보는 보존 History. Active Context와 독립적으로 계속 누적될 수 있음
 
 ACTIVE MODEL CONTEXT
 = 압축 가능한 모델 추론 작업 기억
@@ -78,13 +89,25 @@ LOCAL ROOT
 = 프로젝트의 지속 가능한 Canonical 상태
 
 CHECKPOINT
-= Context 전환을 건너는 즉시 재개 Bridge
+= Context 교체와 미래 Session 교체를 건너는 즉시 재개 Bridge
 
 LOCAL CAPABILITY WORKSPACE
 = 재사용 Skill, 검증된 Hot Path, Helper, Manifest, Runtime Asset
 ```
 
-`CHECKPOINT`는 장기 지식이 아니다. Local Capability Workspace도 두 번째 Root가 아니다.
+검증된 장기 ChatGPT Workflow에서는 Active-context Compaction을 반복해도 동일 Thread가 무기한 사용 가능해지지 않았다. 그 Product/Thread-level Boundary의 정확한 내부 원인은 알 수 없으며, 이 계약은 특정 OpenAI Retention Rule, Token Threshold, UI Threshold, Database Limit 또는 Private Implementation Detail을 주장하지 않는다.
+
+구조 수준의 Invariant는 더 좁고 더 강하다.
+
+```text
+PROJECT / AGENT IDENTITY
+    ≠ THREAD
+    ≠ CHAT TRANSCRIPT
+    ≠ ACTIVE MODEL CONTEXT
+    ≠ TOOL / MODEL RUNTIME
+```
+
+`CHECKPOINT`는 장기 지식이 아니다. Local Capability Workspace도 두 번째 Root가 아니다. Thread 자체 역시 Root가 아니다.
 
 Capability의 의미 정본은 다음이 소유한다.
 
@@ -109,13 +132,17 @@ Capability의 의미 정본은 다음이 소유한다.
 6. 필요한 Owner를 Patch하고 CHECKPOINT를 갱신한다.
 7. 모든 필수 Local Write를 Read-back 검증한다.
 8. Canonical Digest + CHECKPOINT Hash를 Seal한다.
-9. 설정된 External Backup Event를 평가한다.
+9. 설정된 Recovery를 이번 명시적 Compact Maintenance Window에서 동기화한다.
 10. Capability Ladder에 따라 Active-context Compaction을 시도한다.
 11. Compaction을 검증한다.
 12. 검증 성공 후에만 Context Epoch를 증가시킨다.
 13. BOOT → ROOT → CHECKPOINT → 필요한 Owner만 Rehydrate한다.
-14. 같은 Chat에서 계속한다.
+14. 해당 Thread가 유효한 동안 같은 Chat에서 계속한다.
 ```
+
+따라서 Compaction은 **Context Maintenance 작업**이지 Thread의 영구성을 보장하는 기능이 아니다.
+
+현재 Thread가 이후 사용 불가능해지더라도 `1.0.0` Package는 자동·투명 Rollover를 이미 구현했다고 주장하지 않는다. 명시적 Restore 또는 향후 Rollover Path를 시도하기 전에 Project State가 Root/Checkpoint와 설정된 Recovery Copy에 안전하게 저장되어 있어야 한다.
 
 ### 5.1 Root 결정 순서
 
@@ -141,7 +168,7 @@ runtime/CHECKPOINT.md     → 즉시 작업 재개 상태만
 runtime/CAPABILITIES.json → 실행 Capability의 Availability/Path/Hash/Scope
 ```
 
-Transcript를 Dump하지 않는다. 기존 Owner가 있으면 두 번째 Canonical Owner를 만들지 않는다.
+Transcript를 Dump하지 않는다. 기존 Owner가 있으면 두 번째 Canonical Owner를 만들지 않는다. 현재 Provider Thread를 Canonical Owner로 취급하지 않는다.
 
 ## 6. Local Storage Gate
 
@@ -217,21 +244,61 @@ Private RPC를 만들어내지 않는다. No-op을 모든 Chat의 Universal Forc
 
 Minefield 및 Trigger Reduction 실험은 Research Provenance이며 Production Assumption이 아니다.
 
-## 9. Transcript 규칙
+Compaction 성공은 Active-context Maintenance가 성공했다는 것만 증명한다. 사람이 보는 Transcript가 줄었거나 Product Thread의 수명이 무한해졌음을 증명하지 않는다.
 
-Compaction은 Active Model Context 유지보수다. 사람이 보는 Transcript 삭제 요청이 아니다.
+## 9. Transcript와 Thread 규칙
 
-검증된 Persistent Project Thread에서는 Active Context가 반복 압축된 뒤에도 과거 Message를 Scroll해 볼 수 있었다. 이는 운영 계층 분리를 지지하지만 ChatGPT Private DB 구조를 안다는 뜻은 아니다.
+Compaction은 Active Model Context 유지보수다. 사람이 보는 Transcript 삭제 또는 압축 요청이 아니다.
+
+검증된 Persistent Project Thread에서는 Active Context가 반복 압축된 뒤에도 과거 Message를 Scroll해 볼 수 있었다. 이후 장기 관찰에서는 성공적인 Context Compaction에도 불구하고 누적된 Thread가 결국 계속 작업할 수 없는 상태에 도달했다.
+
+두 결과를 함께 유지해야 한다.
 
 ```text
-사람의 과거 확인       → Transcript
+사람의 과거 확인        → Transcript
 모델 Working Memory 감소 → Compaction
-프로젝트 정본          → Local Root
-즉시 작업 재개         → CHECKPOINT
-재사용 행동 능력       → Capability Workspace
+현재 실행 Container     → Thread / Chat Surface
+프로젝트 정본           → Local Root
+즉시 작업 재개          → CHECKPOINT
+재사용 행동 능력        → Capability Workspace
 ```
 
-## 10. MD 동기화 규칙
+따라서:
+
+> **Active-context Lifetime과 Thread Lifetime은 서로 다른 문제다.**
+
+현재 ChatGPT-hosted 한계는 실험으로 발견된 Product/Thread Boundary로 취급하며, Root Engineering 연구의 종료로 취급하지 않는다.
+
+연구 Evidence:
+
+- `Valon-Jang/persistent-project-thread/evidence/LONG_HORIZON_THREAD_LIMIT_2026-09-05.md`
+
+## 10. 연구 계속 — Thread-replaceable Continuity
+
+반증된 질문은 다음이었다.
+
+> **하나의 ChatGPT Thread를 어떻게 영구적으로 만들 것인가?**
+
+Root Engineering은 더 일반적인 질문으로 연구를 계속한다.
+
+> **Model, Context, Runtime, Thread가 교체되어도 Project는 어떻게 살아남는가?**
+
+구조 수준의 연구 방향:
+
+- 하나의 Stable Project Identity 뒤에서 Provider Session/Thread Rollover
+- Fresh Execution Surface로 Root + Checkpoint Rehydration
+- Raw History와 기본 표시 화면을 분리하는 Human-view Compression
+- 전체 History를 Active Context에 넣지 않는 Transcript/Event Retrieval
+- Model, Session, Runtime 교체를 견디는 Agent Identity
+- Context를 Compact할 시점과 Session을 교체할 시점을 구분하는 Lifecycle Health Signal
+
+이 항목들은 연구 방향이다. 현재 ChatGPT Rebirth `1.0.0`이 이미 투명한 Thread Rollover 또는 Human-visible Transcript Compression을 수행한다는 주장이 아니다.
+
+일반화된 원칙:
+
+> **Model은 교체 가능하다. Context는 교체 가능하다. Thread는 교체 가능하다. Root는 지속된다.**
+
+## 11. MD 동기화 규칙
 
 1. 영문 Installer가 Canonical이며 한글 Installer는 의미 동등본이다.
 2. Backup 세부 내용은 Backup Policy 문서가 소유하고 다른 파일은 요약·Link만 한다.
@@ -240,8 +307,9 @@ Compaction은 Active Model Context 유지보수다. 사람이 보는 Transcript 
 5. Production Rule 변경 시 영향받는 의미 동등본과 Validator를 같은 Patch에서 갱신한다.
 6. 두 번째 `압축해` Canonical Owner를 추가하지 않는다.
 7. 기존 Layout과 Identity Contract가 호환되므로 이번 융합에서 Package/Schema는 `1.0.0`을 유지한다.
+8. Thread Replaceability 연구 결론을 이미 구현된 Transparent Rollover 기능처럼 표현하지 않는다.
 
-## 11. Acceptance Gate
+## 12. Acceptance Gate
 
 다음을 모두 만족해야 PASS다.
 
@@ -250,17 +318,20 @@ Compaction은 Active Model Context 유지보수다. 사람이 보는 Transcript 
 - Root 결정 후 Persistence 수행
 - 실제 Root Filesystem Storage Health 검사
 - Smallest-owner Save 및 CHECKPOINT Read-back 검증
-- External Backup은 Event-driven, Hash-gated, Adapter-gated, One-way
+- External Backup은 `EXPLICIT_COMPACT_ONLY` 기본, Hash-gated, Adapter-gated, One-way 유지
 - 일반/엄격 Backup 실패 의미 분리
 - Compaction 성공 확인 후 Epoch 증가
-- Same-thread Rehydration 정의
+- 현재 `1.0.0` Scope에서 Same-thread Rehydration 정의
+- 현재 Thread를 Canonical Project Identity나 영구 Resource로 취급하지 않음
+- 별도 구현·검증 없이 Automatic Thread Rollover를 주장하지 않음
 - Capability Asset이 두 번째 Root가 되지 않도록 Index됨
 - 변경 Scope의 영문/한글 의미 불일치 없음
 - 연구 저장소는 Provenance이며 Production Authority가 아님
 
 ---
 
-> **Transcript는 남을 수 있다. Active Context는 압축할 수 있다. Checkpoint가 전환을 잇고 Root가 진실을 보존한다. Skill은 재사용 능력을 보존한다. 같은 프로젝트는 계속된다.**
+> **Transcript는 남을 수 있다. Active Context는 압축할 수 있다. Thread는 그래도 끝날 수 있다. Checkpoint가 전환을 잇고 Root가 진실을 보존한다. Skill은 재사용 능력을 보존한다. 같은 Project는 교체 가능한 실행 Resource를 넘어 계속될 수 있다.**
 
+> **Model은 교체 가능하다. Context는 교체 가능하다. Thread는 교체 가능하다. Root는 지속된다.**
 
 Default external recovery trigger: `EXPLICIT_COMPACT_ONLY`; scheduled/idle/timer/background sync is disabled.
