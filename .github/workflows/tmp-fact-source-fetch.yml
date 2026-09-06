@@ -11,34 +11,18 @@ permissions:
   contents: read
 
 jobs:
-  inspect-public-video-sources:
+  save-source-html:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect FreightWaves and Wing HTML for direct media URLs
-        shell: bash
+      - name: Download public source pages
         run: |
-          set -euo pipefail
-          for URL in \
-            'https://www.freightwaves.com/news/how-its-delivered-wing-gives-glimpse-of-a-future-with-drone-delivery' \
-            'https://wing.com/news/how-do-you-get-package-from-drone-to' \
-            'https://wing.com/technology'; do
-            echo "===== $URL ====="
-            curl -L --fail --compressed -A 'Mozilla/5.0' "$URL" -o page.html
-            python3 - <<'PY'
-import re, html
-s=open('page.html','r',encoding='utf-8',errors='ignore').read()
-s=html.unescape(s)
-patterns=[
-    r'https?://[^\"\'<> ]+?\.(?:mp4|webm|mov)(?:\?[^\"\'<> ]*)?',
-    r'https?://[^\"\'<> ]+(?:video|media)[^\"\'<> ]*',
-]
-seen=[]
-for p in patterns:
-    for m in re.findall(p,s,re.I):
-        if m not in seen:
-            seen.append(m)
-for x in seen[:100]: print(x)
-print('MEDIA_URL_COUNT',len(seen))
-PY
-          done
+          mkdir -p out
+          curl -L --fail "https://www.freightwaves.com/news/how-its-delivered-wing-gives-glimpse-of-a-future-with-drone-delivery" -o out/freightwaves.html
+          curl -L --fail "https://wing.com/news/how-do-you-get-package-from-drone-to" -o out/wing_delivery.html
+      - name: Upload source html
+        uses: actions/upload-artifact@v4
+        with:
+          name: wing_source_html
+          path: out/
+          retention-days: 1
