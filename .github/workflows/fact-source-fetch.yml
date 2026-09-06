@@ -1,0 +1,36 @@
+name: Temporary FACT Source Fetch
+
+on:
+  push:
+    branches:
+      - tmp/fact-source-fetch-20260906
+    paths:
+      - .github/workflows/fact-source-fetch.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-wing-broll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download Wing press-kit B-roll
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          URL='https://framerusercontent.com/assets/uu3i4ic3V8YNgEqvGZnkkScvE.mp4'
+          curl -L --fail --retry 3 --retry-delay 2 "$URL" -o out/F01_Wing_delivery_MASTER.mp4
+          ffprobe -v quiet -print_format json -show_format -show_streams out/F01_Wing_delivery_MASTER.mp4 > out/F01_Wing_delivery_METADATA.json
+          ffmpeg -y -i out/F01_Wing_delivery_MASTER.mp4 -vf "scale=960:-2" -c:v libx264 -preset veryfast -crf 24 -an out/F01_Wing_delivery_PROXY.mp4
+          ffmpeg -y -i out/F01_Wing_delivery_MASTER.mp4 -vf "fps=1/2,scale=320:-2,drawtext=text='%{pts\\:hms}':x=8:y=8:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.55,tile=5x10:padding=4:margin=4" -frames:v 1 -q:v 2 out/F01_Wing_delivery_CONTACT.jpg
+          ls -lh out
+
+      - name: Upload FACT source pack probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: F01_Wing_delivery_probe
+          path: out/
+          if-no-files-found: error
+          retention-days: 1
