@@ -9,92 +9,31 @@ on:
 jobs:
   locate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Locate source through public proxy APIs
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Playwright
+        run: |
+          npm install playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Scan Dyson official page media
+        run: node tmp/sh007/scan-dyson.mjs
+      - name: Summarize candidates
         shell: bash
         run: |
-          set -euxo pipefail
-          mkdir -p out
-          ID='9livmGRegBk'
-          PIPED=(
-            'https://pipedapi.pfcd.me'
-            'https://api-piped.mha.fi'
-            'https://piped-api.garudalinux.org'
-            'https://pipedapi.rivo.lol'
-            'https://pipedapi.colinslegacy.com'
-            'https://api.piped.yt'
-            'https://piped-api.privacy.com.de'
-            'https://api.piped.link'
-            'https://api.piped.lunar.icu'
-            'https://pipedapi.osphost.fi'
-            'https://pipedapi.darkness.services'
-            'https://pipedapi.ggtyler.dev'
-            'https://piped-api.hostux.net'
-            'https://pipedapi.simpleprivacy.fr'
-            'https://watchapi.whatever.social'
-            'https://api.piped.privacydev.net'
-          )
-          INVIDIOUS=(
-            'https://inv.nadeko.net'
-            'https://inv1.nadeko.net'
-            'https://invidious.private.coffee'
-            'https://yewtu.be'
-            'https://iv.ggtyler.dev'
-            'https://invidious.drgns.space'
-            'https://invidious.adminforge.de'
-            'https://invidious.nerdvpn.de'
-            'https://invidious.reallyaweso.me'
-            'https://invidious.ducks.party'
-          )
-          ok=''
-          kind=''
-          for base in "${PIPED[@]}"; do
-            echo "PIPED_TRY=$base"
-            if curl -A 'Mozilla/5.0' --connect-timeout 4 --max-time 12 -fsSL "$base/streams/$ID" -o out/raw.json \
-              && jq -e '.videoStreams | length > 0' out/raw.json >/dev/null 2>&1; then
-              ok="$base"; kind='piped'; break
-            fi
-          done
-          if [ -z "$ok" ]; then
-            for base in "${INVIDIOUS[@]}"; do
-              echo "INVIDIOUS_TRY=$base"
-              if curl -A 'Mozilla/5.0' --connect-timeout 4 --max-time 12 -fsSL "$base/api/v1/videos/$ID" -o out/raw.json \
-                && jq -e '((.formatStreams // []) | length > 0) or ((.adaptiveFormats // []) | length > 0)' out/raw.json >/dev/null 2>&1; then
-                ok="$base"; kind='invidious'; break
-              fi
-            done
-          fi
-          if [ -z "$ok" ]; then
-            echo 'NO_PROXY_INSTANCE_SUCCEEDED'
-            exit 1
-          fi
-          printf '%s\n' "$ok" > out/instance.txt
-          printf '%s\n' "$kind" > out/kind.txt
-          if [ "$kind" = 'piped' ]; then
-            jq '{title,uploader,duration,uploadDate,livestream,subtitles,videoStreams,audioStreams}' out/raw.json > out/streams.json
-            SUB=$(jq -r '[.subtitles[]? | select((.code // "") | startswith("en"))][0].url // empty' out/raw.json)
-          else
-            jq '{title,author,lengthSeconds,publishedText,captions,formatStreams,adaptiveFormats}' out/raw.json > out/streams.json
-            SUB=$(jq -r '[.captions[]? | select(((.label // "")|ascii_downcase|contains("english")) or ((.languageCode // "")|startswith("en")))][0].url // empty' out/raw.json)
-            if [[ "$SUB" == /* ]]; then SUB="$ok$SUB"; fi
-          fi
-          if [ -n "$SUB" ]; then
-            curl -A 'Mozilla/5.0' --connect-timeout 5 --max-time 30 -fsSL "$SUB" -o out/subtitles.vtt || true
-          fi
-          echo "SUCCESS_KIND=$kind BASE=$ok"
-          jq -r '.title // empty' out/raw.json | sed 's/^/TITLE=/'
-          echo '--- KEYWORD HITS ---'
-          if [ -s out/subtitles.vtt ]; then
-            grep -i -n -C 12 -E 'nurovi|spot.?scrub|ultraviolet|\buv\b|stain|robot vacuum|floor cleaning robot' out/subtitles.vtt || true
-          else
-            echo 'NO_ENGLISH_SUBTITLE'
-          fi
-          ls -lah out
-      - name: Upload locate files
+          echo '--- MEDIA ---'
+          cat out/media.json
+          echo '--- DOM VIDEO ---'
+          cat out/dom.json
+          echo '--- R3 HTML MEDIA LINES ---'
+          grep -Eio '.{0,160}(mp4|m3u8|mpd|video|brightcove|src=).{0,260}' out/r3.html | head -200 || true
+      - name: Upload scan files
         uses: actions/upload-artifact@v4
         with:
-          name: sh007-locate-proxy
+          name: sh007-dyson-page-scan
           path: out/
           if-no-files-found: error
           retention-days: 1
