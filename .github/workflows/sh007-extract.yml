@@ -1,0 +1,40 @@
+name: SH007 Extract
+
+on:
+  push:
+    branches:
+      - tmp/sh007-final-extract
+  workflow_dispatch:
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install yt-dlp
+        run: python -m pip install --upgrade 'yt-dlp[default]'
+      - name: Fetch metadata and English subtitles
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p out
+          URL='https://www.youtube.com/watch?v=9livmGRegBk'
+          yt-dlp --js-runtimes node --write-info-json --write-subs --write-auto-subs --sub-langs 'en.*,en' --sub-format vtt --skip-download -o 'out/dyson.%(ext)s' "$URL" || true
+          yt-dlp --js-runtimes node --print 'TITLE=%(title)s\nCHANNEL=%(channel)s\nDURATION=%(duration_string)s\nID=%(id)s' "$URL" || true
+          echo '--- KEYWORD HITS ---'
+          grep -i -n -C 8 -E 'nurovi|spot.?scrub|ultraviolet|\buv\b|stain|robot vacuum|floor cleaning robot' out/*.vtt || true
+          ls -lah out
+      - name: Upload locate files
+        uses: actions/upload-artifact@v4
+        with:
+          name: sh007-locate
+          path: out/
+          if-no-files-found: warn
+          retention-days: 1
