@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Install FFmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - name: Download Dyson official MP4 candidates
         shell: bash
         run: |
@@ -28,7 +30,7 @@ jobs:
           for f in out/videos/*.mp4; do
             b=$(basename "$f" .mp4)
             ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration,size -of json "$f" > "out/${b}_probe.json"
-            ffmpeg -y -i "$f" -vf "fps=1,scale=480:-2,tile=5x2:padding=4:margin=4" -frames:v 1 "out/sheets/${b}_contact.jpg"
+            ffmpeg -hide_banner -loglevel error -y -i "$f" -vf "fps=1,scale=480:-2,tile=5x2:padding=4:margin=4" -frames:v 1 "out/sheets/${b}_contact.jpg"
           done
           ls -lh out/videos out/sheets
       - name: Upload candidates
