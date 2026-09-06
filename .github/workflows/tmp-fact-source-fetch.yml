@@ -11,18 +11,17 @@ permissions:
   contents: read
 
 jobs:
-  fetch-direct-proof-clips:
+  fetch-residential-proof-image:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Download public MP4 clips
+      - name: Download public evidence image
         run: |
           mkdir -p out
-          curl -L --fail "https://www.freightwaves.com/wp-content/uploads/2023/10/12/trim_1C49858F-8479-47B6-89B4-D0AC3CDDB071.mp4" -o out/wing_proof_01.mp4
-          curl -L --fail "https://www.freightwaves.com/wp-content/uploads/2023/10/12/trim_7AF53F8B-AE2D-4BAE-BCE0-911F7682E454-1.mp4" -o out/wing_proof_02.mp4
-      - name: Upload proof clips
+          curl -L --fail "https://www.drones.gov.au/sites/default/files/images/Wing%20Delivery%205.jpg" -o out/F01B_Wing_residential_delivery.jpg
+      - name: Upload evidence image
         uses: actions/upload-artifact@v4
         with:
-          name: wing_direct_proof_clips
+          name: wing_residential_delivery_image
           path: out/
           retention-days: 1
