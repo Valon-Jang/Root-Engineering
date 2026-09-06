@@ -1,4 +1,4 @@
-name: Temporary FACT Source Inspect
+name: Temporary FACT Source Fetch
 
 on:
   push:
@@ -11,18 +11,18 @@ permissions:
   contents: read
 
 jobs:
-  save-source-html:
+  fetch-direct-proof-clips:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Download public source pages
+      - name: Download public MP4 clips
         run: |
           mkdir -p out
-          curl -L --fail "https://www.freightwaves.com/news/how-its-delivered-wing-gives-glimpse-of-a-future-with-drone-delivery" -o out/freightwaves.html
-          curl -L --fail "https://wing.com/news/how-do-you-get-package-from-drone-to" -o out/wing_delivery.html
-      - name: Upload source html
+          curl -L --fail "https://www.freightwaves.com/wp-content/uploads/2023/10/12/trim_1C49858F-8479-47B6-89B4-D0AC3CDDB071.mp4" -o out/wing_proof_01.mp4
+          curl -L --fail "https://www.freightwaves.com/wp-content/uploads/2023/10/12/trim_7AF53F8B-AE2D-4BAE-BCE0-911F7682E454-1.mp4" -o out/wing_proof_02.mp4
+      - name: Upload proof clips
         uses: actions/upload-artifact@v4
         with:
-          name: wing_source_html
+          name: wing_direct_proof_clips
           path: out/
           retention-days: 1
