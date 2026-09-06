@@ -1,4 +1,4 @@
-name: Temporary FACT Source Fetch
+name: Temporary FACT Source Inspect
 
 on:
   push:
@@ -11,34 +11,34 @@ permissions:
   contents: read
 
 jobs:
-  fetch-wing-delivery-proof:
+  inspect-public-video-sources:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Install media tools
-        shell: bash
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
-          python3 -m pip install -q --break-system-packages yt-dlp
-
-      - name: Download and probe Wing delivery proof video
+      - name: Inspect FreightWaves and Wing HTML for direct media URLs
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p out
-          URL='https://www.youtube.com/watch?v=snLOdFxrvUo'
-          yt-dlp --no-playlist -f 'bv*+ba/b' --merge-output-format mp4 -o 'out/F01_Wing_ground_delivery_MASTER.%(ext)s' "$URL"
-          MASTER=$(find out -maxdepth 1 -type f -name 'F01_Wing_ground_delivery_MASTER.*' | head -n1)
-          ffprobe -v quiet -print_format json -show_format -show_streams "$MASTER" > out/F01_Wing_ground_delivery_METADATA.json
-          ffmpeg -y -i "$MASTER" -vf "scale=960:-2" -c:v libx264 -preset veryfast -crf 24 -an out/F01_Wing_ground_delivery_PROXY.mp4
-          ffmpeg -y -i "$MASTER" -vf "fps=1,scale=320:-2,drawtext=text='%{pts\\:hms}':x=8:y=8:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.55,tile=5x12:padding=4:margin=4" -frames:v 1 -q:v 2 out/F01_Wing_ground_delivery_CONTACT.jpg
-          ls -lh out
-
-      - name: Upload FACT source pack probe
-        uses: actions/upload-artifact@v4
-        with:
-          name: F01_Wing_ground_delivery_probe
-          path: out/
-          if-no-files-found: error
-          retention-days: 1
+          for URL in \
+            'https://www.freightwaves.com/news/how-its-delivered-wing-gives-glimpse-of-a-future-with-drone-delivery' \
+            'https://wing.com/news/how-do-you-get-package-from-drone-to' \
+            'https://wing.com/technology'; do
+            echo "===== $URL ====="
+            curl -L --fail --compressed -A 'Mozilla/5.0' "$URL" -o page.html
+            python3 - <<'PY'
+import re, html
+s=open('page.html','r',encoding='utf-8',errors='ignore').read()
+s=html.unescape(s)
+patterns=[
+    r'https?://[^\"\'<> ]+?\.(?:mp4|webm|mov)(?:\?[^\"\'<> ]*)?',
+    r'https?://[^\"\'<> ]+(?:video|media)[^\"\'<> ]*',
+]
+seen=[]
+for p in patterns:
+    for m in re.findall(p,s,re.I):
+        if m not in seen:
+            seen.append(m)
+for x in seen[:100]: print(x)
+print('MEDIA_URL_COUNT',len(seen))
+PY
+          done
