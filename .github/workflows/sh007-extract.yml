@@ -7,36 +7,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  contact:
+  scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
-      - name: Install FFmpeg
-        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
-      - name: Download Dyson official MP4 candidates
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Playwright
+        run: |
+          npm install playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Scan TechRadar article media
+        run: node tmp/sh007/scan-techradar.mjs
+      - name: Show media candidates
         shell: bash
         run: |
-          set -euxo pipefail
-          mkdir -p out/videos out/sheets
-          curl -fL --retry 3 'https://gateway-eu.assetsadobe.com/DMGateway/public-ssl/dyson/_renditions_/418/418ab12e-e266-400a-abad-4144392f9900/avs/gl_en_IFA-unvieled_video_16x9_10s_682_hero-film_2026_CHID_clean%20%28no%20sound%29%20%281%29-1440x0-2000k.mp4' -o out/videos/01_682.mp4
-          curl -fL --retry 3 'https://gateway-eu.assetsadobe.com/DMGateway/public-ssl/dyson/_renditions_/f00/f00c2c3c-0b07-41c3-9dd3-6fdad1e5324e/avs/gl_en_IFA-unvieled_video_16x9_10s_804b_hero-film_2026_CHID_clean%20%28no%20sound%29%20%281%29-1440x0-2000k.mp4' -o out/videos/02_804b.mp4
-          curl -fL --retry 3 'https://gateway-eu.assetsadobe.com/DMGateway/public-ssl/dyson/_renditions_/c66/c660775f-e643-487b-a472-15e84155ea82/avs/gl_en_IFA-unvieled_video_16x9_10s_970b_hero-film_2026_CHID_clean%20%28no%20sound%29%20%281%29-1440x0-2000k.mp4' -o out/videos/03_970b.mp4
-          curl -fL --retry 3 'https://gateway-eu.assetsadobe.com/DMGateway/public-ssl/dyson/_renditions_/921/92171a60-5837-43c7-a40b-a2c7637cfa53/avs/gl_en_IFA-unvieled_video_16x%20%28no%20sound%29%20%281%29-1440x0-2000k.mp4' -o out/videos/04_921.mp4
-          curl -fL --retry 3 'https://gateway-eu.assetsadobe.com/DMGateway/public-ssl/dyson/_renditions_/313/313e4e24-1a62-4f7e-8947-0a52022ca36e/avs/gl_en_IFA-unvieled_video_16x9_10s_922_hero-film_2026_CHID_clean%20%28no%20sound%29%20%281%29-1440x0-2000k.mp4' -o out/videos/05_922.mp4
-      - name: Build contact sheets
-        shell: bash
-        run: |
-          set -euxo pipefail
-          for f in out/videos/*.mp4; do
-            b=$(basename "$f" .mp4)
-            ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration,size -of json "$f" > "out/${b}_probe.json"
-            ffmpeg -hide_banner -loglevel error -y -i "$f" -vf "fps=1,scale=480:-2,tile=5x2:padding=4:margin=4" -frames:v 1 "out/sheets/${b}_contact.jpg"
-          done
-          ls -lh out/videos out/sheets
-      - name: Upload candidates
+          cat out/media.json
+          echo '--- DOM ---'
+          cat out/dom.json
+      - name: Upload scan
         uses: actions/upload-artifact@v4
         with:
-          name: sh007-dyson-official-candidates
+          name: sh007-techradar-scan
           path: out/
           if-no-files-found: error
           retention-days: 1
