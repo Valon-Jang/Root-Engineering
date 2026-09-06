@@ -9,41 +9,81 @@ on:
 jobs:
   locate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Locate source through Piped
+      - name: Locate source through public proxy APIs
         shell: bash
         run: |
           set -euxo pipefail
           mkdir -p out
           ID='9livmGRegBk'
-          INSTANCES=(
-            'https://pipedapi.adminforge.de'
-            'https://api.piped.private.coffee'
-            'https://pipedapi.us.projectsegfau.lt'
-            'https://pipedapi.palveluntarjoaja.eu'
-            'https://pipedapi.smnz.de'
-            'https://pipedapi.qdi.fi'
+          PIPED=(
+            'https://pipedapi.pfcd.me'
+            'https://api-piped.mha.fi'
+            'https://piped-api.garudalinux.org'
+            'https://pipedapi.rivo.lol'
+            'https://pipedapi.colinslegacy.com'
+            'https://api.piped.yt'
+            'https://piped-api.privacy.com.de'
+            'https://api.piped.link'
+            'https://api.piped.lunar.icu'
+            'https://pipedapi.osphost.fi'
+            'https://pipedapi.darkness.services'
+            'https://pipedapi.ggtyler.dev'
+            'https://piped-api.hostux.net'
+            'https://pipedapi.simpleprivacy.fr'
+            'https://watchapi.whatever.social'
+            'https://api.piped.privacydev.net'
+          )
+          INVIDIOUS=(
+            'https://inv.nadeko.net'
+            'https://inv1.nadeko.net'
+            'https://invidious.private.coffee'
+            'https://yewtu.be'
+            'https://iv.ggtyler.dev'
+            'https://invidious.drgns.space'
+            'https://invidious.adminforge.de'
+            'https://invidious.nerdvpn.de'
+            'https://invidious.reallyaweso.me'
+            'https://invidious.ducks.party'
           )
           ok=''
-          for base in "${INSTANCES[@]}"; do
-            echo "TRY=$base"
-            if curl -A 'Mozilla/5.0' --connect-timeout 8 --max-time 25 -fsSL "$base/streams/$ID" -o out/streams.json \
-              && jq -e '.videoStreams | length > 0' out/streams.json >/dev/null 2>&1; then
-              ok="$base"
-              break
+          kind=''
+          for base in "${PIPED[@]}"; do
+            echo "PIPED_TRY=$base"
+            if curl -A 'Mozilla/5.0' --connect-timeout 4 --max-time 12 -fsSL "$base/streams/$ID" -o out/raw.json \
+              && jq -e '.videoStreams | length > 0' out/raw.json >/dev/null 2>&1; then
+              ok="$base"; kind='piped'; break
             fi
           done
           if [ -z "$ok" ]; then
-            echo 'NO_PIPED_INSTANCE_SUCCEEDED'
+            for base in "${INVIDIOUS[@]}"; do
+              echo "INVIDIOUS_TRY=$base"
+              if curl -A 'Mozilla/5.0' --connect-timeout 4 --max-time 12 -fsSL "$base/api/v1/videos/$ID" -o out/raw.json \
+                && jq -e '((.formatStreams // []) | length > 0) or ((.adaptiveFormats // []) | length > 0)' out/raw.json >/dev/null 2>&1; then
+                ok="$base"; kind='invidious'; break
+              fi
+            done
+          fi
+          if [ -z "$ok" ]; then
+            echo 'NO_PROXY_INSTANCE_SUCCEEDED'
             exit 1
           fi
           printf '%s\n' "$ok" > out/instance.txt
-          jq '{title,uploader,duration,uploadDate,livestream,subtitles,videoStreams:[.videoStreams[]|{url,format,quality,mimeType,codec,width,height,fps,videoOnly,bitrate}],audioStreams:[.audioStreams[]|{url,format,quality,mimeType,codec,bitrate}]}' out/streams.json > out/streams_compact.json
-          jq -r '"TITLE="+.title,"UPLOADER="+.uploader,"DURATION="+(.duration|tostring)' out/streams.json
-          SUB=$(jq -r '[.subtitles[]? | select((.code // "") | startswith("en"))][0].url // empty' out/streams.json)
-          if [ -n "$SUB" ]; then
-            curl -A 'Mozilla/5.0' --connect-timeout 8 --max-time 30 -fsSL "$SUB" -o out/subtitles.vtt || true
+          printf '%s\n' "$kind" > out/kind.txt
+          if [ "$kind" = 'piped' ]; then
+            jq '{title,uploader,duration,uploadDate,livestream,subtitles,videoStreams,audioStreams}' out/raw.json > out/streams.json
+            SUB=$(jq -r '[.subtitles[]? | select((.code // "") | startswith("en"))][0].url // empty' out/raw.json)
+          else
+            jq '{title,author,lengthSeconds,publishedText,captions,formatStreams,adaptiveFormats}' out/raw.json > out/streams.json
+            SUB=$(jq -r '[.captions[]? | select(((.label // "")|ascii_downcase|contains("english")) or ((.languageCode // "")|startswith("en")))][0].url // empty' out/raw.json)
+            if [[ "$SUB" == /* ]]; then SUB="$ok$SUB"; fi
           fi
+          if [ -n "$SUB" ]; then
+            curl -A 'Mozilla/5.0' --connect-timeout 5 --max-time 30 -fsSL "$SUB" -o out/subtitles.vtt || true
+          fi
+          echo "SUCCESS_KIND=$kind BASE=$ok"
+          jq -r '.title // empty' out/raw.json | sed 's/^/TITLE=/'
           echo '--- KEYWORD HITS ---'
           if [ -s out/subtitles.vtt ]; then
             grep -i -n -C 12 -E 'nurovi|spot.?scrub|ultraviolet|\buv\b|stain|robot vacuum|floor cleaning robot' out/subtitles.vtt || true
@@ -54,7 +94,7 @@ jobs:
       - name: Upload locate files
         uses: actions/upload-artifact@v4
         with:
-          name: sh007-locate-piped
+          name: sh007-locate-proxy
           path: out/
           if-no-files-found: error
           retention-days: 1
