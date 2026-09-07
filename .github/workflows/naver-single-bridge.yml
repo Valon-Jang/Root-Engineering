@@ -1,0 +1,318 @@
+name: Naver Persistent Mail Session
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/naver-single-bridge.yml
+      - .bridge/session-start.txt
+
+permissions:
+  contents: write
+
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+          install-chromedriver: true
+
+      - name: Install runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb python3-venv
+          python3 -m venv /tmp/naver-persist-venv
+          /tmp/naver-persist-venv/bin/pip install --quiet selenium requests cryptography
+
+      - name: Start Chrome, create QR and session key
+        env:
+          CHROME_BINARY: ${{ steps.chrome.outputs.chrome-path }}
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export DISPLAY=:99
+          export HOME=/tmp/naver-persist/home
+          mkdir -p "$HOME" /tmp/naver-persist/profile /tmp/naver-persist/out /tmp/naver-persist/keys
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/naver-persist/keys/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/naver-persist/keys/private.pem -pubout -out /tmp/naver-persist/out/public.pem >/dev/null 2>&1
+
+          nohup Xvfb :99 -screen 0 1440x900x24 -ac >/tmp/naver-persist/xvfb.log 2>&1 &
+          sleep 2
+          nohup "$CHROME_BINARY" \
+            --no-sandbox --disable-dev-shm-usage --disable-gpu \
+            --no-first-run --no-default-browser-check \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
+            --user-data-dir=/tmp/naver-persist/profile \
+            --window-position=0,0 --window-size=1440,900 \
+            'https://nid.naver.com/nidlogin.login' \
+            >/tmp/naver-persist/chrome.log 2>&1 &
+
+          for _ in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:9222/json/version >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:9222/json/version >/dev/null
+
+          /tmp/naver-persist-venv/bin/python - <<'PY'
+          import json, os, re, time
+          from selenium import webdriver
+          from selenium.webdriver.chrome.service import Service
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
+          d=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
+          state={}
+          try:
+              WebDriverWait(d,30).until(lambda x:x.execute_script('return document.readyState') in ('interactive','complete'))
+              time.sleep(2)
+              clicked=False
+              for e in d.find_elements(By.XPATH,"//*[self::a or self::button or @role='button' or @role='tab']"):
+                  try:
+                      txt=(e.text or e.get_attribute('aria-label') or e.get_attribute('title') or '').strip()
+                      if e.is_displayed() and re.search(r'QR\s*(코드|로그인|sign-in)?',txt,re.I):
+                          e.click(); clicked=True; state['clicked_text']=txt; break
+                  except Exception: pass
+              if not clicked:
+                  d.get('https://nid.naver.com/nidlogin.login?mode=qrcode')
+              time.sleep(3)
+              qr=None
+              for sel in ["img[id*='qr' i]","img[class*='qr' i]","[id*='qr' i] img","[class*='qr' i] img"]:
+                  try:
+                      xs=[e for e in d.find_elements(By.CSS_SELECTOR,sel) if e.is_displayed() and e.size.get('width',0)>=100 and e.size.get('height',0)>=100]
+                      if xs: qr=xs[0]; state['qr_selector']=sel; break
+                  except Exception: pass
+              if qr is None: raise RuntimeError('QR image not found')
+              panel=None
+              for xp in ["./ancestor::form[1]","./ancestor::div[contains(@class,'qr')][1]"]:
+                  try:
+                      p=qr.find_element(By.XPATH,xp)
+                      if p.is_displayed() and p.size.get('width',0)>=300 and p.size.get('height',0)>=180: panel=p; break
+                  except Exception: pass
+              (panel or qr).screenshot('/tmp/naver-persist/out/login.png')
+              state['url']=d.current_url
+              state['body_excerpt']=d.find_element(By.TAG_NAME,'body').text[:1000]
+              with open('/tmp/naver-persist/out/login-state.json','w',encoding='utf-8') as f: json.dump(state,f,ensure_ascii=False,indent=2)
+          finally:
+              d.quit()
+          PY
+
+      - name: Upload persistent session access bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: naver-persistent-session-access
+          path: |
+            /tmp/naver-persist/out/login.png
+            /tmp/naver-persist/out/login-state.json
+            /tmp/naver-persist/out/public.pem
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Keep authenticated Chrome alive and process encrypted commands
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
+          RUN_ID: ${{ github.run_id }}
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          /tmp/naver-persist-venv/bin/python - <<'PY'
+          import base64, json, os, pathlib, re, time, traceback, requests
+          from datetime import datetime, timezone
+          from cryptography.hazmat.primitives import hashes, serialization
+          from cryptography.hazmat.primitives.asymmetric import padding
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          from selenium import webdriver
+          from selenium.webdriver.chrome.service import Service
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.common.keys import Keys
+          from selenium.webdriver.support.ui import WebDriverWait
+
+          repo=os.environ['REPOSITORY']; branch=os.environ['HEAD_REF']; token=os.environ['GH_TOKEN']
+          session_id=os.environ['RUN_ID']
+          headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          command_url=f'https://api.github.com/repos/{repo}/contents/.bridge/mail-command.enc'
+          status_url=f'https://api.github.com/repos/{repo}/contents/.bridge/single-command.json'
+          private_key=serialization.load_pem_private_key(pathlib.Path('/tmp/naver-persist/keys/private.pem').read_bytes(),password=None)
+
+          opt=webdriver.ChromeOptions(); opt.debugger_address='127.0.0.1:9222'
+          d=webdriver.Chrome(service=Service(os.environ['CHROMEDRIVER']),options=opt)
+
+          def now(): return datetime.now(timezone.utc).isoformat()
+
+          def write_status(status, command_id=None, ok=None, error=None, url=None):
+              payload={'session_id':session_id,'status':status,'updated_at':now()}
+              if command_id is not None: payload['command_id']=command_id
+              if ok is not None: payload['ok']=ok
+              if error: payload['error']=error[:300]
+              if url: payload['url']=url
+              raw=(json.dumps(payload,ensure_ascii=False,separators=(',',':'))+'\n').encode()
+              try:
+                  r=requests.get(status_url,headers=headers,params={'ref':branch},timeout=20)
+                  body={'message':f'Update persistent mail status {status}','content':base64.b64encode(raw).decode(),'branch':branch}
+                  if r.status_code==200: body['sha']=r.json()['sha']
+                  requests.put(status_url,headers=headers,json=body,timeout=20).raise_for_status()
+              except Exception as exc:
+                  print('STATUS_WRITE_FAILED',type(exc).__name__,str(exc)[:120])
+
+          def decrypt_command(raw):
+              env=json.loads(raw.decode('utf-8'))
+              aes_key=private_key.decrypt(base64.b64decode(env['wrapped_key']),padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+              return json.loads(AESGCM(aes_key).decrypt(base64.b64decode(env['nonce']),base64.b64decode(env['ciphertext']),None).decode('utf-8'))
+
+          def visible(el):
+              try: return el.is_displayed() and el.size.get('width',0)>3 and el.size.get('height',0)>3
+              except Exception: return False
+
+          def text_of(el):
+              try: return (el.text or el.get_attribute('aria-label') or el.get_attribute('title') or '').strip()
+              except Exception: return ''
+
+          def find_subject_input():
+              for sel in ["input[placeholder*='제목']","input[aria-label*='제목']","input[name*='subject' i]","input[id*='subject' i]","input[id*='title' i]"]:
+                  for e in d.find_elements(By.CSS_SELECTOR,sel):
+                      if visible(e): return e
+              ref=d.find_elements(By.ID,'reference_input_element')
+              ref_y=ref[0].rect['y'] if ref and visible(ref[0]) else 220
+              c=[]
+              for e in d.find_elements(By.CSS_SELECTOR,"input[type='text'],input:not([type])"):
+                  if not visible(e): continue
+                  if (e.get_attribute('id') or '') in ('recipient_input_element','reference_input_element'): continue
+                  r=e.rect
+                  if r['width']>400 and ref_y+15 < r['y'] < ref_y+100: c.append((r['y'],e))
+              return sorted(c,key=lambda x:x[0])[0][1] if c else None
+
+          def send_mail(cmd):
+              TO=str(cmd['to']).strip(); SUBJECT=str(cmd.get('subject') or ''); BODY=str(cmd.get('body') or '')
+              if '@' not in TO: raise ValueError('Invalid recipient')
+              d.switch_to.default_content(); d.get('https://mail.naver.com')
+              WebDriverWait(d,30).until(lambda x:x.execute_script('return document.readyState') in ('interactive','complete'))
+              time.sleep(3)
+              if 'nidlogin' in d.current_url.lower(): raise RuntimeError('Naver session is no longer authenticated')
+
+              compose=None
+              for e in d.find_elements(By.XPATH,"//*[self::button or self::a or @role='button']"):
+                  if visible(e) and re.search(r'메일\s*쓰기',text_of(e)):
+                      compose=e; break
+              if compose is None: raise RuntimeError('Compose button not found')
+              d.execute_script('arguments[0].click()',compose); time.sleep(3)
+
+              recipient=d.find_elements(By.ID,'recipient_input_element')
+              recipient=recipient[0] if recipient and visible(recipient[0]) else None
+              subject=find_subject_input()
+              if recipient is None or subject is None: raise RuntimeError('Compose header inputs not found')
+
+              d.execute_script("""
+                const el=arguments[0], value=arguments[1];
+                const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+                set.call(el,''); el.dispatchEvent(new Event('input',{bubbles:true}));
+                set.call(el,value); el.dispatchEvent(new Event('input',{bubbles:true}));
+                el.dispatchEvent(new Event('change',{bubbles:true})); el.focus();
+              """,recipient,TO)
+              time.sleep(.7)
+              exact=None
+              for e in d.find_elements(By.XPATH,f"//*[normalize-space(.)={json.dumps(TO)}]"):
+                  if visible(e): exact=e; break
+              if exact is not None:
+                  d.execute_script('arguments[0].click()',exact); time.sleep(.5)
+              else:
+                  subject.click(); time.sleep(.3)
+
+              subject=find_subject_input()
+              if subject is None: raise RuntimeError('Subject input disappeared')
+              subject.clear(); subject.send_keys(SUBJECT)
+
+              d.switch_to.default_content(); body=None
+              for sel in ["[contenteditable='true'][role='textbox']","div[contenteditable='true']","textarea[placeholder*='내용']","textarea[aria-label*='내용']"]:
+                  xs=[e for e in d.find_elements(By.CSS_SELECTOR,sel) if visible(e)]
+                  if xs: body=xs[0]; break
+              if body is None:
+                  for frame in d.find_elements(By.CSS_SELECTOR,'iframe'):
+                      try:
+                          d.switch_to.default_content(); d.switch_to.frame(frame)
+                          for sel in ["body[contenteditable='true']","[contenteditable='true']","textarea"]:
+                              xs=[e for e in d.find_elements(By.CSS_SELECTOR,sel) if visible(e)]
+                              if xs: body=xs[0]; break
+                          if body is not None: break
+                      except Exception: pass
+              if body is None: raise RuntimeError('Body editor not found')
+              body.click(); body.send_keys(BODY)
+              d.switch_to.default_content(); time.sleep(.5)
+
+              recipient_now=d.find_elements(By.ID,'recipient_input_element')
+              recipient_value=recipient_now[0].get_attribute('value') if recipient_now else ''
+              page_text=d.find_element(By.TAG_NAME,'body').text
+              if not (recipient_value==TO or TO in page_text): raise RuntimeError('Exact recipient readback failed')
+              if SUBJECT and SUBJECT not in page_text and subject.get_attribute('value')!=SUBJECT: raise RuntimeError('Subject readback failed')
+
+              send=None
+              for e in d.find_elements(By.XPATH,"//*[self::button or self::a or @role='button']"):
+                  if visible(e) and text_of(e) in ('보내기','메일 보내기','Send'):
+                      send=e; break
+              if send is None: raise RuntimeError('Send button not found')
+              d.execute_script('arguments[0].click()',send); time.sleep(4)
+              for dialog in d.find_elements(By.CSS_SELECTOR,"[role='dialog'],.layer,.modal"):
+                  if not visible(dialog): continue
+                  for e in dialog.find_elements(By.XPATH,".//*[self::button or self::a or @role='button']"):
+                      if visible(e) and text_of(e) in ('확인','보내기','Send'):
+                          d.execute_script('arguments[0].click()',e); time.sleep(2); break
+              d.switch_to.default_content(); text=d.find_element(By.TAG_NAME,'body').text; current=d.current_url
+              sent=bool(re.search(r'메일을\s*보냈|발송.*완료|보내기\s*완료',text,re.I)) or '/done' in current.lower()
+              if not sent: raise RuntimeError('Send success not detected')
+              return current
+
+          try:
+              deadline=time.time()+300
+              while time.time()<deadline:
+                  cookies={c.get('name') for c in d.get_cookies()}
+                  if 'NID_AUT' in cookies or 'NID_SES' in cookies or 'nidlogin.login' not in d.current_url.lower(): break
+                  time.sleep(1)
+              else:
+                  write_status('login_timeout',ok=False); raise TimeoutError('QR login approval timeout')
+
+              write_status('ready',ok=True,url=d.current_url)
+              last_id=None
+              end=time.time()+19800
+              while time.time()<end:
+                  if not pathlib.Path('/proc').exists(): break
+                  try:
+                      r=requests.get(command_url,headers=headers,params={'ref':branch},timeout=20)
+                      if r.status_code==200:
+                          raw=base64.b64decode(r.json()['content'])
+                          if raw.strip() and raw.strip()!=b'PENDING':
+                              try:
+                                  cmd=decrypt_command(raw)
+                                  cid=str(cmd.get('id') or '')
+                                  if cid and cid!=last_id and cmd.get('action')=='send_mail':
+                                      last_id=cid; write_status('sending',command_id=cid)
+                                      try:
+                                          url=send_mail(cmd)
+                                          write_status('sent',command_id=cid,ok=True,url=url)
+                                      except Exception as exc:
+                                          write_status('failed',command_id=cid,ok=False,error=f'{type(exc).__name__}: {exc}',url=d.current_url)
+                                          try: d.switch_to.default_content(); d.get('https://mail.naver.com'); time.sleep(2)
+                                          except Exception: pass
+                              except Exception:
+                                  pass
+                  except Exception:
+                      pass
+                  time.sleep(2)
+              write_status('expired',ok=False,url=d.current_url)
+          finally:
+              d.quit()
+          PY
