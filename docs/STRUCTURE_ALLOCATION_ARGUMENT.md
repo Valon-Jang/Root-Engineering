@@ -1,6 +1,6 @@
 # Where structure belongs: a unified, evidence-bounded argument
 
-Status: working design argument, not an established capability-scaling law. Version 0.1, audited 2026-09-13.
+Status: working design argument, not an established capability-scaling law. Version 0.1.1, corrected 2026-09-13 after Exp3 raw-output review.
 
 ## Start with a decision, not a metaphor
 
@@ -56,7 +56,7 @@ Use a quality/labor/cost/risk frontier rather than an uncalibrated single score.
 | Evidence | What was observed | What it does not establish |
 |---|---|---|
 | Atlas v0.1 | Published 3 advantages / 3 ties / 0 disadvantages for Root; specific scope/provenance/readiness omissions | Population superiority, production validity, an isolated retrieval mechanism or total ROI |
-| Qwen Exp3 | BARE 16/16, HC 14/16; state-replacement and rejected-hypothesis-revival failures | That all persistent state is harmful, or that selective Root retrieval is proven superior |
+| Qwen Exp3 | Original contract-inclusive BARE 16/16, HC 14/16; retrospective logged-decision semantics 16/16 each; HC omitted FINAL on 3 turns across 2 cases | Semantic reasoning or dependency-loss regression; universal memory harm; superiority of untested selective Root retrieval |
 | Qwen Exp4 | BARE 11/12, GUIDE 12/12, LITE 12/12; LITE verifier did not activate | Universal benefit from guidance, or a measured verifier benefit |
 | Qwen Exp5 | Eight held-out case types, two repetitions: BARE 16/16, GUIDE 15/16, MAX 11/16 | Sixteen independent task types, semantic-only effects, or a clean high-reasoning intervention |
 | Qwen source/conflict follow-up | Sixteen system outcomes: ten deterministic zero-model passes and five correct model choices out of six actual conflict choices | 15/16 model reasoning accuracy, fresh held-out confirmation or transfer to a larger model |
@@ -72,17 +72,23 @@ The Qwen conflict-only follow-up retained unambiguous records deterministically 
 
 The remaining failure selected an obsolete source; exact source-byte reconstruction and the deterministic solver then faithfully solved the wrong specification. The useful lesson is not 'state is automatically safe' but **source fidelity, source applicability and decision correctness are different checks**. This supports continuing the existing source-applicability investigation rather than replacing it with a fashionable model comparison.
 
-## 4. Exp3: what the recovered source can and cannot tell us
+## 4. Exp3: what the recovered source and outputs can and cannot tell us
 
 A privately supplied diagnostic capture, uploaded on 2026-09-12, contains line-numbered excerpts from `QWEN_HUMAN_INTELLIGENCE_HARNESS_v3_3_EXP4_SUBTRACTIVE_ABLATION_FIX1.cmd`. The captured `buildPrimaryMessages` at original lines 665-674 builds a system kernel plus one user message containing `STATE` and `NEW_USER_MESSAGE`; it does not append prior raw conversation in that builder. Captured kernel lines 625-636 describe CURRENT-only state and hidden superseded history.
 
 This is evidence for the design in the recovered **later FIX1 revision**. It is not the complete historical Exp3 executable, a verified full call-chain audit, or a hash match to the run that produced 14/16. The original result and reproducibility limitations are preserved. The public note intentionally excludes private paths, endpoints and unrelated capture contents.
 
+A subsequent user-supplied original-result capture contains 32 case-arm records and 40 visible turn outputs. Retrospective decision-label review finds **20/20 turns and 16/16 cases correct in each arm**. HC11 turn 2 explicitly chooses S; HC13 turns 1 and 2 explicitly reject and revive A. All three omit FINAL markers and have empty logged `got` values with `WRONG_FINAL`. Therefore the previous state-replacement/revival reasoning-failure explanation is withdrawn. The original contract-inclusive HC score remains 14/16. This is decision semantics relative to the logged gold, not comprehensive prose factuality or a hidden-state audit. See the [corrected Exp3 report](https://github.com/Valon-Jang/Qwen-Reasoning-Architecture-Study/blob/main/docs/EXP3_BARE_VS_HC.md).
+
 Even with exact execution provenance, the following inference would still be invalid:
 
-> compressed-state HC lost -> therefore selective external Root retrieval won
+> HC ties on decision semantics -> therefore selective external Root retrieval won
 
-That comparison was not performed. State compression, replacement of history, update mechanics, prompt rules, control formatting and additional calls were bundled. A follow-up must separately compare raw history, lossy replacement and source-backed selective retrieval under matched conditions. Exp3 remains a negative result for the tested bundle and a motivation for this test, not retroactive positive validation of Root.
+That comparison was not performed. State compression, replacement of history, update mechanics, prompt rules, control formatting and additional calls were bundled. A follow-up must separately compare raw history, lossy replacement and source-backed selective retrieval under matched conditions. Exp3 now constrains **output-contract reliability and cost**, not observed semantic degradation: it is neither a semantic counterexample to Root nor retroactive positive validation of Root.
+
+Exp3's 0 versus 3 FINAL-omission turns and Exp5's reported 0/1/7 format-failure counts form a same-direction **contract-risk signal under different bundles**, not a replicated causal law that structure harms compliance. The counting units and output contracts are not automatically interchangeable, and three failed turns in two paired cases are not three independent experiments. No claim that this is the portfolio's only reproduced effect is established.
+
+HC's aggregate prompt/completion/total tokens are 18,792/46,543/65,335 versus Bare's 2,748/51,689/54,437. The record lacks separate reasoning-token and extra-call breakdowns, so it cannot establish a transfer of internal reasoning into prompt scaffolding. HC11 prompt growth is consistent with replacement but does not reconstruct the request payload. Exp3 timing stays descriptive; neither outliers alone nor a median difference identify architectural speed.
 
 ## 5. Atlas timing: a conditional break-even, not business ROI
 
@@ -154,4 +160,6 @@ No runtime, permissions, acceptance thresholds or frozen E001 treatment is chang
 
 Original Git blob identities inspected: Atlas results `d7153e066b620e573178c52d680ebc8468bf3d43`; timing CSV `268b67655d5072571d364d133fc425ade593aebf`; methodology `d68adbfb4216d3b9330116e71ea644af16ce3fd5`; Qwen Exp3 summary `76515ec34e92b7bdd5edcf340f43e8657115cde2`; Exp4 summary `93ce552472e4edee75a1d05d7cf2e731ed9bf1d4`; Exp5 summary `cfe12472842919bb5f63bfa20b4a9d1c6dfea2ca`; source/conflict checkpoint `df21c517b96290aa9863dfbf09dc64c98a4a44e0`; E001 protocol `81871e436388b830d4650913801ce5d4460e2ef9`.
 
-These are content blob identities, not execution commit hashes. Original model runs were not repeated or independently re-graded during this audit; published counts were checked against their source summaries, and the timing arithmetic was recalculated.
+These are content blob identities, not execution commit hashes. In the initial v0.1 audit, original model runs were not repeated or independently re-graded; published counts were checked against their source summaries, and the timing arithmetic was recalculated.
+
+Correction v0.1.1: the user subsequently supplied the Exp3 result capture (SHA-256 `71228cab3ccafb4d49f7388804cb19d2c55c4b0cbb508a75074b9e3587966cc5`, 28,195 bytes). All 40 saved final-label extractions and original turn verdicts were reproduced by an audit-only key checker. Three prose decisions were manually adjudicated without changing the original log or making any new model call. This withdraws the prior Exp3 reasoning-loss premise; other experiments and frozen treatments are unchanged.
