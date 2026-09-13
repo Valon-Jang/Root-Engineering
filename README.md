@@ -6,6 +6,20 @@
 
 > **Model is replaceable. Context is replaceable. Thread is replaceable. Root persists.**
 
+## Start with the evidence
+
+In the **synthetic procurement / part-qualification Project Atlas scenario**, the Native condition retained high-level rules but omitted a prepared **120-sample + QR** package and the exact **C1 validation evidence**. The published evaluation reports that this changed the reconstructed readiness state and final decision ranking. Root retained the relevant detail:
+
+> **State omission → different reconstruction → different decision.**
+
+The original manual paired comparison reports **Root advantage 3, tie 3, disadvantage 0 across six dependent stages**. This is a preliminary case study, not six independent trials or proof of general superiority. Maintenance has costs: the recorded UI thinking-time total was **701 seconds Native versus 822 seconds Root**; a read/write break-even can only be extrapolated under explicit assumptions.
+
+[Read the unified argument and evidence audit](./docs/STRUCTURE_ALLOCATION_ARGUMENT.md) · [Inspect Material Failure 3](./benchmarks/project-atlas-v0.1/results.md) · [Review the conditional timing calculation](./benchmarks/project-atlas-v0.1/timing-break-even.md)
+
+The shared research direction is **not** “remove all structure” or “put everything into memory.” It is: **keep goals, authority and acceptance human-governed; preserve traceable state and evidence; let methods change; retain scaffolding only when its measured benefit justifies its lifecycle cost.** Root Engineering, the [Qwen architecture study](https://github.com/Valon-Jang/Qwen-Reasoning-Architecture-Study), and [GDSSA](https://github.com/Valon-Jang/Goal-Directed-Self-Structuring-AI) keep separate protocols and evidence while sharing this argument. Capability-scaling and method-by-state interaction remain hypotheses.
+
+## Runtime and installation context
+
 Root Engineering is a context-engineering methodology for preserving validated project knowledge, decisions, constraints, learning, and source relationships around AI systems.
 
 **Root Engineering 1.0 — Rebirth** extends the original idea: not only the model, but also the model's active conversation context can be treated as replaceable working memory. Ongoing long-horizon research now adds a further architectural conclusion: **the current Chat/thread is also an execution resource, not the persistence authority for the project.**
